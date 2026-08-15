@@ -80,8 +80,17 @@ State stays in browser `localStorage` under
 `ace-quest-store`, call external services, or modify Athlete Quest data.
 Malformed persisted data is clamped and sanitized before use.
 
-The typed temporary content contract lives in
-`src/types/flow-compass.ts`. When
-`ace-method/flow-compass/QUEST_SCHEMA.json` is ready, adapt that external schema
-to `FlowCompassQuestDefinition`; the interactive state can remain local and
-separate from canonical curriculum content.
+## Canonical curriculum source
+
+Day 1 content is loaded through the server-side consumer adapter from the exact
+`takraw369/ace-method` snapshot at
+`89b17f011366f1a36385fbc54a475b4eb7844c61`. The original
+`flow-compass/APP_QUEST_PACK_SCHEMA.json` validates the original
+`flow-compass/app/quest-pack.json` before it is converted to the explicitly
+consumer-owned `FlowCompassQuestViewModel`.
+
+Schema mismatch, unsupported version, malformed payload, unknown quest type,
+invalid stage order, or a missing requested day throws
+`QuestPackValidationError`; there is no content fallback. The same adapter
+successfully converts all 35 records. Only Day 1 has an interactive route in
+this version; Day 2 conversion is covered by a contract test.

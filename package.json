@@ -7,9 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run src/lib/flow-compass-day-one.test.ts"
+    "test": "vitest run src/lib"
   },
   "dependencies": {
+    "ajv": "^8.17.1",
     "framer-motion": "^12.38.0",
     "nanoid": "^5.1.7",
     "next": "16.2.1",

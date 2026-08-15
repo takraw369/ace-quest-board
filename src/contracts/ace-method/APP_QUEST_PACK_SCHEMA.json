@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sunlovesflow.example/schemas/flow-compass-app-quest-pack-v0.1.json",
+  "title": "FLOW COMPASS app quest pack",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contractVersion", "sourceVersion", "locale", "sessionSeconds", "scientificStatus", "quests"],
+  "properties": {
+    "contractVersion": { "const": "flow-compass.quest-pack/0.1.0" },
+    "sourceVersion": { "const": "0.1.0" },
+    "locale": { "const": "ja-JP" },
+    "sessionSeconds": { "const": 300 },
+    "scientificStatus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scope", "metaphors", "claimPolicy"],
+      "properties": {
+        "scope": { "type": "string", "minLength": 1 },
+        "metaphors": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string" } },
+        "claimPolicy": { "type": "string", "minLength": 1 }
+      }
+    },
+    "quests": {
+      "type": "array",
+      "minItems": 35,
+      "maxItems": 35,
+      "items": { "$ref": "#/$defs/quest" }
+    }
+  },
+  "$defs": {
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["startSecond", "durationSeconds", "label", "instruction"],
+      "properties": {
+        "startSecond": { "type": "integer", "minimum": 0, "maximum": 299 },
+        "durationSeconds": { "type": "integer", "minimum": 1, "maximum": 300 },
+        "label": { "enum": ["ARRIVE", "LOCATE", "EXPERIMENT", "REORIENT", "RECORD"] },
+        "instruction": { "type": "string", "minLength": 8 }
+      }
+    },
+    "record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["observation", "interpretation", "nextAction", "deltaScale"],
+      "properties": {
+        "observation": { "type": "string", "minLength": 1 },
+        "interpretation": { "type": "string", "minLength": 1 },
+        "nextAction": { "type": "string", "minLength": 1 },
+        "deltaScale": {
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 5,
+          "prefixItems": [{ "const": -2 }, { "const": -1 }, { "const": 0 }, { "const": 1 }, { "const": 2 }],
+          "items": false
+        }
+      }
+    },
+    "quest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "day", "slug", "phase", "title", "status", "durationSeconds", "prompt", "intention", "steps", "bodyCue", "microExperiment", "reflection", "record", "progressionLink", "safetyCue"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^flow-compass:[0-9]{2}:[a-z0-9]+(?:-[a-z0-9]+)*$" },
+        "day": { "type": "integer", "minimum": 1, "maximum": 35 },
+        "slug": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+        "phase": { "enum": ["NOTICE", "UNFIX", "RELATE", "CIRCULATE", "NAVIGATE"] },
+        "title": { "type": "string", "minLength": 1 },
+        "status": { "enum": ["test-ready", "authored"] },
+        "durationSeconds": { "const": 300 },
+        "prompt": { "type": "string", "minLength": 8 },
+        "intention": { "type": "string", "minLength": 8 },
+        "steps": { "type": "array", "minItems": 5, "maxItems": 5, "items": { "$ref": "#/$defs/step" } },
+        "bodyCue": { "type": "string", "minLength": 8 },
+        "microExperiment": { "type": "string", "minLength": 8 },
+        "reflection": { "type": "array", "minItems": 2, "maxItems": 3, "items": { "type": "string", "minLength": 4 } },
+        "record": { "$ref": "#/$defs/record" },
+        "progressionLink": { "type": "string", "minLength": 8 },
+        "safetyCue": { "type": "string", "minLength": 8 }
+      }
+    }
+  }
+}

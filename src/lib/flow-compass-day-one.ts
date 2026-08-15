@@ -1,53 +1,10 @@
 import type {
   CompassPoint,
   FlowCompassDayOneState,
-  FlowCompassQuestDefinition,
 } from '@/types/flow-compass';
+import { FLOW_COMPASS_STEP_IDS } from '../types/flow-compass';
 
 export const FLOW_COMPASS_STORAGE_KEY = 'ace-flow-compass-day-1-v1';
-
-export const DAY_ONE_QUEST: FlowCompassQuestDefinition = {
-  schemaVersion: 'prototype-0.1',
-  slug: 'flow-compass-day-1',
-  title: '中心は、ひとつの場所ではない',
-  intent: '中心の位置と変化を、身体・空間・操作の往復から観察する。',
-  stages: [
-    {
-      id: 'arrive',
-      label: 'ARRIVE',
-      prompt: '視点を一点から周辺へひらき、今いる場所に到着する。',
-      estimatedSeconds: 45,
-    },
-    {
-      id: 'locate',
-      label: 'LOCATE',
-      prompt: '身体のどこに中心を感じるか、自分で仮置きする。',
-      estimatedSeconds: 60,
-    },
-    {
-      id: 'compress-release',
-      label: 'COMPRESS / RELEASE',
-      prompt: '凝縮と解放を往復し、中心の質がどう変わるか比べる。',
-      estimatedSeconds: 75,
-    },
-    {
-      id: 'reorient',
-      label: 'REORIENT',
-      prompt: '固定された上下をほどき、自分の向きを選び直す。',
-      estimatedSeconds: 60,
-    },
-    {
-      id: 'record',
-      label: 'RECORD',
-      prompt: '起きた変化を一行だけ残し、次の観察へつなぐ。',
-      estimatedSeconds: 60,
-    },
-  ],
-  scientificStatus: {
-    measurable: ['画面上で選んだ座標', '圧縮スライダー値', '軸の角度', '入力した言葉'],
-    metaphor: ['中心', '花托', '循環', '凝縮と解放'],
-  },
-};
 
 export const INITIAL_DAY_ONE_STATE: FlowCompassDayOneState = {
   schemaVersion: 1,
@@ -90,7 +47,7 @@ export function sanitizeDayOneState(value: unknown): FlowCompassDayOneState {
 
   return {
     ...INITIAL_DAY_ONE_STATE,
-    stepIndex: Math.round(clamp(Number(candidate.stepIndex), 0, DAY_ONE_QUEST.stages.length - 1)),
+    stepIndex: Math.round(clamp(Number(candidate.stepIndex), 0, FLOW_COMPASS_STEP_IDS.length - 1)),
     center: {
       x: clamp(Number(center?.x), 8, 92),
       y: clamp(Number(center?.y), 8, 92),
@@ -122,7 +79,7 @@ export function dayOneReducer(
     case 'NEXT':
       return {
         ...state,
-        stepIndex: Math.min(DAY_ONE_QUEST.stages.length - 1, state.stepIndex + 1),
+        stepIndex: Math.min(FLOW_COMPASS_STEP_IDS.length - 1, state.stepIndex + 1),
       };
     case 'BACK':
       return { ...state, stepIndex: Math.max(0, state.stepIndex - 1) };

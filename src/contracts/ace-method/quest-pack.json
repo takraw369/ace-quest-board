@@ -1,0 +1,2225 @@
+{
+  "contractVersion": "flow-compass.quest-pack/0.1.0",
+  "sourceVersion": "0.1.0",
+  "locale": "ja-JP",
+  "sessionSeconds": 300,
+  "scientificStatus": {
+    "scope": "身体・空間・関係・時間の前後差を扱う教育的自己観察",
+    "metaphors": [
+      "compass",
+      "center-node",
+      "torus",
+      "hourglass",
+      "lotus-receptacle"
+    ],
+    "claimPolicy": "比喩を解剖学・神経科学・物理学上の事実として主張しない"
+  },
+  "quests": [
+    {
+      "id": "flow-compass:01:moving-center",
+      "day": 1,
+      "slug": "moving-center",
+      "phase": "NOTICE",
+      "title": "中心は動いてよい",
+      "status": "test-ready",
+      "durationSeconds": 300,
+      "prompt": "中心は見つけるものではなく、今の操作でどこへ動いた？",
+      "intention": "注意が集まる場所を仮のnodeとして置き、操作前後の移動を発見する。",
+      "steps": [
+        {
+          "startSecond": 0,
+          "durationSeconds": 30,
+          "label": "ARRIVE",
+          "instruction": "目を開けたまま座るか立つ。足または椅子の接触を一か所確認し、痛みがない姿勢を選ぶ。"
+        },
+        {
+          "startSecond": 30,
+          "durationSeconds": 45,
+          "label": "LOCATE",
+          "instruction": "『今、注意が最も集まる場所は？』と問い、眉間・胸・腹・足・身体の外・不明から仮に一つ選ぶ。正解にしない。"
+        },
+        {
+          "startSecond": 75,
+          "durationSeconds": 90,
+          "label": "EXPERIMENT",
+          "instruction": "指を眉間から20cm離して置き、触れずに10秒見る。次に指を胸の前、腹の前へゆっくり移す。各位置で注意の凝縮・広がり・変化なしを比べる。"
+        },
+        {
+          "startSecond": 165,
+          "durationSeconds": 75,
+          "label": "REORIENT",
+          "instruction": "指を下ろし、視線を部屋の遠い一点へ移す。最初の中心候補が動いたか、境界が変わったかを確認し、楽な方向へ一歩または重心を1cm動かす。"
+        },
+        {
+          "startSecond": 240,
+          "durationSeconds": 60,
+          "label": "RECORD",
+          "instruction": "観察『注意はAからBへ』、解釈『私は〜かもしれない』、次の一歩『今日の○○前に10秒再確認』を各一行で記録する。"
+        }
+      ],
+      "bodyCue": "額を固めず、足か椅子の接触を保ったまま視線と注意の位置差を見る。",
+      "microExperiment": "指の位置を眉間・胸・腹の前へ動かし、触れずに注意の集まり方を比較する。",
+      "reflection": [
+        "直接感じた位置・圧・広がりは何だった？",
+        "そこへ付けた意味は何だった？"
+      ],
+      "record": {
+        "observation": "操作前後の中心候補と境界",
+        "interpretation": "感覚に付けた意味（仮説）",
+        "nextAction": "今日10秒で再試行する場面",
+        "deltaScale": [
+          -2,
+          -1,
+          0,
+          1,
+          2
+        ]
+      },
+      "progressionLink": "Day 2では中心だけでなく、身体と床の接触地図を現在地に加える。",
+      "safetyCue": "目は開けたままでよい。頭痛やめまいがあれば指の追視を止め、固定物を見る。"
+    },
+    {
+      "id": "flow-compass:02:contact-map",
+      "day": 2,
+      "slug": "contact-map",
+      "phase": "NOTICE",
+      "title": "接触から現在地を描く",
+      "status": "test-ready",
+      "durationSeconds": 300,
+      "prompt": "身体の現在地を、気分ではなく三つの接触点で表すと？",
+      "intention": "頭の中の説明より先に、床・椅子・衣服との接触圧を地図として採取する。",
+      "steps": [
+        {
+          "startSecond": 0,
+          "durationSeconds": 30,
+          "label": "ARRIVE",
+          "instruction": "座位か立位で、目に入る四角い物を一つ言う。足裏または座面の接触を確認する。"
+        },
+        {
+          "startSecond": 30,
+          "durationSeconds": 45,
+          "label": "LOCATE",
+          "instruction": "接触点を3つ探し、強い・中・弱の印を心の中で付ける。左右均等にしようとしない。"
+        },
+        {
+          "startSecond": 75,
+          "durationSeconds": 90,
+          "label": "EXPERIMENT",
+          "instruction": "重心を前・中央・後へ各2cmだけ移す。毎回止まり、強くなる接触点と消える接触点を一つずつ採取する。"
+        },
+        {
+          "startSecond": 165,
+          "durationSeconds": 75,
+          "label": "REORIENT",
+          "instruction": "最も動きやすかった位置から、机上の物へ片手を伸ばして戻す。接触地図が動作の前後でどう変わるかを見る。"
+        },
+        {
+          "startSecond": 240,
+          "durationSeconds": 60,
+          "label": "RECORD",
+          "instruction": "操作前後の強い接触点、動きやすい方向、次に試す日常動作を各一行で記録する。"
+        }
+      ],
+      "bodyCue": "膝を固めず、重心移動は倒れない2cm以内。接触が薄い場所もデータにする。",
+      "microExperiment": "重心を前・中央・後へ2cm移し、接触圧の地図を書き換える。",
+      "reflection": [
+        "強い接触点はどこからどこへ移った？",
+        "『安定／不安定』という評価を外すと何が残る？"
+      ],
+      "record": {
+        "observation": "三つの接触点と圧の変化",
+        "interpretation": "安定・不安定などの評価",
+        "nextAction": "接触地図を使う日常動作",
+        "deltaScale": [
+          -2,
+          -1,
+          0,
+          1,
+          2
+        ]
+      },
+      "progressionLink": "Day 3では接触地図に前後・左右・上下の向きを重ねる。",
+      "safetyCue": "転倒リスクがあれば座位で行い、可動域を小さくする。"
+    },
+    {
+      "id": "flow-compass:03:six-directions",
+      "day": 3,
+      "slug": "six-directions",
+      "phase": "NOTICE",
+      "title": "六方向に余白をつくる",
+      "status": "test-ready",
+      "durationSeconds": 300,
+      "prompt": "『上が良い、前が正しい』を外したとき、今アクセスしやすい方向は？",
+      "intention": "前後左右上下に優劣を置かず、今使いやすい方向と使いにくい方向を観察する。",
+      "steps": [
+        {
+          "startSecond": 0,
+          "durationSeconds": 30,
+          "label": "ARRIVE",
+          "instruction": "接触点を一つ選び、そこを基準に現在の正面を指で示す。"
+        },
+        {
+          "startSecond": 30,
+          "durationSeconds": 45,
+          "label": "LOCATE",
+          "instruction": "前・後・右・左・上・下を視線または指で小さく示し、最も近く感じる方向を一つ選ぶ。"
+        },
+        {
+          "startSecond": 75,
+          "durationSeconds": 90,
+          "label": "EXPERIMENT",
+          "instruction": "六方向へ順に1cm伸びて中央へ戻る。動きの大きさでなく、開始の速さ・息・接触圧のどれが変わるか比べる。"
+        },
+        {
+          "startSecond": 165,
+          "durationSeconds": 75,
+          "label": "REORIENT",
+          "instruction": "使いにくかった方向へ目だけ向け、次に頭、最後に胴を少し追従させる。最初と同じ方向が近いか確認する。"
+        },
+        {
+          "startSecond": 240,
+          "durationSeconds": 60,
+          "label": "RECORD",
+          "instruction": "近い方向、遠い方向、順序を変えた後の差、今日使う一方向を記録する。"
+        }
+      ],
+      "bodyCue": "軸を真っすぐに矯正せず、接触点から各方向への小さな余白を探す。",
+      "microExperiment": "六方向へ1cm動き、視線→頭→胴の順序で遠い方向への経路を変える。",
+      "reflection": [
+        "動きやすさは方向と順序のどちらで変わった？",
+        "方向へ付けていた良い／悪いは何？"
+      ],
+      "record": {
+        "observation": "近い方向・遠い方向・前後差",
+        "interpretation": "方向に付けた価値",
+        "nextAction": "今日意図的に使う方向",
+        "deltaScale": [
+          -2,
+          -1,
+          0,
+          1,
+          2
+        ]
+      },
+      "progressionLink": "Day 4では方向を狭める／広げる操作と組み合わせる。",
+      "safetyCue": "首や腰に痛みがある方向は視線だけにし、痛みを越えない。"
+    },
+    {
+      "id": "flow-compass:04:compress-release",
+      "day": 4,
+      "slug": "compress-release",
+      "phase": "NOTICE",
+      "title": "凝縮と解放を比較する",
+      "status": "test-ready",
+      "durationSeconds": 300,
+      "prompt": "今必要なのは広がること、それとも一度まとまること？",
+      "intention": "凝縮を悪、解放を善とせず、両方が注意と行動に与える差を採取する。",
+      "steps": [
+        {
+          "startSecond": 0,
+          "durationSeconds": 30,
+          "label": "ARRIVE",
+          "instruction": "息を止めず、両手を腿か机に置く。現在の視野の広さを一語で仮記録する。"
+        },
+        {
+          "startSecond": 30,
+          "durationSeconds": 45,
+          "label": "LOCATE",
+          "instruction": "親指と人差し指を1cm離し、その隙間へ10秒注意を集める。身体のどこが同時に固まるか探す。"
+        },
+        {
+          "startSecond": 75,
+          "durationSeconds": 90,
+          "label": "EXPERIMENT",
+          "instruction": "指の隙間をゆっくり閉じて凝縮、次に手を肩幅へ開いて解放する。3往復し、視野・接触圧・動き出しの差を一つ選ぶ。"
+        },
+        {
+          "startSecond": 165,
+          "durationSeconds": 75,
+          "label": "REORIENT",
+          "instruction": "凝縮してから一点を見る場合と、解放してから周囲を見る場合に、机上の物へ手を伸ばす速さを比べる。"
+        },
+        {
+          "startSecond": 240,
+          "durationSeconds": 60,
+          "label": "RECORD",
+          "instruction": "凝縮が役立った点、解放が役立った点、切り替えたい場面を各一行で記録する。"
+        }
+      ],
+      "bodyCue": "握力は2割まで。顎・肩・呼吸が固まったら力を半分にする。",
+      "microExperiment": "1cmの指の隙間と肩幅の手を往復し、凝縮／解放後の動作を比べる。",
+      "reflection": [
+        "凝縮と解放で何が一つ変わった？",
+        "どちらを善悪で見ていた？"
+      ],
+      "record": {
+        "observation": "視野・接触・動き出しの差",
+        "interpretation": "凝縮／解放への価値判断",
+        "nextAction": "切り替えを試す場面",
+        "deltaScale": [
+          -2,
+          -1,
+          0,
+          1,
+          2
+        ]
+      },
+      "progressionLink": "Day 5では凝縮点を固定せず、位置が変わる境界として探る。",
+      "safetyCue": "息を止めず、手や肩に痛みがあれば想像上の開閉だけで行う。"
+    },
+    {
+      "id": "flow-compass:05:hourglass-boundary",
+      "day": 5,
+      "slug": "hourglass-boundary",
+      "phase": "NOTICE",
+      "title": "境界の細いところ",
+      "status": "test-ready",
+      "durationSeconds": 300,
+      "prompt": "すべてを通すのでなく、一つを選び次へ渡す境界は今どこ？",
+      "intention": "砂時計の細部を比喩に、入力が選ばれ出力へ変わる一時的な結節点を探す。",
+      "steps": [
+        {
+          "startSecond": 0,
+          "durationSeconds": 30,
+          "label": "ARRIVE",
+          "instruction": "周囲の音を三つ受け取り、足または座面の接触へ戻る。"
+        },
+        {
+          "startSecond": 30,
+          "durationSeconds": 45,
+          "label": "LOCATE",
+          "instruction": "両手で上下に離れた二つの空間を示し、その間の細い境目を身体の前に仮置きする。上下は途中で入れ替えてよい。"
+        },
+        {
+          "startSecond": 75,
+          "durationSeconds": 90,
+          "label": "EXPERIMENT",
+          "instruction": "周囲の音から一つを選び、細い境目へ集めるように手を近づけ、別の方向へ手を開く。音→選択→動作を3回、選ぶ音を変えて行う。"
+        },
+        {
+          "startSecond": 165,
+          "durationSeconds": 75,
+          "label": "REORIENT",
+          "instruction": "砂時計を横・斜めに回すように手の向きを変える。結節点が身体の内外どこへ移る感じか、または変化なしを確認する。"
+        },
+        {
+          "startSecond": 240,
+          "durationSeconds": 60,
+          "label": "RECORD",
+          "instruction": "入ったもの、選んだもの、出した動作、結節点の位置を短語で記録する。"
+        }
+      ],
+      "bodyCue": "首や胸を絞らず、細さは手の間の空間として表す。上下を固定しない。",
+      "microExperiment": "一つの音を選び、手で凝縮点を作って別方向の小動作へ渡す。",
+      "reflection": [
+        "何を入力として選び、何を通さなかった？",
+        "結節点は操作でどこへ変わった？"
+      ],
+      "record": {
+        "observation": "入力・選択・出力と結節点",
+        "interpretation": "通した／止めた意味",
+        "nextAction": "一入力を一動作へ渡す場面",
+        "deltaScale": [
+          -2,
+          -1,
+          0,
+          1,
+          2
+        ]
+      },
+      "progressionLink": "Day 6では結節点を花托として、受け取る／支える／分岐する機能に広げる。",
+      "safetyCue": "音に過敏さがあれば視覚対象を入力に替える。身体の部位を締めない。"
+    },
+    {
+      "id": "flow-compass:06:receptacle-choice",
+      "day": 6,
+      "slug": "receptacle-choice",
+      "phase": "NOTICE",
+      "title": "花托は受けて選ぶ",
+      "status": "test-ready",
+      "durationSeconds": 300,
+      "prompt": "開くか閉じるかではなく、何を受け、何を支え、どこへ渡す？",
+      "intention": "lotus/receptacleを開放の象徴だけでなく、受け取り・支え・方向選択の比喩として使う。",
+      "steps": [
+        {
+          "startSecond": 0,
+          "durationSeconds": 30,
+          "label": "ARRIVE",
+          "instruction": "片手のひらを上向きにし、手首・肘・肩の接触または重さを確認する。"
+        },
+        {
+          "startSecond": 30,
+          "durationSeconds": 45,
+          "label": "LOCATE",
+          "instruction": "手のひらを花托に見立て、空気・光・音のどれを受け取っていると扱うか一つ選ぶ。何も感じなくてよい。"
+        },
+        {
+          "startSecond": 75,
+          "durationSeconds": 90,
+          "label": "EXPERIMENT",
+          "instruction": "手を開く、少し閉じる、傾ける、身体へ近づけるを各10秒行う。受け取りやすさではなく、注意がどこへ分岐したかを比べる。"
+        },
+        {
+          "startSecond": 165,
+          "durationSeconds": 75,
+          "label": "REORIENT",
+          "instruction": "一番合う手の形から、視線を一方向へ送り、指先を3cm動かして止める。受けたものを選んだ方向へ渡すと仮定する。"
+        },
+        {
+          "startSecond": 240,
+          "durationSeconds": 60,
+          "label": "RECORD",
+          "instruction": "受けた入力、支えになった接触、選んだ方向、今日の小さな出力を記録する。"
+        }
+      ],
+      "bodyCue": "手の形より、手首・肘・肩・足の支えがどう変わるかを見る。",
+      "microExperiment": "手のひらの開閉と傾きを変え、受け取りから一方向の出力へつなぐ。",
+      "reflection": [
+        "開閉よりも支えを変えたのは何？",
+        "選ばなかった方向も残せた？"
+      ],
+      "record": {
+        "observation": "入力・支え・分岐方向",
+        "interpretation": "開く／閉じるへの意味",
+        "nextAction": "今日外へ渡す小さな出力",
+        "deltaScale": [
+          -2,
+          -1,
+          0,
+          1,
+          2
+        ]
+      },
+      "progressionLink": "Day 7では中心・接触・方向・凝縮／解放・結節点を一周の地図に統合する。",
+      "safetyCue": "手首や肩が痛ければ手を腿に置き、視線の方向だけで行う。"
+    },
+    {
+      "id": "flow-compass:07:notice-compass",
+      "day": 7,
+      "slug": "notice-compass",
+      "phase": "NOTICE",
+      "title": "最初のCOMPASSを描く",
+      "status": "test-ready",
+      "durationSeconds": 300,
+      "prompt": "現在地から一つ動き、反応を受けて戻るなら、今日の一周は？",
+      "intention": "六日間のアンカーを一つの短い観測ループにまとめ、現実の一歩へ接続する。",
+      "steps": [
+        {
+          "startSecond": 0,
+          "durationSeconds": 30,
+          "label": "ARRIVE",
+          "instruction": "接触点を一つ、目に入る対象を一つ、聞こえる音を一つ確認する。"
+        },
+        {
+          "startSecond": 30,
+          "durationSeconds": 45,
+          "label": "LOCATE",
+          "instruction": "中心候補、近い方向、凝縮／解放の必要度を各一語で仮置きする。わからないを選べる。"
+        },
+        {
+          "startSecond": 75,
+          "durationSeconds": 90,
+          "label": "EXPERIMENT",
+          "instruction": "手を中心候補の前に置き、2割凝縮して方向を選び、手と視線をそこへ開く。接触地図へ戻る。一周30秒を3回、方向を変えて行う。"
+        },
+        {
+          "startSecond": 165,
+          "durationSeconds": 75,
+          "label": "REORIENT",
+          "instruction": "今日の実行項目を一つ思い浮かべ、同じ一周を短く行ってから、その行動の最初の10秒だけ実演する。"
+        },
+        {
+          "startSecond": 240,
+          "durationSeconds": 60,
+          "label": "RECORD",
+          "instruction": "現在地、選んだ方向、前後差、最初の10秒、次週に残す問いを記録する。"
+        }
+      ],
+      "bodyCue": "中心を固定せず、毎周の最後に足か椅子の接触へ戻る。",
+      "microExperiment": "凝縮→方向選択→解放→接触へ戻る30秒ループを三方向で試す。",
+      "reflection": [
+        "三周で中心・方向・接触はどう更新された？",
+        "現実の10秒へ最も移せたアンカーは？"
+      ],
+      "record": {
+        "observation": "現在地・方向・前後差",
+        "interpretation": "行動に付けた予測",
+        "nextAction": "現実で実演する最初の10秒",
+        "deltaScale": [
+          -2,
+          -1,
+          0,
+          1,
+          2
+        ]
+      },
+      "progressionLink": "Day 8から、今作った地図を反転し、固定した二項対立をほどく。",
+      "safetyCue": "速さや大きさを競わない。不安が増えたら一周を止め、外界の三点を確認する。"
+    },
+    {
+      "id": "flow-compass:08:swap-up-down",
+      "day": 8,
+      "slug": "swap-up-down",
+      "phase": "UNFIX",
+      "title": "上下を入れ替える",
+      "status": "authored",
+      "durationSeconds": 300,
+      "prompt": "上は前進、下は停滞という分類は、この操作でも成り立つ？",
+      "intention": "上向き／下向きに付けた価値を、視線と接触の反転で検証する。",
+      "steps": [
+        {
+          "startSecond": 0,
+          "durationSeconds": 30,
+          "label": "ARRIVE",
+          "instruction": "足または座面の接触を一つ確認し、今の視線の高さを記憶する。"
+        },
+        {
+          "startSecond": 30,
+          "durationSeconds": 45,
+          "label": "LOCATE",
+          "instruction": "上と下のどちらを良い・前向きと感じるか、説明せず仮に選ぶ。"
+        },
+        {
+          "startSecond": 75,
+          "durationSeconds": 90,
+          "label": "EXPERIMENT",
+          "instruction": "視線を少し上げて足圧を、少し下げて背面の広がりを各15秒観察し、上下を4往復する。"
+        },
+        {
+          "startSecond": 165,
+          "durationSeconds": 75,
+          "label": "REORIENT",
+          "instruction": "下を見てから一歩先を指し、上を見てから足元を指す。視線と行動方向の固定ペアを交差させる。"
+        },
+        {
+          "startSecond": 240,
+          "durationSeconds": 60,
+          "label": "RECORD",
+          "instruction": "上下ごとの身体事実、付けた価値、交差後に選ぶ方向を記録する。"
+        }
+      ],
+      "bodyCue": "首で角度を作りすぎず、目だけの上下でもよい。",
+      "microExperiment": "上下視線と逆方向の指差しを組み、価値と身体反応を分離する。",
+      "reflection": [
+        "上下で直接変わった接触は？",
+        "上下へ付けた物語は？"
+      ],
+      "record": {
+        "observation": "上下ごとの接触差",
+        "interpretation": "上下への価値判断",
+        "nextAction": "固定ペアを一度交差する場面",
+        "deltaScale": [
+          -2,
+          -1,
+          0,
+          1,
+          2
+        ]
+      },
+      "progressionLink": "Day 9では内側／外側の固定ペアをほどく。",
+      "safetyCue": "めまいがあれば視線移動を止め、正面の一点を見る。"
+    },
+    {
+      "id": "flow-compass:09:inside-outside",
+      "day": 9,
+      "slug": "inside-outside",
+      "phase": "UNFIX",
+      "title": "内外を往復する",
+      "status": "authored",
+      "durationSeconds": 300,
+      "prompt": "内か外かではなく、往復の速さを変えると何が起きる？",
+      "intention": "内側の感覚と外界の情報を競合させず、往復できる帯域として扱う。",
+      "steps": [
+        {
+          "startSecond": 0,
+          "durationSeconds": 30,
+          "label": "ARRIVE",
+          "instruction": "身体接触一つと、外界の色一つを同時に確認する。"
+        },
+        {
+          "startSecond": 30,
+          "durationSeconds": 45,
+          "label": "LOCATE",
+          "instruction": "今は内側と外側のどちらへ注意が偏っているか0対100で仮置きする。"
+        },
+        {
+          "startSecond": 75,
+          "durationSeconds": 90,
+          "label": "EXPERIMENT",
+          "instruction": "手の温度を10秒、壁の色を10秒、両方を10秒の順に三周する。"
+        },
+        {
+          "startSecond": 165,
+          "durationSeconds": 75,
+          "label": "REORIENT",
+          "instruction": "外の対象を見たまま手を開閉し、内外を同時に保持できる最小時間を探す。"
+        },
+        {
+          "startSecond": 240,
+          "durationSeconds": 60,
+          "label": "RECORD",
+          "instruction": "内・外・同時の三条件で変わったものと、次の往復場面を書く。"
+        }
+      ],
+      "bodyCue": "目を閉じる必要はない。手の温度が不明なら接触圧を使う。",
+      "microExperiment": "手の感覚と壁の色を10秒単位で往復し、最後に同時保持する。",
+      "reflection": [
+        "同時に残せた情報は？",
+        "内外のどちらを正しいと扱っていた？"
+      ],
+      "record": {
+        "observation": "内・外・同時の差",
+        "interpretation": "内外への優先判断",
+        "nextAction": "注意を往復する場面",
+        "deltaScale": [
+          -2,
+          -1,
+          0,
+          1,
+          2
+        ]
+      },
+      "progressionLink": "Day 10では力む／緩むの間に第三の強度を置く。",
+      "safetyCue": "内側への注意で不安が出たら外界の色・形・名前へ戻る。"
+    },
+    {
+      "id": "flow-compass:10:third-tension",
+      "day": 10,
+      "slug": "third-tension",
+      "phase": "UNFIX",
+      "title": "0と100の間を作る",
+      "status": "authored",
+      "durationSeconds": 300,
+      "prompt": "緩むか力むかの間に、今日使える何割がある？",
+      "intention": "力む／緩むの二択から離れ、課題に合う中間強度を探す。",
+      "steps": [
+        {
+          "startSecond": 0,
+          "durationSeconds": 30,
+          "label": "ARRIVE",
+          "instruction": "片手を腿に置き、現在の押す力を0〜10で仮記録する。"
+        },
+        {
+          "startSecond": 30,
+          "durationSeconds": 45,
+          "label": "LOCATE",
+          "instruction": "指先を完全に緩めた0と安全な範囲の5を作り、差を確認する。"
+        },
+        {
+          "startSecond": 75,
+          "durationSeconds": 90,
+          "label": "EXPERIMENT",
+          "instruction": "押す力を0・2・4・2・0と変え、各強度で反対の手を10cm動かす。"
+        },
+        {
+          "startSecond": 165,
+          "durationSeconds": 75,
+          "label": "REORIENT",
+          "instruction": "最も動かしやすい強度を選び、机上の物へ手を伸ばして戻す。"
+        },
+        {
+          "startSecond": 240,
+          "durationSeconds": 60,
+          "label": "RECORD",
+          "instruction": "強度ごとの動き、選んだ第三値、使う課題を記録する。"
+        }
+      ],
+      "bodyCue": "最大力を出さず0〜5だけで比較し、息を止めない。",
+      "microExperiment": "片手の押圧を段階化し、反対の手の動きやすさを比較する。",
+      "reflection": [
+        "最小の有効強度は？",
+        "0か100で語っていた課題は？"
+      ],
+      "record": {
+        "observation": "強度ごとの動作差",
+        "interpretation": "力への評価",
+        "nextAction": "第三の強度を使う課題",
+        "deltaScale": [
+          -2,
+          -1,
+          0,
+          1,
+          2
+        ]
+      },
+      "progressionLink": "Day 11では正しい／間違いを複数の試作品へ置換する。",
+      "safetyCue": "痛みやしびれがあれば押圧を中止し、想像上の数値だけで行う。"
+    },
+    {
+      "id": "flow-compass:11:three-prototypes",
+      "day": 11,
+      "slug": "three-prototypes",
+      "phase": "UNFIX",
+      "title": "正解を三つの試作品にする",
+      "status": "authored",
+      "durationSeconds": 300,
+      "prompt": "正しい始め方を探す前に、三つの入口を作れる？",
+      "intention": "一つの正解を探す前に、身体的に異なる三つの開始方法を生成する。",
+      "steps": [
+        {
+          "startSecond": 0,
+          "durationSeconds": 30,
+          "label": "ARRIVE",
+          "instruction": "今日始めたい小さな作業を一つ決め、接触点を確認する。"
+        },
+        {
+          "startSecond": 30,
+          "durationSeconds": 45,
+          "label": "LOCATE",
+          "instruction": "いつもの開始姿勢と、そこにある緊張を一つ観察する。"
+        },
+        {
+          "startSecond": 75,
+          "durationSeconds": 90,
+          "label": "EXPERIMENT",
+          "instruction": "作業の最初の5秒を、前傾・後傾・横向きの三姿勢から各一回だけ実演する。"
+        },
+        {
+          "startSecond": 165,
+          "durationSeconds": 75,
+          "label": "REORIENT",
+          "instruction": "正しさでなく開始しやすさと次動作への接続で一案を選び、10秒続ける。"
+        },
+        {
+          "startSecond": 240,
+          "durationSeconds": 60,
+          "label": "RECORD",
+          "instruction": "三案の身体差、選択基準、次に残す案を記録する。"
+        }
+      ],
+      "bodyCue": "姿勢を大きく変えず、足か座面の接触差を比較する。",
+      "microExperiment": "同じ作業を三方向の姿勢から5秒ずつ開始する。",
+      "reflection": [
+        "三案を区別した身体事実は？",
+        "正しさ以外の選択基準は？"
+      ],
+      "record": {
+        "observation": "三案の身体差",
+        "interpretation": "正解だと思った理由",
+        "nextAction": "選んだ開始方法の再試行",
+        "deltaScale": [
+          -2,
+          -1,
+          0,
+          1,
+          2
+        ]
+      },
+      "progressionLink": "Day 12では速度のカテゴリーも連続量にする。",
+      "safetyCue": "姿勢変更は小さくし、バランスに不安があれば座位で行う。"
+    },
+    {
+      "id": "flow-compass:12:tempo-slider",
+      "day": 12,
+      "slug": "tempo-slider",
+      "phase": "UNFIX",
+      "title": "速い／遅いを滑らせる",
+      "status": "authored",
+      "durationSeconds": 300,
+      "prompt": "速い人／遅い人ではなく、今の目的に合うテンポは？",
+      "intention": "速度を性格や能力でなく、状況に合わせて変更できる変数として扱う。",
+      "steps": [
+        {
+          "startSecond": 0,
+          "durationSeconds": 30,
+          "label": "ARRIVE",
+          "instruction": "指で机または腿を自然なテンポで4回タップする。"
+        },
+        {
+          "startSecond": 30,
+          "durationSeconds": 45,
+          "label": "LOCATE",
+          "instruction": "自然な速さのとき、肩・顎・接触のどこが動くか一つ見る。"
+        },
+        {
+          "startSecond": 75,
+          "durationSeconds": 90,
+          "label": "EXPERIMENT",
+          "instruction": "8秒で4回、4秒で4回、2秒で4回、4秒で4回とタップし、切替点を観察する。"
+        },
+        {
+          "startSecond": 165,
+          "durationSeconds": 75,
+          "label": "REORIENT",
+          "instruction": "簡単な一動作を選び、遅→中→速の三テンポで行って目的に合う速さを選ぶ。"
+        },
+        {
+          "startSecond": 240,
+          "durationSeconds": 60,
+          "label": "RECORD",
+          "instruction": "テンポごとの緊張、選んだ速度、速度を変える合図を書く。"
+        }
+      ],
+      "bodyCue": "タップは軽く、速さで力が増えたら振幅を小さくする。",
+      "microExperiment": "同じタップと一動作を三テンポで行い、切替可能性を確認する。",
+      "reflection": [
+        "速度変更時に先に変わった部位は？",
+        "速度に付けていた性格ラベルは？"
+      ],
+      "record": {
+        "observation": "テンポごとの身体差",
+        "interpretation": "速度への人物評価",
+        "nextAction": "テンポを切り替える合図",
+        "deltaScale": [
+          -2,
+          -1,
+          0,
+          1,
+          2
+        ]
+      },
+      "progressionLink": "Day 13では成功／失敗を前後差データへ変換する。",
+      "safetyCue": "腱や関節に違和感があればタップを視線移動へ替える。"
+    },
+    {
+      "id": "flow-compass:13:failure-as-delta",
+      "day": 13,
+      "slug": "failure-as-delta",
+      "phase": "UNFIX",
+      "title": "失敗を差分に戻す",
+      "status": "authored",
+      "durationSeconds": 300,
+      "prompt": "失敗というラベルを外すと、どの方向にどれだけ差が残る？",
+      "intention": "結果ラベルの前に、予測と実測の差を身体・動作データとして採取する。",
+      "steps": [
+        {
+          "startSecond": 0,
+          "durationSeconds": 30,
+          "label": "ARRIVE",
+          "instruction": "紙の一点または机上の小物を安全なターゲットにする。"
+        },
+        {
+          "startSecond": 30,
+          "durationSeconds": 45,
+          "label": "LOCATE",
+          "instruction": "目を開けたまま、指でターゲットを指す前の到達感を予測する。"
+        },
+        {
+          "startSecond": 75,
+          "durationSeconds": 90,
+          "label": "EXPERIMENT",
+          "instruction": "ゆっくり3回指し、毎回ずれの方向と距離だけを記憶して次の一回を1mm調整する。"
+        },
+        {
+          "startSecond": 165,
+          "durationSeconds": 75,
+          "label": "REORIENT",
+          "instruction": "成功／失敗と言わず、三回目の差分を使って別角度から一回試す。"
+        },
+        {
+          "startSecond": 240,
+          "durationSeconds": 60,
+          "label": "RECORD",
+          "instruction": "予測、実測、調整、次の仮説を一行ずつ書く。"
+        }
+      ],
+      "bodyCue": "速度と距離を小さくし、目を閉じない。",
+      "microExperiment": "ターゲットへの指差しを反復し、ずれを1mmの次調整へ変える。",
+      "reflection": [
+        "予測と実測の具体差は？",
+        "ラベルを外した後に増えた選択肢は？"
+      ],
+      "record": {
+        "observation": "方向・距離の差分",
+        "interpretation": "成功／失敗ラベル",
+        "nextAction": "差分を使う次の一回",
+        "deltaScale": [
+          -2,
+          -1,
+          0,
+          1,
+          2
+        ]
+      },
+      "progressionLink": "Day 14で一週間の固定語を可変パラメータへ編集する。",
+      "safetyCue": "鋭利・熱い・壊れやすい物をターゲットにしない。"
+    },
+    {
+      "id": "flow-compass:14:unfix-dashboard",
+      "day": 14,
+      "slug": "unfix-dashboard",
+      "phase": "UNFIX",
+      "title": "固定語を可変つまみにする",
+      "status": "authored",
+      "durationSeconds": 300,
+      "prompt": "二択をつまみに変えると、今どの位置を試せる？",
+      "intention": "上下・内外・強弱・正誤・速度の固定語を、動かせるパラメータへ統合する。",
+      "steps": [
+        {
+          "startSecond": 0,
+          "durationSeconds": 30,
+          "label": "ARRIVE",
+          "instruction": "接触点を確認し、今気になる課題を一つ選ぶ。"
+        },
+        {
+          "startSecond": 30,
+          "durationSeconds": 45,
+          "label": "LOCATE",
+          "instruction": "課題を語る二項対立を一つ見つけ、両端を手の左右に置く。"
+        },
+        {
+          "startSecond": 75,
+          "durationSeconds": 90,
+          "label": "EXPERIMENT",
+          "instruction": "手の間を5段階に分け、身体姿勢または指の圧で各段階を一度表す。"
+        },
+        {
+          "startSecond": 165,
+          "durationSeconds": 75,
+          "label": "REORIENT",
+          "instruction": "中間値と端の値を一つずつ10秒実演し、状況に合う方を選び直す。"
+        },
+        {
+          "startSecond": 240,
+          "durationSeconds": 60,
+          "label": "RECORD",
+          "instruction": "二項語、作った中間値、採用値、再調整の合図を記録する。"
+        }
+      ],
+      "bodyCue": "両端を最大動作にせず、安全な小さな差として表す。",
+      "microExperiment": "二項対立を身体で5段階化し、端と中間を用途で選び直す。",
+      "reflection": [
+        "増えた第三の選択肢は？",
+        "再調整の合図になる身体変化は？"
+      ],
+      "record": {
+        "observation": "5段階の身体差",
+        "interpretation": "二項語への評価",
+        "nextAction": "再調整する現実場面",
+        "deltaScale": [
+          -2,
+          -1,
+          0,
+          1,
+          2
+        ]
+      },
+      "progressionLink": "Day 15から、可変つまみを環境・他者・時間との関係へ広げる。",
+      "safetyCue": "感情負荷の大きい課題を選ばず、今日扱える小さな行動に限定する。"
+    },
+    {
+      "id": "flow-compass:15:near-far",
+      "day": 15,
+      "slug": "near-far",
+      "phase": "RELATE",
+      "title": "近さと遠さの関係",
+      "status": "authored",
+      "durationSeconds": 300,
+      "prompt": "近い一手と遠い目的を同じ視野に置くと、中心はどこへ動く？",
+      "intention": "対象との距離が中心・姿勢・行動可能性をどう変えるか観察する。",
+      "steps": [
+        {
+          "startSecond": 0,
+          "durationSeconds": 30,
+          "label": "ARRIVE",
+          "instruction": "手元の物と部屋の遠い物を一つずつ選ぶ。"
+        },
+        {
+          "startSecond": 30,
+          "durationSeconds": 45,
+          "label": "LOCATE",
+          "instruction": "近い物を見るときの接触点と遠い物を見るときの接触点を比べる。"
+        },
+        {
+          "startSecond": 75,
+          "durationSeconds": 90,
+          "label": "EXPERIMENT",
+          "instruction": "近→遠→近を視線で三往復し、各切替で中心候補がどこへ動くか確認する。"
+        },
+        {
+          "startSecond": 165,
+          "durationSeconds": 75,
+          "label": "REORIENT",
+          "instruction": "近い課題を遠い目的に一文で接続し、最初の手動作を行う。"
+        },
+        {
+          "startSecond": 240,
+          "durationSeconds": 60,
+          "label": "RECORD",
+          "instruction": "距離ごとの中心、接続文、最初の動作を記録する。"
+        }
+      ],
+      "bodyCue": "ピント合わせで目が疲れたら対象間の距離を短くする。",
+      "microExperiment": "近遠の視線往復から、近い課題を遠い目的へ一文でつなぐ。",
+      "reflection": [
+        "距離で接触と中心はどう変わった？",
+        "近い行動と遠い意味の関係は？"
+      ],
+      "record": {
+        "observation": "近遠での中心差",
+        "interpretation": "距離に付けた意味",
+        "nextAction": "目的へ接続した近い一手",
+        "deltaScale": [
+          -2,
+          -1,
+          0,
+          1,
+          2
+        ]
+      },
+      "progressionLink": "Day 16では場所の配置が行動を誘う関係を見る。",
+      "safetyCue": "眼精疲労やめまいがあれば視線往復を止める。"
+    },
+    {
+      "id": "flow-compass:16:environment-invites",
+      "day": 16,
+      "slug": "environment-invites",
+      "phase": "RELATE",
+      "title": "環境が誘う動き",
+      "status": "authored",
+      "durationSeconds": 300,
+      "prompt": "意志が弱いのではなく、配置が別の動きを誘っているとしたら？",
+      "intention": "行動を意志だけで説明せず、物の配置と身体の関係として再設計する。",
+      "steps": [
+        {
+          "startSecond": 0,
+          "durationSeconds": 30,
+          "label": "ARRIVE",
+          "instruction": "今の姿勢から自然に手が届く物を一つ選ぶ。"
+        },
+        {
+          "startSecond": 30,
+          "durationSeconds": 45,
+          "label": "LOCATE",
+          "instruction": "その物への距離・角度・障害物を観察する。"
+        },
+        {
+          "startSecond": 75,
+          "durationSeconds": 90,
+          "label": "EXPERIMENT",
+          "instruction": "物を10cmだけ近づける、遠ざける、角度を変える三条件で手の動き出しを比べる。"
+        },
+        {
+          "startSecond": 165,
+          "durationSeconds": 75,
+          "label": "REORIENT",
+          "instruction": "今日始めたい行動の道具を、最初の一手が出やすい位置へ一つだけ移す。"
+        },
+        {
+          "startSecond": 240,
+          "durationSeconds": 60,
+          "label": "RECORD",
+          "instruction": "配置差、動き出し、変更した一点、後で戻す基準を記録する。"
+        }
+      ],
+      "bodyCue": "重い物や配線は動かさず、安全な小物だけ使う。",
+      "microExperiment": "物の距離と角度を変え、動作開始への環境の寄与を比較する。",
+      "reflection": [
+        "最小の配置変更で何が変わった？",
+        "自分だけの責任としていた説明は？"
+      ],
+      "record": {
+        "observation": "配置ごとの動き出し",
+        "interpretation": "意志への物語",
+        "nextAction": "保持する環境変更",
+        "deltaScale": [
+          -2,
+          -1,
+          0,
+          1,
+          2
+        ]
+      },
+      "progressionLink": "Day 17では他者の仮想位置を空間に加える。",
+      "safetyCue": "共有物を動かす場合は許可を取り、通路を塞がない。"
+    },
+    {
+      "id": "flow-compass:17:other-position",
+      "day": 17,
+      "slug": "other-position",
+      "phase": "RELATE",
+      "title": "他者の位置を加える",
+      "status": "authored",
+      "durationSeconds": 300,
+      "prompt": "相手の気持ちでなく、相手との角度が自分に何を起こす？",
+      "intention": "相手の心を推測せず、相手の位置を加えたときの自分の身体変化を観察する。",
+      "steps": [
+        {
+          "startSecond": 0,
+          "durationSeconds": 30,
+          "label": "ARRIVE",
+          "instruction": "空の椅子または床の一点を相手の仮位置にする。"
+        },
+        {
+          "startSecond": 30,
+          "durationSeconds": 45,
+          "label": "LOCATE",
+          "instruction": "仮位置へ正面・斜め・横のどれを向いているか確認する。"
+        },
+        {
+          "startSecond": 75,
+          "durationSeconds": 90,
+          "label": "EXPERIMENT",
+          "instruction": "相手位置を正面・斜め・横に置くよう身体の向きを小さく変え、接触・声の出しやすさを比べる。"
+        },
+        {
+          "startSecond": 165,
+          "durationSeconds": 75,
+          "label": "REORIENT",
+          "instruction": "短い挨拶を三方向で一度ずつ言い、今日の会話に使う角度を一つ選ぶ。"
+        },
+        {
+          "startSecond": 240,
+          "durationSeconds": 60,
+          "label": "RECORD",
+          "instruction": "方向ごとの身体事実、推測した相手の反応、選ぶ角度を書く。"
+        }
+      ],
+      "bodyCue": "実在の相手を診断せず、自分の接触・視線・声だけを見る。",
+      "microExperiment": "仮の他者位置への三つの角度で短い挨拶を比較する。",
+      "reflection": [
+        "角度で変わった自分の事実は？",
+        "相手についての推測はどれ？"
+      ],
+      "record": {
+        "observation": "角度ごとの身体・声",
+        "interpretation": "相手の反応の推測",
+        "nextAction": "会話で試す安全な角度",
+        "deltaScale": [
+          -2,
+          -1,
+          0,
+          1,
+          2
+        ]
+      },
+      "progressionLink": "Day 18では与える／受けるの交互作用を見る。",
+      "safetyCue": "強い対人葛藤を再現せず、中立な挨拶だけを使う。"
+    },
+    {
+      "id": "flow-compass:18:give-receive",
+      "day": 18,
+      "slug": "give-receive",
+      "phase": "RELATE",
+      "title": "与える／受けるの往復",
+      "status": "authored",
+      "durationSeconds": 300,
+      "prompt": "与える人／受ける人を固定せず、今どの機能へ切り替える？",
+      "intention": "一方向の役割を離れ、同じ手が渡す・受ける・保留するへ変わる過程を見る。",
+      "steps": [
+        {
+          "startSecond": 0,
+          "durationSeconds": 30,
+          "label": "ARRIVE",
+          "instruction": "安全な小物を片手に持ち、重さと接触を確認する。"
+        },
+        {
+          "startSecond": 30,
+          "durationSeconds": 45,
+          "label": "LOCATE",
+          "instruction": "手を前へ出す直前の中心候補と肩の緊張を観察する。"
+        },
+        {
+          "startSecond": 75,
+          "durationSeconds": 90,
+          "label": "EXPERIMENT",
+          "instruction": "空いた場所へ物を渡す動作、受ける動作、胸元で保留する動作を各二回行う。"
+        },
+        {
+          "startSecond": 165,
+          "durationSeconds": 75,
+          "label": "REORIENT",
+          "instruction": "三動作を渡す→保留→受けるの順でつなぎ、切替点の呼吸・接触を見る。"
+        },
+        {
+          "startSecond": 240,
+          "durationSeconds": 60,
+          "label": "RECORD",
+          "instruction": "各役割の身体差、切替合図、今日必要な役割を書く。"
+        }
+      ],
+      "bodyCue": "物は軽く壊れないもの。肩ではなく足や座面の支えも見る。",
+      "microExperiment": "一つの小物で渡す・受ける・保留する動作を切り替える。",
+      "reflection": [
+        "役割の切替点で何が変わった？",
+        "固定していた自分の役割は？"
+      ],
+      "record": {
+        "observation": "三役割の身体差",
+        "interpretation": "役割への自己物語",
+        "nextAction": "今日選ぶ関係機能",
+        "deltaScale": [
+          -2,
+          -1,
+          0,
+          1,
+          2
+        ]
+      },
+      "progressionLink": "Day 19では直前・現在・直後の時間関係を加える。",
+      "safetyCue": "落として危険な物や他人の所有物を使わない。"
+    },
+    {
+      "id": "flow-compass:19:before-now-after",
+      "day": 19,
+      "slug": "before-now-after",
+      "phase": "RELATE",
+      "title": "時間に厚みを持たせる",
+      "status": "authored",
+      "durationSeconds": 300,
+      "prompt": "今には、直前の何が残り、直後の何が始まっている？",
+      "intention": "現在を一点でなく、直前の残響と直後の準備を含む変化として観察する。",
+      "steps": [
+        {
+          "startSecond": 0,
+          "durationSeconds": 30,
+          "label": "ARRIVE",
+          "instruction": "手を一度開閉し、動作直後に残る感覚を一つ探す。"
+        },
+        {
+          "startSecond": 30,
+          "durationSeconds": 45,
+          "label": "LOCATE",
+          "instruction": "直前の残り、現在の接触、次動作の予兆を各一語で置く。"
+        },
+        {
+          "startSecond": 75,
+          "durationSeconds": 90,
+          "label": "EXPERIMENT",
+          "instruction": "開く前5秒・開閉中5秒・直後5秒を区切って三回観察する。"
+        },
+        {
+          "startSecond": 165,
+          "durationSeconds": 75,
+          "label": "REORIENT",
+          "instruction": "今日の一作業の前・最初の10秒・直後の停止を身体で一度リハーサルする。"
+        },
+        {
+          "startSecond": 240,
+          "durationSeconds": 60,
+          "label": "RECORD",
+          "instruction": "残響・現在・予兆と、作業後に確認する一点を書く。"
+        }
+      ],
+      "bodyCue": "呼吸を操作せず、動作前後の接触や温度を使う。",
+      "microExperiment": "一動作を前・最中・後の三窓で観察し、作業へ転用する。",
+      "reflection": [
+        "直後まで残った身体事実は？",
+        "未来の予測と現在の観察を分けられた？"
+      ],
+      "record": {
+        "observation": "前・中・後の感覚",
+        "interpretation": "次に起こる予測",
+        "nextAction": "作業後に確認する一点",
+        "deltaScale": [
+          -2,
+          -1,
+          0,
+          1,
+          2
+        ]
+      },
+      "progressionLink": "Day 20では環境から返る応答を次の入力にする。",
+      "safetyCue": "過去の強い記憶を扱わず、今の小動作だけを観察する。"
+    },
+    {
+      "id": "flow-compass:20:response-becomes-input",
+      "day": 20,
+      "slug": "response-becomes-input",
+      "phase": "RELATE",
+      "title": "応答を次の入力にする",
+      "status": "authored",
+      "durationSeconds": 300,
+      "prompt": "結果を判定せず、次の入力として読んだら何を1mm変える？",
+      "intention": "行動の結果を評価で閉じず、環境の応答として次の調整に戻す。",
+      "steps": [
+        {
+          "startSecond": 0,
+          "durationSeconds": 30,
+          "label": "ARRIVE",
+          "instruction": "紙片か布を机に置き、その位置と向きを見る。"
+        },
+        {
+          "startSecond": 30,
+          "durationSeconds": 45,
+          "label": "LOCATE",
+          "instruction": "指で1cm動かしたらどうなるか予測を一つ置く。"
+        },
+        {
+          "startSecond": 75,
+          "durationSeconds": 90,
+          "label": "EXPERIMENT",
+          "instruction": "1cm押し、止まった位置・向きを次の入力として、二回目の方向を決める。三回続ける。"
+        },
+        {
+          "startSecond": 165,
+          "durationSeconds": 75,
+          "label": "REORIENT",
+          "instruction": "三回目の配置を見て、元へ戻すか新しい位置を残すかを目的で選ぶ。"
+        },
+        {
+          "startSecond": 240,
+          "durationSeconds": 60,
+          "label": "RECORD",
+          "instruction": "各行動、返った応答、次の調整、最後の選択を書く。"
+        }
+      ],
+      "bodyCue": "動かす力を一定にせず、物の応答に合わせて小さくする。",
+      "microExperiment": "小物への一押しの結果を読み、次方向を三回更新する。",
+      "reflection": [
+        "予測外の応答は何？",
+        "応答から次の力や方向をどう変えた？"
+      ],
+      "record": {
+        "observation": "行動と環境応答",
+        "interpretation": "結果への評価",
+        "nextAction": "応答を受けた次調整",
+        "deltaScale": [
+          -2,
+          -1,
+          0,
+          1,
+          2
+        ]
+      },
+      "progressionLink": "Day 21で自己・環境・他者・時間を一枚の関係図にする。",
+      "safetyCue": "滑りやすい床や壊れ物を使わず、机上の軽い物で行う。"
+    },
+    {
+      "id": "flow-compass:21:relationship-map",
+      "day": 21,
+      "slug": "relationship-map",
+      "phase": "RELATE",
+      "title": "関係の現在地を描く",
+      "status": "authored",
+      "durationSeconds": 300,
+      "prompt": "自分を直す前に、四つの関係のどれを少し変えられる？",
+      "intention": "自己だけを中心にせず、対象・他者・環境・時間の四点から次の一手を選ぶ。",
+      "steps": [
+        {
+          "startSecond": 0,
+          "durationSeconds": 30,
+          "label": "ARRIVE",
+          "instruction": "今日扱う小さな場面を一つ選び、接触点へ戻る。"
+        },
+        {
+          "startSecond": 30,
+          "durationSeconds": 45,
+          "label": "LOCATE",
+          "instruction": "自分・対象・他者・時間を空間の四方向へ指で仮配置する。"
+        },
+        {
+          "startSecond": 75,
+          "durationSeconds": 90,
+          "label": "EXPERIMENT",
+          "instruction": "各方向へ視線を移し、距離を1段近づける／遠ざける手動作を一回ずつ行う。"
+        },
+        {
+          "startSecond": 165,
+          "durationSeconds": 75,
+          "label": "REORIENT",
+          "instruction": "四点のうち一つだけ関係を変え、場面の最初の10秒を実演する。"
+        },
+        {
+          "startSecond": 240,
+          "durationSeconds": 60,
+          "label": "RECORD",
+          "instruction": "四点配置、変えた関係、身体差、現実の一手を書く。"
+        }
+      ],
+      "bodyCue": "指差す方向に優劣を置かず、中心が身体外にあってもよい。",
+      "microExperiment": "四関係を空間配置し、一辺だけ変えて10秒の場面を再演する。",
+      "reflection": [
+        "一辺の変更で身体はどう変わった？",
+        "自分だけを原因にした物語は？"
+      ],
+      "record": {
+        "observation": "四点と一辺の変化",
+        "interpretation": "原因についての物語",
+        "nextAction": "一関係だけ変える行動",
+        "deltaScale": [
+          -2,
+          -1,
+          0,
+          1,
+          2
+        ]
+      },
+      "progressionLink": "Day 22から関係の変化を入力→凝縮→出力→応答の循環で追う。",
+      "safetyCue": "深刻な対人問題でなく、低負荷の日常場面を使う。"
+    },
+    {
+      "id": "flow-compass:22:input-filter-output",
+      "day": 22,
+      "slug": "input-filter-output",
+      "phase": "CIRCULATE",
+      "title": "入力を選び出力へ渡す",
+      "status": "authored",
+      "durationSeconds": 300,
+      "prompt": "全部に反応せず、一入力を一出力へ通す今日の一周は？",
+      "intention": "複数入力から一つを選び、小動作に変え、戻る応答まで一周させる。",
+      "steps": [
+        {
+          "startSecond": 0,
+          "durationSeconds": 30,
+          "label": "ARRIVE",
+          "instruction": "見える色・聞こえる音・接触を一つずつ確認する。"
+        },
+        {
+          "startSecond": 30,
+          "durationSeconds": 45,
+          "label": "LOCATE",
+          "instruction": "三入力のうち今最も強い一つと、中心候補を仮置きする。"
+        },
+        {
+          "startSecond": 75,
+          "durationSeconds": 90,
+          "label": "EXPERIMENT",
+          "instruction": "一入力を選び、指先へ凝縮する比喩を置き、方向を一つ指して接触へ戻る。一周を三入力で行う。"
+        },
+        {
+          "startSecond": 165,
+          "durationSeconds": 75,
+          "label": "REORIENT",
+          "instruction": "最も明瞭だった一周を、今日の作業開始動作へ置き換える。"
+        },
+        {
+          "startSecond": 240,
+          "durationSeconds": 60,
+          "label": "RECORD",
+          "instruction": "入力・選択・出力・戻った応答を矢印で記録する。"
+        }
+      ],
+      "bodyCue": "凝縮は想像上の操作で、身体を締めたり息を止めたりしない。",
+      "microExperiment": "三種類の入力を順に一小動作へ変換し、接触へ戻る。",
+      "reflection": [
+        "何を通し何を保留した？",
+        "出力後に返った入力は？"
+      ],
+      "record": {
+        "observation": "一周の四要素",
+        "interpretation": "選択の意味",
+        "nextAction": "作業開始の一周",
+        "deltaScale": [
+          -2,
+          -1,
+          0,
+          1,
+          2
+        ]
+      },
+      "progressionLink": "Day 23では循環の速度を変える。",
+      "safetyCue": "刺激が多すぎる場合は入力を接触一つに限定する。"
+    },
+    {
+      "id": "flow-compass:23:cycle-tempo",
+      "day": 23,
+      "slug": "cycle-tempo",
+      "phase": "CIRCULATE",
+      "title": "循環のテンポ",
+      "status": "authored",
+      "durationSeconds": 300,
+      "prompt": "循環が速すぎる／遅すぎるのではなく、今の用途に合う一周時間は？",
+      "intention": "速い反応と遅い反応を切り替え、目的に合う循環速度を選ぶ。",
+      "steps": [
+        {
+          "startSecond": 0,
+          "durationSeconds": 30,
+          "label": "ARRIVE",
+          "instruction": "手を開く→指す→戻すを自然な速さで一周する。"
+        },
+        {
+          "startSecond": 30,
+          "durationSeconds": 45,
+          "label": "LOCATE",
+          "instruction": "一周のどこで止まりや詰まりを感じるか一つ選ぶ。"
+        },
+        {
+          "startSecond": 75,
+          "durationSeconds": 90,
+          "label": "EXPERIMENT",
+          "instruction": "同じ一周を15秒、8秒、4秒、8秒で行い、接触と視野の差を比べる。"
+        },
+        {
+          "startSecond": 165,
+          "durationSeconds": 75,
+          "label": "REORIENT",
+          "instruction": "考える課題は15秒、即応課題は4秒と仮定し、各一回リハーサルする。"
+        },
+        {
+          "startSecond": 240,
+          "durationSeconds": 60,
+          "label": "RECORD",
+          "instruction": "速度ごとの利点・失う情報・使い分けの合図を書く。"
+        }
+      ],
+      "bodyCue": "速い一周ほど動作を小さくし、力を増やさない。",
+      "microExperiment": "同じ入出力ループを三速度で比較し、用途へ割り当てる。",
+      "reflection": [
+        "速度で消えた情報と増えた情報は？",
+        "速度を変える合図は？"
+      ],
+      "record": {
+        "observation": "速度別の循環差",
+        "interpretation": "速さへの評価",
+        "nextAction": "用途別に選ぶ一周時間",
+        "deltaScale": [
+          -2,
+          -1,
+          0,
+          1,
+          2
+        ]
+      },
+      "progressionLink": "Day 24では循環の詰まりを悪ではなく滞留点として使う。",
+      "safetyCue": "速い動作で違和感が出たら即中止し、最遅だけ行う。"
+    },
+    {
+      "id": "flow-compass:24:use-the-bottleneck",
+      "day": 24,
+      "slug": "use-the-bottleneck",
+      "phase": "CIRCULATE",
+      "title": "詰まりを選択点にする",
+      "status": "authored",
+      "durationSeconds": 300,
+      "prompt": "詰まりを消す前に、二秒の選択点として使うと何が選べる？",
+      "intention": "流れの遅い場所を排除せず、情報を選ぶ凝縮点として使えるか試す。",
+      "steps": [
+        {
+          "startSecond": 0,
+          "durationSeconds": 30,
+          "label": "ARRIVE",
+          "instruction": "開く→指す→戻すを一周し、遅くなる箇所を探す。"
+        },
+        {
+          "startSecond": 30,
+          "durationSeconds": 45,
+          "label": "LOCATE",
+          "instruction": "遅い箇所の位置・圧・方向を評価語なしで一つ記憶する。"
+        },
+        {
+          "startSecond": 75,
+          "durationSeconds": 90,
+          "label": "EXPERIMENT",
+          "instruction": "遅い箇所で意図的に2秒止まり、次方向を選んでから続ける。止まらない周と交互に行う。"
+        },
+        {
+          "startSecond": 165,
+          "durationSeconds": 75,
+          "label": "REORIENT",
+          "instruction": "今日迷う場面の前に2秒の選択点を置き、二方向から一つ選ぶ動作をする。"
+        },
+        {
+          "startSecond": 240,
+          "durationSeconds": 60,
+          "label": "RECORD",
+          "instruction": "滞留点、選べた情報、止まらない場合との差を書く。"
+        }
+      ],
+      "bodyCue": "身体部位を締めず、停止は動作時間として作る。",
+      "microExperiment": "自然に遅い箇所へ2秒の選択停止を挿入する。",
+      "reflection": [
+        "停止で選べた情報は？",
+        "詰まりへ付けていた悪い物語は？"
+      ],
+      "record": {
+        "observation": "滞留点と前後差",
+        "interpretation": "詰まりへの評価",
+        "nextAction": "二秒止まる現実場面",
+        "deltaScale": [
+          -2,
+          -1,
+          0,
+          1,
+          2
+        ]
+      },
+      "progressionLink": "Day 25では中心から外へ、外から中心への往復を描く。",
+      "safetyCue": "息止めや筋肉の締め付けで停止を作らない。"
+    },
+    {
+      "id": "flow-compass:25:torus-loop",
+      "day": 25,
+      "slug": "torus-loop",
+      "phase": "CIRCULATE",
+      "title": "内外の輪を一周する",
+      "status": "authored",
+      "durationSeconds": 300,
+      "prompt": "出して終わりでなく、何が返り、どこから次の一周が始まる？",
+      "intention": "トーラスを比喩に、中心・外界・応答が戻る閉じない循環を体験する。",
+      "steps": [
+        {
+          "startSecond": 0,
+          "durationSeconds": 30,
+          "label": "ARRIVE",
+          "instruction": "中心候補と外界の一点を仮に選ぶ。"
+        },
+        {
+          "startSecond": 30,
+          "durationSeconds": 45,
+          "label": "LOCATE",
+          "instruction": "中心から外へ向かう最短の方向を手で示す。"
+        },
+        {
+          "startSecond": 75,
+          "durationSeconds": 90,
+          "label": "EXPERIMENT",
+          "instruction": "手で中心→外→横へ弧→接触→中心の輪を描く。時計回りと反時計回りを各二回行う。"
+        },
+        {
+          "startSecond": 165,
+          "durationSeconds": 75,
+          "label": "REORIENT",
+          "instruction": "輪の一部を今日の入力・行動・環境応答・再観察へ言葉で置換する。"
+        },
+        {
+          "startSecond": 240,
+          "durationSeconds": 60,
+          "label": "RECORD",
+          "instruction": "輪の四点、回りやすい方向、現実で閉じずに戻す箇所を書く。"
+        }
+      ],
+      "bodyCue": "トーラスは想像上の地図。肩の可動域は小さくてよい。",
+      "microExperiment": "手で中心・外界・接触を結ぶ両方向の輪を描く。",
+      "reflection": [
+        "左右の周回で身体差は？",
+        "現実の応答をどこで受け取り直す？"
+      ],
+      "record": {
+        "observation": "輪の四点と方向差",
+        "interpretation": "循環への意味",
+        "nextAction": "応答を戻す一手",
+        "deltaScale": [
+          -2,
+          -1,
+          0,
+          1,
+          2
+        ]
+      },
+      "progressionLink": "Day 26では二つの循環を関係させる。",
+      "safetyCue": "肩に痛みがあれば指先または視線だけで輪を描く。"
+    },
+    {
+      "id": "flow-compass:26:two-loops",
+      "day": 26,
+      "slug": "two-loops",
+      "phase": "CIRCULATE",
+      "title": "二つの循環を交差させる",
+      "status": "authored",
+      "durationSeconds": 300,
+      "prompt": "同じ流れになる必要はない。二つの循環はどこで接続できる？",
+      "intention": "自分のループと相手・環境のループが交わる場所を仮説として探す。",
+      "steps": [
+        {
+          "startSecond": 0,
+          "durationSeconds": 30,
+          "label": "ARRIVE",
+          "instruction": "左右の手を別々の中心候補として置く。"
+        },
+        {
+          "startSecond": 30,
+          "durationSeconds": 45,
+          "label": "LOCATE",
+          "instruction": "右手を自分、左手を環境または相手の循環と仮定する。"
+        },
+        {
+          "startSecond": 75,
+          "durationSeconds": 90,
+          "label": "EXPERIMENT",
+          "instruction": "両手で小さな円を別方向に描き、近づける・離す・一瞬交差するを試す。"
+        },
+        {
+          "startSecond": 165,
+          "durationSeconds": 75,
+          "label": "REORIENT",
+          "instruction": "交差点で一度止まり、渡す情報と受け取る情報を一語ずつ置く。"
+        },
+        {
+          "startSecond": 240,
+          "durationSeconds": 60,
+          "label": "RECORD",
+          "instruction": "二つの輪、交差点、渡す／受ける情報、次の接点を書く。"
+        }
+      ],
+      "bodyCue": "手の協調が難しければ片手ずつ行い、相手の内面を決めつけない。",
+      "microExperiment": "左右の二円を近遠・交差で操作し、接点を作る。",
+      "reflection": [
+        "接近・分離・交差で何が変わった？",
+        "接点で何を交換すると仮定した？"
+      ],
+      "record": {
+        "observation": "二循環と交差の身体差",
+        "interpretation": "相手ループの仮説",
+        "nextAction": "現実の小さな接点",
+        "deltaScale": [
+          -2,
+          -1,
+          0,
+          1,
+          2
+        ]
+      },
+      "progressionLink": "Day 27では循環から余分な一工程を外す。",
+      "safetyCue": "腕を交差して痛む場合は空間上の二点を視線で結ぶ。"
+    },
+    {
+      "id": "flow-compass:27:remove-one-step",
+      "day": 27,
+      "slug": "remove-one-step",
+      "phase": "CIRCULATE",
+      "title": "一周を軽くする",
+      "status": "authored",
+      "durationSeconds": 300,
+      "prompt": "もっと頑張る前に、一周から何を一つ外せる？",
+      "intention": "流れを速めるのでなく、目的に寄与しない一工程を外して循環を再観察する。",
+      "steps": [
+        {
+          "startSecond": 0,
+          "durationSeconds": 30,
+          "label": "ARRIVE",
+          "instruction": "今日繰り返す小さな手順を三動作で表す。"
+        },
+        {
+          "startSecond": 30,
+          "durationSeconds": 45,
+          "label": "LOCATE",
+          "instruction": "三動作の各切替で接触または緊張を確認する。"
+        },
+        {
+          "startSecond": 75,
+          "durationSeconds": 90,
+          "label": "EXPERIMENT",
+          "instruction": "三動作を一周した後、中央の一動作を省いた二動作版を二周して比べる。"
+        },
+        {
+          "startSecond": 165,
+          "durationSeconds": 75,
+          "label": "REORIENT",
+          "instruction": "省略で失った機能が必要か確認し、削除・縮小・維持の一つを選ぶ。"
+        },
+        {
+          "startSecond": 240,
+          "durationSeconds": 60,
+          "label": "RECORD",
+          "instruction": "元の三工程、省いた工程、得失、採用版を書く。"
+        }
+      ],
+      "bodyCue": "実作業を壊さず、身体での小さなリハーサルだけで比較する。",
+      "microExperiment": "三動作ループと中央を省いた二動作ループを比較する。",
+      "reflection": [
+        "省略で戻った余白は？",
+        "省略で失う必要機能は？"
+      ],
+      "record": {
+        "observation": "三工程／二工程の差",
+        "interpretation": "工程の必要性仮説",
+        "nextAction": "削除・縮小・維持の選択",
+        "deltaScale": [
+          -2,
+          -1,
+          0,
+          1,
+          2
+        ]
+      },
+      "progressionLink": "Day 28で自分用の循環プロトコルを作る。",
+      "safetyCue": "安全確認や品質確認など必須工程は実際には省かない。"
+    },
+    {
+      "id": "flow-compass:28:circulation-protocol",
+      "day": 28,
+      "slug": "circulation-protocol",
+      "phase": "CIRCULATE",
+      "title": "自分の一周を設計する",
+      "status": "authored",
+      "durationSeconds": 300,
+      "prompt": "現実で回せる最小の入力→選択→行動→応答は？",
+      "intention": "入力・凝縮・出力・応答・更新を、現実で反復できる20秒の型にする。",
+      "steps": [
+        {
+          "startSecond": 0,
+          "durationSeconds": 30,
+          "label": "ARRIVE",
+          "instruction": "今日繰り返す場面を一つ選び、接触点へ戻る。"
+        },
+        {
+          "startSecond": 30,
+          "durationSeconds": 45,
+          "label": "LOCATE",
+          "instruction": "場面の入力・凝縮点・出力・応答を一語ずつ置く。"
+        },
+        {
+          "startSecond": 75,
+          "durationSeconds": 90,
+          "label": "EXPERIMENT",
+          "instruction": "四語を身体動作で20秒の輪にし、速度または方向を変えて三周する。"
+        },
+        {
+          "startSecond": 165,
+          "durationSeconds": 75,
+          "label": "REORIENT",
+          "instruction": "最も使える一周から一工程を調整し、実場面の最初だけ実演する。"
+        },
+        {
+          "startSecond": 240,
+          "durationSeconds": 60,
+          "label": "RECORD",
+          "instruction": "四語、20秒手順、調整点、再実行の合図を書く。"
+        }
+      ],
+      "bodyCue": "輪を滑らかに見せる必要はなく、詰まりも工程として残す。",
+      "microExperiment": "一場面を四工程・20秒の循環プロトコルへ変換する。",
+      "reflection": [
+        "反復できた最小形は？",
+        "次周で変える一変数は？"
+      ],
+      "record": {
+        "observation": "四工程と三周の差",
+        "interpretation": "最適だと思う理由",
+        "nextAction": "現実での再実行合図",
+        "deltaScale": [
+          -2,
+          -1,
+          0,
+          1,
+          2
+        ]
+      },
+      "progressionLink": "Day 29から循環プロトコルを選択・行動・更新の航法に使う。",
+      "safetyCue": "負荷の高い場面を避け、失敗しても影響が小さい反復課題を選ぶ。"
+    },
+    {
+      "id": "flow-compass:29:minimum-heading",
+      "day": 29,
+      "slug": "minimum-heading",
+      "phase": "NAVIGATE",
+      "title": "最小の進路を選ぶ",
+      "status": "authored",
+      "durationSeconds": 300,
+      "prompt": "最も進む方向でなく、次の情報が増える最小方位は？",
+      "intention": "大きな目標より先に、現在地から10秒で検証できる方向を選ぶ。",
+      "steps": [
+        {
+          "startSecond": 0,
+          "durationSeconds": 30,
+          "label": "ARRIVE",
+          "instruction": "接触・中心・近い方向を一語ずつ確認する。"
+        },
+        {
+          "startSecond": 30,
+          "durationSeconds": 45,
+          "label": "LOCATE",
+          "instruction": "今日の課題に対して前進・横断・後退の三方向を手で示す。"
+        },
+        {
+          "startSecond": 75,
+          "durationSeconds": 90,
+          "label": "EXPERIMENT",
+          "instruction": "三方向それぞれの最初の5秒を身体で実演し、返る接触と緊張を比べる。"
+        },
+        {
+          "startSecond": 165,
+          "durationSeconds": 75,
+          "label": "REORIENT",
+          "instruction": "最小コストで情報が増える方向を一つ選び、10秒実行する。"
+        },
+        {
+          "startSecond": 240,
+          "durationSeconds": 60,
+          "label": "RECORD",
+          "instruction": "三方位、選択基準、10秒結果、次の方位を書く。"
+        }
+      ],
+      "bodyCue": "後退や横断も有効な航路として、姿勢の善悪を置かない。",
+      "microExperiment": "一課題の三方向を5秒ずつ試作し、一つを10秒実行する。",
+      "reflection": [
+        "どの方位が情報を増やした？",
+        "前進だけを選びたかった理由は？"
+      ],
+      "record": {
+        "observation": "三方位の身体差",
+        "interpretation": "方位への価値判断",
+        "nextAction": "選んだ10秒航路",
+        "deltaScale": [
+          -2,
+          -1,
+          0,
+          1,
+          2
+        ]
+      },
+      "progressionLink": "Day 30では行動の途中に更新点を置く。",
+      "safetyCue": "損失の大きな意思決定で試さず、取り消せる小行動を選ぶ。"
+    },
+    {
+      "id": "flow-compass:30:midcourse-update",
+      "day": 30,
+      "slug": "midcourse-update",
+      "phase": "NAVIGATE",
+      "title": "途中で針を更新する",
+      "status": "authored",
+      "durationSeconds": 300,
+      "prompt": "始めた方向を守るより、どの信号で更新する？",
+      "intention": "開始時の計画に固執せず、途中の身体・環境応答から航路を変える。",
+      "steps": [
+        {
+          "startSecond": 0,
+          "durationSeconds": 30,
+          "label": "ARRIVE",
+          "instruction": "机上の二点を出発点と仮の目的地にする。"
+        },
+        {
+          "startSecond": 30,
+          "durationSeconds": 45,
+          "label": "LOCATE",
+          "instruction": "指で結ぶ予定経路と、途中の更新点を一つ決める。"
+        },
+        {
+          "startSecond": 75,
+          "durationSeconds": 90,
+          "label": "EXPERIMENT",
+          "instruction": "指を目的地へ動かし、更新点で止まり、接触を読んで直線・迂回・戻るを選ぶ。三回行う。"
+        },
+        {
+          "startSecond": 165,
+          "durationSeconds": 75,
+          "label": "REORIENT",
+          "instruction": "今日の作業に更新時刻または更新合図を一つ置き、変更可能な項目を決める。"
+        },
+        {
+          "startSecond": 240,
+          "durationSeconds": 60,
+          "label": "RECORD",
+          "instruction": "予定経路、更新点、読み取る信号、変更候補を書く。"
+        }
+      ],
+      "bodyCue": "停止は失敗でなく観測工程。接触へ一度戻って選ぶ。",
+      "microExperiment": "目的地への途中で三航路から選び直す更新停止を入れる。",
+      "reflection": [
+        "更新点で得た信号は？",
+        "計画を守ることへ付けた価値は？"
+      ],
+      "record": {
+        "observation": "更新点の身体・環境信号",
+        "interpretation": "計画変更への評価",
+        "nextAction": "現実の更新合図",
+        "deltaScale": [
+          -2,
+          -1,
+          0,
+          1,
+          2
+        ]
+      },
+      "progressionLink": "Day 31では選択肢を増やす／減らすタイミングを決める。",
+      "safetyCue": "重要手順や安全ルールを途中変更せず、変更可能範囲を先に定める。"
+    },
+    {
+      "id": "flow-compass:31:option-aperture",
+      "day": 31,
+      "slug": "option-aperture",
+      "phase": "NAVIGATE",
+      "title": "選択肢の絞りを調整する",
+      "status": "authored",
+      "durationSeconds": 300,
+      "prompt": "今は花弁を増やす時間か、花托で一方向を選ぶ時間か？",
+      "intention": "迷いに対し、常に増やす／即座に絞るのでなく、探索と決定を切り替える。",
+      "steps": [
+        {
+          "startSecond": 0,
+          "durationSeconds": 30,
+          "label": "ARRIVE",
+          "instruction": "両手の間を選択肢の幅として肩幅に置く。"
+        },
+        {
+          "startSecond": 30,
+          "durationSeconds": 45,
+          "label": "LOCATE",
+          "instruction": "今の課題で選択肢が多すぎる・少なすぎる・不明を選ぶ。"
+        },
+        {
+          "startSecond": 75,
+          "durationSeconds": 90,
+          "label": "EXPERIMENT",
+          "instruction": "手幅を広・中・狭へ変え、各幅で候補を声か指で1・2・3個示す。"
+        },
+        {
+          "startSecond": 165,
+          "durationSeconds": 75,
+          "label": "REORIENT",
+          "instruction": "30秒探索後に二択へ凝縮し、一つの最初の5秒を実演する。"
+        },
+        {
+          "startSecond": 240,
+          "durationSeconds": 60,
+          "label": "RECORD",
+          "instruction": "探索幅、凝縮基準、選んだ一案、再び開く条件を書く。"
+        }
+      ],
+      "bodyCue": "花の比喩が合わなければ、カメラの絞りとして手幅を使う。",
+      "microExperiment": "候補を三つに開き、基準で二つ、一動作で一つへ凝縮する。",
+      "reflection": [
+        "開く／絞るのどちらで身体が変わった？",
+        "再探索する条件は？"
+      ],
+      "record": {
+        "observation": "選択幅ごとの身体差",
+        "interpretation": "選択数への評価",
+        "nextAction": "探索・決定の切替条件",
+        "deltaScale": [
+          -2,
+          -1,
+          0,
+          1,
+          2
+        ]
+      },
+      "progressionLink": "Day 32では圧力の中で方位を保持・変更する。",
+      "safetyCue": "重大な選択でなく、今日試して戻せる小課題を使う。"
+    },
+    {
+      "id": "flow-compass:32:pressure-compass",
+      "day": 32,
+      "slug": "pressure-compass",
+      "phase": "NAVIGATE",
+      "title": "圧の中で方位を読む",
+      "status": "authored",
+      "durationSeconds": 300,
+      "prompt": "圧をゼロにできない今、残っている最小の選択は？",
+      "intention": "外圧や時間圧を消す前提にせず、圧下で残る接触と小さな選択を見つける。",
+      "steps": [
+        {
+          "startSecond": 0,
+          "durationSeconds": 30,
+          "label": "ARRIVE",
+          "instruction": "タイマー表示を見ず、接触点と今日の小課題を選ぶ。"
+        },
+        {
+          "startSecond": 30,
+          "durationSeconds": 45,
+          "label": "LOCATE",
+          "instruction": "手のひらを腿へ2割押し、圧下で狭くなる視野や選択を観察する。"
+        },
+        {
+          "startSecond": 75,
+          "durationSeconds": 90,
+          "label": "EXPERIMENT",
+          "instruction": "2割押圧のまま視線を三方向へ移し、手圧を1割へ下げて同じ三方向を比べる。"
+        },
+        {
+          "startSecond": 165,
+          "durationSeconds": 75,
+          "label": "REORIENT",
+          "instruction": "圧を完全に消さず、一方向を選んで課題の最初の10秒を実演する。"
+        },
+        {
+          "startSecond": 240,
+          "durationSeconds": 60,
+          "label": "RECORD",
+          "instruction": "圧ごとの視野、残った選択、圧下で使う合図を書く。"
+        }
+      ],
+      "bodyCue": "最大圧を使わず1〜2割だけ。息が止まれば圧を解く。",
+      "microExperiment": "軽い押圧下で視線の選択肢を探し、圧を半減して比較する。",
+      "reflection": [
+        "圧下でも残った方向は？",
+        "圧をゼロにしないと動けないという仮説は？"
+      ],
+      "record": {
+        "observation": "圧強度と視野差",
+        "interpretation": "圧への予測",
+        "nextAction": "圧下で使う最小選択",
+        "deltaScale": [
+          -2,
+          -1,
+          0,
+          1,
+          2
+        ]
+      },
+      "progressionLink": "Day 33では他者の応答を受けて方位を更新する。",
+      "safetyCue": "身体的苦痛や呼吸制限を作らず、軽い手圧だけを使う。"
+    },
+    {
+      "id": "flow-compass:33:relational-navigation",
+      "day": 33,
+      "slug": "relational-navigation",
+      "phase": "NAVIGATE",
+      "title": "関係の中で航路を変える",
+      "status": "authored",
+      "durationSeconds": 300,
+      "prompt": "相手を変える前に、自分の距離・角度・速度のどれを更新できる？",
+      "intention": "相手を操作せず、自分の距離・角度・速度を変更可能な航法変数にする。",
+      "steps": [
+        {
+          "startSecond": 0,
+          "durationSeconds": 30,
+          "label": "ARRIVE",
+          "instruction": "空の椅子または一点を相手位置にし、接触へ戻る。"
+        },
+        {
+          "startSecond": 30,
+          "durationSeconds": 45,
+          "label": "LOCATE",
+          "instruction": "距離・角度・声の速度のうち、今変更できる一変数を選ぶ。"
+        },
+        {
+          "startSecond": 75,
+          "durationSeconds": 90,
+          "label": "EXPERIMENT",
+          "instruction": "中立な一文を、選んだ変数の三段階で言い、身体の前後差を比べる。"
+        },
+        {
+          "startSecond": 165,
+          "durationSeconds": 75,
+          "label": "REORIENT",
+          "instruction": "最も情報が受け取れそうな段階を選び、言った後に2秒待つ動作を加える。"
+        },
+        {
+          "startSecond": 240,
+          "durationSeconds": 60,
+          "label": "RECORD",
+          "instruction": "変更変数、三段階差、待つ間に読む応答、次の一文を書く。"
+        }
+      ],
+      "bodyCue": "相手の反応は仮説。実験では自分の声・姿勢・接触だけを評価する。",
+      "microExperiment": "中立文を一つの関係変数の三段階で言い、2秒の応答待ちを加える。",
+      "reflection": [
+        "変更できた自分側の変数は？",
+        "実際の応答と予測をどう分ける？"
+      ],
+      "record": {
+        "observation": "変数ごとの身体・声",
+        "interpretation": "相手の反応予測",
+        "nextAction": "会話で試す一変数",
+        "deltaScale": [
+          -2,
+          -1,
+          0,
+          1,
+          2
+        ]
+      },
+      "progressionLink": "Day 34では複数信号が競合するときの優先順位を試す。",
+      "safetyCue": "実在の対立相手との練習はせず、中立文と仮位置を使う。"
+    },
+    {
+      "id": "flow-compass:34:signal-priority",
+      "day": 34,
+      "slug": "signal-priority",
+      "phase": "NAVIGATE",
+      "title": "競合する信号を並べる",
+      "status": "authored",
+      "durationSeconds": 300,
+      "prompt": "すべてを満たせない今、何を先に読み、何を保留する？",
+      "intention": "身体・環境・関係・時間の信号を一つの正解にせず、優先順位を仮決定する。",
+      "steps": [
+        {
+          "startSecond": 0,
+          "durationSeconds": 30,
+          "label": "ARRIVE",
+          "instruction": "接触・外界・時間の三信号を一つずつ確認する。"
+        },
+        {
+          "startSecond": 30,
+          "durationSeconds": 45,
+          "label": "LOCATE",
+          "instruction": "身体、環境、他者、時間を四本の指に割り当てる。"
+        },
+        {
+          "startSecond": 75,
+          "durationSeconds": 90,
+          "label": "EXPERIMENT",
+          "instruction": "今日の小課題について各指から一信号を言い、指の高さで暫定優先順位を作る。"
+        },
+        {
+          "startSecond": 165,
+          "durationSeconds": 75,
+          "label": "REORIENT",
+          "instruction": "最上位信号に沿う10秒を実演し、別信号が悪化するなら順位を一度入れ替える。"
+        },
+        {
+          "startSecond": 240,
+          "durationSeconds": 60,
+          "label": "RECORD",
+          "instruction": "四信号、暫定順位、実演結果、入替条件を書く。"
+        }
+      ],
+      "bodyCue": "身体信号に痛みや危険があれば常に停止を優先する。",
+      "microExperiment": "四信号を指に割り当て、順位に沿う10秒と入替条件を試す。",
+      "reflection": [
+        "優先した信号と保留した信号は？",
+        "実演で順位は変わった？"
+      ],
+      "record": {
+        "observation": "四信号と実演差",
+        "interpretation": "優先理由の仮説",
+        "nextAction": "順位と入替条件",
+        "deltaScale": [
+          -2,
+          -1,
+          0,
+          1,
+          2
+        ]
+      },
+      "progressionLink": "Day 35で自分用のCOMPASSループと次のQuestを設計する。",
+      "safetyCue": "安全・健康に関する警告信号は保留せず、必要なら中止して支援を求める。"
+    },
+    {
+      "id": "flow-compass:35:next-quest",
+      "day": 35,
+      "slug": "next-quest",
+      "phase": "NAVIGATE",
+      "title": "COMPASSを次のQuestへ渡す",
+      "status": "authored",
+      "durationSeconds": 300,
+      "prompt": "答えではなく更新可能な問いとして、次の七日へ何を持っていく？",
+      "intention": "固定した答えで終わらず、自分の観察・実験・更新ループを現実の次Questにする。",
+      "steps": [
+        {
+          "startSecond": 0,
+          "durationSeconds": 30,
+          "label": "ARRIVE",
+          "instruction": "Day 1と同じく、中心候補・接触・外界の一点を確認する。"
+        },
+        {
+          "startSecond": 30,
+          "durationSeconds": 45,
+          "label": "LOCATE",
+          "instruction": "現在地・向き・変化・関係・次の一歩を各一語で置く。"
+        },
+        {
+          "startSecond": 75,
+          "durationSeconds": 90,
+          "label": "EXPERIMENT",
+          "instruction": "凝縮→方向選択→小動作→応答→接触へ戻る20秒ループを三周し、毎周一変数を更新する。"
+        },
+        {
+          "startSecond": 165,
+          "durationSeconds": 75,
+          "label": "REORIENT",
+          "instruction": "今後7日で検証する問いを一つ作り、明日の最初の10秒を実演する。"
+        },
+        {
+          "startSecond": 240,
+          "durationSeconds": 60,
+          "label": "RECORD",
+          "instruction": "35日で使えるアンカー、手放す固定語、7日Quest、停止条件、更新日を書く。"
+        }
+      ],
+      "bodyCue": "中心位置や感覚の強さを成果にせず、観察と更新ができることを見る。",
+      "microExperiment": "20秒のCOMPASSループを三周し、自作の7日Questの初動を行う。",
+      "reflection": [
+        "使えるようになった観察アンカーは？",
+        "次のQuestで変える一変数は？",
+        "安全のための停止条件は？"
+      ],
+      "record": {
+        "observation": "現在地と35日の前後差",
+        "interpretation": "変化へ付けた物語",
+        "nextAction": "自作7日Questの最初の10秒",
+        "deltaScale": [
+          -2,
+          -1,
+          0,
+          1,
+          2
+        ]
+      },
+      "progressionLink": "終了ではなく、7日後に観察→実験→応答→更新を再評価する。",
+      "safetyCue": "次Questは取り消せる小行動にし、医療・治療効果を目標にしない。"
+    }
+  ]
+}

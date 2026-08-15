@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import FlowCompassDayOne from '@/components/flow-compass/FlowCompassDayOne';
+import { loadCanonicalFlowCompassQuest } from '@/lib/flow-compass-quest-pack';
 
 export const metadata: Metadata = {
   title: 'Day 01 — FLOW COMPASS | ACE',
@@ -7,5 +8,6 @@ export const metadata: Metadata = {
 };
 
 export default function FlowCompassDayOnePage() {
-  return <FlowCompassDayOne />;
+  const quest = loadCanonicalFlowCompassQuest(1);
+  return <FlowCompassDayOne quest={quest} />;
 }

@@ -33,23 +33,53 @@ export interface FlowCompassDayOneState {
 
 export interface FlowCompassQuestStage {
   id: FlowCompassStepId;
-  label: string;
-  prompt: string;
+  canonicalLabel: 'ARRIVE' | 'LOCATE' | 'EXPERIMENT' | 'REORIENT' | 'RECORD';
+  displayLabel: string;
+  instruction: string;
+  startSecond: number;
   estimatedSeconds: number;
 }
 
 /**
- * Temporary contract for the prototype. It is intentionally content-first so
- * it can later be adapted to ace-method/flow-compass/QUEST_SCHEMA.json.
+ * Consumer-side view model for Athlete Quest UI. The canonical contract remains
+ * owned by ace-method; this shape is only the validated adapter output.
  */
-export interface FlowCompassQuestDefinition {
-  schemaVersion: 'prototype-0.1';
+export interface FlowCompassQuestViewModel {
+  viewModelVersion: 'athlete-quest.flow-compass-view/0.1.0';
+  id: string;
+  day: number;
   slug: string;
   title: string;
-  intent: string;
+  phase: 'NOTICE' | 'UNFIX' | 'RELATE' | 'CIRCULATE' | 'NAVIGATE';
+  status: 'test-ready' | 'authored';
+  durationSeconds: number;
+  prompt: string;
+  intention: string;
   stages: FlowCompassQuestStage[];
   scientificStatus: {
-    measurable: string[];
-    metaphor: string[];
+    scope: string;
+    metaphors: string[];
+    claimPolicy: string;
+  };
+  bodyCue: string;
+  microExperiment: string;
+  reflection: string[];
+  record: {
+    observation: string;
+    interpretation: string;
+    nextAction: string;
+    deltaScale: number[];
+  };
+  progressionLink: string;
+  safetyCue: string;
+  source: {
+    type: 'ace-method.quest-pack';
+    repository: 'takraw369/ace-method';
+    canonicalCommit: '89b17f011366f1a36385fbc54a475b4eb7844c61';
+    path: 'flow-compass/app/quest-pack.json';
+    schemaPath: 'flow-compass/APP_QUEST_PACK_SCHEMA.json';
+    contractVersion: 'flow-compass.quest-pack/0.1.0';
+    sourceVersion: string;
+    locale: string;
   };
 }
