@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import GameBoard from '@/components/board/GameBoard';
 import QuestPanel from '@/components/quest/QuestPanel';
@@ -44,7 +45,12 @@ export default function HomePage() {
           <span className="text-xl font-black tracking-tight text-indigo-400">ACE</span>
           <span className="text-lg font-semibold text-white">Quest Board</span>
         </div>
-        <div className="text-xs text-slate-600">Phase 1 · MVP</div>
+        <div className="flex items-center gap-2">
+          <Link href="/want-to" className="rounded-full border border-indigo-400/40 bg-indigo-500/10 px-3 py-1.5 text-xs font-bold text-indigo-200 transition hover:bg-indigo-500/20">
+            ✦ Want to Master
+          </Link>
+          <div className="hidden text-xs text-slate-600 sm:block">Phase 1 · MVP</div>
+        </div>
       </header>
 
       {/* Player status bar */}
