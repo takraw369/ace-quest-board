@@ -17,10 +17,28 @@ type Achievement = {
 
 type LevelMap = Record<string, number>;
 type ViewMode = 'cards' | 'table';
+type EnrichedWant = WantToSeed & {
+  theme: string;
+  type: string;
+  timing: string;
+  logs: Achievement[];
+  count: number;
+  avgSatisfaction: number | null;
+  avgRepeat: number | null;
+  myLevel?: number;
+};
 
 const ACHIEVEMENT_KEY = 'ace-want-achievements-v1';
 const LEVEL_KEY = 'ace-want-levels-v1';
 const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1gkYpIk28ScWY5xlFfkjyyBVa0Cmx3pl_oQuJ5sC8ij4/edit';
+
+function todayLocal() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
 
 function inferTheme(item: WantToSeed) {
   const s = `${item.title} ${item.action}`;
@@ -82,7 +100,7 @@ export default function WantToPage() {
   const [typeFilter, setTypeFilter] = useState('');
   const [pinOnly, setPinOnly] = useState(false);
   const [view, setView] = useState<ViewMode>('cards');
-  const [selected, setSelected] = useState<WantToSeed | null>(null);
+  const [selected, setSelected] = useState<EnrichedWant | null>(null);
   const [achieving, setAchieving] = useState<WantToSeed | null>(null);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [levels, setLevels] = useState<LevelMap>({});
@@ -107,7 +125,7 @@ export default function WantToPage() {
     if (hydrated) localStorage.setItem(LEVEL_KEY, JSON.stringify(levels));
   }, [levels, hydrated]);
 
-  const enriched = useMemo(() => WANT_TO_SEED.map((item) => {
+  const enriched = useMemo<EnrichedWant[]>(() => WANT_TO_SEED.map((item) => {
     const theme = inferTheme(item);
     const type = inferType(item);
     const timing = timingFor(type, item);
@@ -161,7 +179,7 @@ export default function WantToPage() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `want-to-achievements-${new Date().toISOString().slice(0,10)}.csv`;
+    link.download = `want-to-achievements-${todayLocal()}.csv`;
     link.click();
     URL.revokeObjectURL(url);
   }
@@ -281,7 +299,7 @@ export default function WantToPage() {
         {!visible.length && <div className="mt-12 text-center text-slate-500">該当するWant toが見つからなかった。</div>}
       </main>
 
-      {selected && <DetailModal item={selected} achievements={achievements.filter((a) => a.wantId === selected.id)} level={levels[selected.id]} onLevel={(level) => setLevels((p) => ({ ...p, [selected.id]: level }))} onAchieve={() => { setSelected(null); setAchieving(selected); }} onClose={() => setSelected(null)} />}
+      {selected && <DetailModal item={selected} achievements={selected.logs} level={levels[selected.id]} onLevel={(level) => setLevels((p) => ({ ...p, [selected.id]: level }))} onAchieve={() => { setSelected(null); setAchieving(selected); }} onClose={() => setSelected(null)} />}
       {achieving && <AchievementModal item={achieving} onSave={saveAchievement} onClose={() => setAchieving(null)} />}
     </div>
   );
@@ -300,7 +318,7 @@ function SourceBadge({ value }: { value: string }) {
   return <span className={`rounded-full px-2 py-1 ${cls}`}>{value}</span>;
 }
 
-function DetailModal({ item, achievements, level, onLevel, onAchieve, onClose }: { item: WantToSeed & { theme: string; type: string; timing: string }; achievements: Achievement[]; level?: number; onLevel: (n: number) => void; onAchieve: () => void; onClose: () => void }) {
+function DetailModal({ item, achievements, level, onLevel, onAchieve, onClose }: { item: EnrichedWant; achievements: Achievement[]; level?: number; onLevel: (n: number) => void; onAchieve: () => void; onClose: () => void }) {
   return <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4" onMouseDown={onClose}>
     <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-t-3xl bg-white p-5 shadow-2xl sm:rounded-3xl" onMouseDown={(e) => e.stopPropagation()}>
       <div className="flex items-start justify-between gap-4"><div><div className="text-xs font-bold text-slate-400">{item.id} · {item.category}</div><h2 className="mt-2 text-2xl font-black leading-tight">{item.title}</h2></div><button onClick={onClose} className="rounded-full border px-3 py-1.5">✕</button></div>
@@ -315,7 +333,7 @@ function DetailModal({ item, achievements, level, onLevel, onAchieve, onClose }:
 }
 
 function AchievementModal({ item, onSave, onClose }: { item: WantToSeed; onSave: (x: Omit<Achievement,'id'>) => void; onClose: () => void }) {
-  const [date, setDate] = useState(new Date().toISOString().slice(0,10));
+  const [date, setDate] = useState(todayLocal());
   const [withWho, setWithWho] = useState('');
   const [place, setPlace] = useState('');
   const [satisfaction, setSatisfaction] = useState(5);
