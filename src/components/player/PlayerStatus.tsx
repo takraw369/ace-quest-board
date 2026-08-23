@@ -16,27 +16,29 @@ export default function PlayerStatus() {
     return 0;
   })();
 
-  const progress = Math.min(
-    ((totalXp - currentTierStart) / (nextLevelXp - currentTierStart)) * 100,
-    100
-  );
+  const denominator = Math.max(nextLevelXp - currentTierStart, 1);
+  const progress = Math.min(((totalXp - currentTierStart) / denominator) * 100, 100);
 
   return (
-    <div className="flex items-center gap-3 px-4 py-2 bg-slate-900/80 border-b border-slate-800">
-      {/* Avatar */}
-      <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-sm font-bold text-white flex-shrink-0">
-        {level}
+    <div className="grid gap-3 sm:grid-cols-[auto_1fr_auto] sm:items-center">
+      <div className="flex items-center gap-3">
+        <div className="grid h-11 w-11 place-items-center rounded-2xl border border-indigo-300/15 bg-indigo-400/10 text-sm font-black text-indigo-200 shadow-[0_12px_30px_rgba(99,102,241,0.12)]">
+          {level}
+        </div>
+        <div>
+          <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Current level</div>
+          <div className="mt-0.5 text-sm font-bold text-white">{title}</div>
+        </div>
       </div>
 
-      {/* Level info */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between mb-0.5">
-          <span className="text-xs font-semibold text-slate-200 truncate">{title}</span>
-          <span className="text-xs text-slate-500 ml-2 flex-shrink-0">{totalXp} XP</span>
+      <div className="min-w-0">
+        <div className="mb-2 flex items-center justify-between text-[11px]">
+          <span className="font-semibold text-slate-500">Experience</span>
+          <span className="font-bold text-slate-300">{totalXp} / {nextLevelXp} XP</span>
         </div>
-        <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+        <div className="h-1.5 overflow-hidden rounded-full bg-white/8">
           <motion.div
-            className="h-full bg-indigo-500 rounded-full"
+            className="h-full rounded-full bg-gradient-to-r from-indigo-400 to-violet-400"
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
             transition={{ duration: 0.8, ease: 'easeOut' }}
@@ -44,12 +46,11 @@ export default function PlayerStatus() {
         </div>
       </div>
 
-      {/* Streak */}
-      {streakDays > 0 && (
-        <div className="flex items-center gap-1 flex-shrink-0 text-xs text-orange-400 font-bold">
-          🔥 {streakDays}
-        </div>
-      )}
+      <div className="flex items-center justify-end gap-2 text-xs">
+        <span className="rounded-full border border-white/8 bg-white/[0.035] px-3 py-1.5 font-semibold text-slate-400">
+          {streakDays > 0 ? `🔥 ${streakDays} day streak` : 'Streak 0'}
+        </span>
+      </div>
     </div>
   );
 }
