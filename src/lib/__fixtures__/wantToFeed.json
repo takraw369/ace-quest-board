@@ -1,0 +1,44 @@
+{
+  "updatedAt": "2026-08-25T12:34:56+09:00",
+  "sheet": "Want to Master",
+  "rows": [
+    {
+      "ID": "W901",
+      "ジャンル": "旅・温泉",
+      "Want to": "雪の季節に乳頭温泉へ行く",
+      "SOURCE": "明示",
+      "階層": "上位",
+      "中心ピン": "★★★★★",
+      "CLEAR / ACTION": "冬の宿泊可能日を3日出す",
+      "前提": "W038, W092",
+      "関連": "W039\nW114",
+      "image_url": "https://images.example.com/nyuto-onsen.jpg",
+      "image_source": "example photographer",
+      "emoji": "♨️",
+      "icon": "hot-spring",
+      "area": "東北",
+      "prefecture": "秋田県",
+      "lat": "39.8012",
+      "lng": 140.7995,
+      "budget": "50,000円",
+      "best_season": "12月〜3月",
+      "priority": "s",
+      "status": "NEXT",
+      "next_action": "候補宿を3軒比較する",
+      "companion": "家族"
+    },
+    {
+      "want_id": "W902",
+      "category": "食・体験",
+      "title": "地域の旬を味わう",
+      "source": "unknown value",
+      "tier": "unknown value",
+      "pin": "9",
+      "action": "生産者を調べる",
+      "prereq": ["W113", "W115"],
+      "related": "W037 | W114",
+      "priority": "Z",
+      "lat": "not-a-number"
+    }
+  ]
+}
