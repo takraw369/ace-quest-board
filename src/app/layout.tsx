@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ACE Quest Board",
+  title: "FLOW OS",
   description: "Knowledge → Want to → Quest",
 };
 
@@ -29,8 +29,8 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        {children}
         <LayerSwitcher />
+        {children}
       </body>
     </html>
   );
