@@ -10,7 +10,7 @@ Production surface: `https://ace-quest-board.netlify.app`
 | 望 / Want to | `/want-to` | Direction, desires, priorities |
 | 行 / Quest | `/` | Action, quests, execution |
 
-All three layers share one global layer switcher. Navigation changes should be made once and reused across the app.
+All three layers share one global header and layer switcher. Navigation changes should be made once and reused across the app.
 
 ## Source of truth
 
@@ -30,8 +30,8 @@ Netlify production should ultimately track `main`. Preview deploys are verificat
 
 ## Retired surfaces
 
-- `willowy-liger-24e5c7.netlify.app` is legacy/redirect-only.
-- `deploy-preview-*--ace-quest-board.netlify.app` is preview only and must never be treated as canonical.
+- The former standalone Knowledge site is legacy/redirect-only.
+- Netlify deploy-preview URLs are preview only and must never be treated as canonical.
 
 ## Private command center
 
