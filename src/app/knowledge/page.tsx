@@ -125,31 +125,20 @@ export default function KnowledgePage() {
     <div className="min-h-screen bg-[#090d16] text-[#e8edf5] selection:bg-[#ff8a1f]/25">
       <div className="pointer-events-none fixed inset-0 opacity-70" style={{backgroundImage:'radial-gradient(circle at 15% 10%,rgba(255,138,31,.08),transparent 28%),radial-gradient(circle at 85% 70%,rgba(74,107,155,.12),transparent 34%)'}} />
 
-      <header className="sticky top-0 z-30 border-b border-white/[0.07] bg-[#090d16]/88 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-4 px-4 py-3 md:px-7">
-          <div className="flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-full border border-[#ff8a1f]/35 bg-[#ff8a1f]/[0.06] font-serif text-sm text-[#ffad62]">知</div>
-            <div>
-              <div className="text-[9px] font-bold tracking-[.22em] text-[#ff9a42]">KNOWLEDGE LAYER</div>
-              <h1 className="font-serif text-lg font-semibold">Knowledge Core</h1>
-              <p className="text-[9px] tracking-wide text-[#768196]">意味を見つけ、望みと行動へつなぐ。</p>
-            </div>
-          </div>
-          <nav className="flex items-center gap-2 text-[10px] font-semibold">
-            <span className="hidden rounded-full border border-[#ff8a1f]/25 bg-[#ff8a1f]/[0.06] px-3 py-2 text-[#ffad62] sm:inline-flex">知 · Knowledge</span>
-            <Link href={APP_ROUTES.wantTo} className="rounded-full border border-white/[0.09] px-3 py-2 text-[#aeb9ca] hover:border-[#ff8a1f]/30 hover:text-white">望 · Want to</Link>
-            <Link href={APP_ROUTES.quest} className="rounded-full border border-white/[0.09] px-3 py-2 text-[#aeb9ca] hover:border-[#ff8a1f]/30 hover:text-white">行 · Quest</Link>
-          </nav>
-        </div>
-      </header>
-
       <main className="relative z-10 mx-auto grid max-w-[1440px] gap-5 px-4 py-6 md:px-7 lg:grid-cols-[minmax(0,1fr)_420px]">
         <section>
-          <div className="mb-5 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+          <div className="mb-5 grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
             <div>
-              <p className="text-[9px] font-bold uppercase tracking-[.22em] text-[#66738a]">知 → 望 → 行</p>
-              <h2 className="mt-1 font-serif text-3xl font-semibold tracking-tight">知識を、使える接続点に。</h2>
-              <p className="mt-2 max-w-2xl text-sm leading-7 text-[#8793a6]">別サイトではなく、このアプリ内のKnowledge正本としてSupabaseから直接読み込みます。</p>
+              <div className="mb-4 flex items-center gap-3">
+                <div className="grid h-10 w-10 place-items-center rounded-full border border-[#ff8a1f]/35 bg-[#ff8a1f]/[0.06] font-serif text-sm text-[#ffad62]">知</div>
+                <div>
+                  <div className="text-[9px] font-bold tracking-[.22em] text-[#ff9a42]">KNOWLEDGE LAYER</div>
+                  <div className="font-serif text-lg font-semibold">Knowledge Core</div>
+                  <p className="text-[9px] tracking-wide text-[#768196]">意味を見つけ、望みと行動へつなぐ。</p>
+                </div>
+              </div>
+              <h1 className="font-serif text-3xl font-semibold tracking-tight">知識を、使える接続点に。</h1>
+              <p className="mt-2 max-w-2xl text-sm leading-7 text-[#8793a6]">このアプリ内のKnowledge正本としてSupabaseから直接読み込みます。</p>
             </div>
             <div className="rounded-2xl border border-white/[0.07] bg-white/[0.025] px-4 py-3 text-right">
               <div className="text-2xl font-semibold text-white">{visible.length}</div>
