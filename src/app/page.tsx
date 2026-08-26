@@ -8,14 +8,13 @@ import QuickAdd from '@/components/input/QuickAdd';
 import PlayerStatus from '@/components/player/PlayerStatus';
 import LevelUpModal from '@/components/player/LevelUpModal';
 import { useQuestStore } from '@/stores/questStore';
+import { APP_ROUTES } from '@/lib/appRoutes';
 import {
   SEED_VISIONS,
   SEED_MILESTONES,
   SEED_QUESTS,
   SEED_TASKS,
 } from '@/lib/seed';
-
-const KNOWLEDGE_URL = 'https://willowy-liger-24e5c7.netlify.app/';
 
 export default function HomePage() {
   const [selectedQuestId, setSelectedQuestId] = useState<string | null>(null);
@@ -70,10 +69,10 @@ export default function HomePage() {
 
           <nav className="flex items-center gap-2">
             <span className="hidden rounded-full border border-white/[0.06] bg-white/[0.018] px-3 py-2 text-[10px] font-semibold text-[#737a73] xl:inline-flex">{visions.length} Visions · {doneCount} Done</span>
-            <a href={KNOWLEDGE_URL} target="_blank" rel="noreferrer" className="hidden rounded-full border border-[#c8ab72]/16 bg-[#c8ab72]/[0.035] px-3.5 py-2 text-[10px] font-semibold tracking-wide text-[#bba67d] transition hover:-translate-y-0.5 hover:border-[#c8ab72]/35 hover:text-[#e0c994] sm:inline-flex">
+            <Link href={APP_ROUTES.knowledge} className="hidden rounded-full border border-[#c8ab72]/16 bg-[#c8ab72]/[0.035] px-3.5 py-2 text-[10px] font-semibold tracking-wide text-[#bba67d] transition hover:-translate-y-0.5 hover:border-[#c8ab72]/35 hover:text-[#e0c994] sm:inline-flex">
               知 · Knowledge
-            </a>
-            <Link href="/want-to" className="rounded-full border border-[#789581]/30 bg-[#789581]/10 px-4 py-2 text-[10px] font-bold tracking-wide text-[#c9d5ca] transition hover:-translate-y-0.5 hover:bg-[#789581]/15">
+            </Link>
+            <Link href={APP_ROUTES.wantTo} className="rounded-full border border-[#789581]/30 bg-[#789581]/10 px-4 py-2 text-[10px] font-bold tracking-wide text-[#c9d5ca] transition hover:-translate-y-0.5 hover:bg-[#789581]/15">
               望 · Want to
             </Link>
           </nav>
