@@ -5,11 +5,17 @@
 To Do / Want to を入力 → ビジョンへの道筋がゲームボード上に可視化 → タスク完了でコマが進む。
 
 ## Architecture
-- Next.js 14 (App Router, static export)
+- Next.js 16 (App Router, static export)
 - Tailwind CSS + Framer Motion（アニメーション）
 - Zustand + localStorage（Phase 1の状態管理）
 - Supabase（Phase 4〜）
-- Deploy: Netlify
+- Deploy: Cloudflare Workers Static Assets
+
+## Deployment policy
+- Netlify is retired for this repository. Do not add new Netlify deploys, hooks, plugins, or build settings.
+- `netlify.toml` exists only as a temporary retirement guard that skips Git-triggered Netlify builds. Delete it after the Netlify project is stopped/disabled in the Netlify UI.
+- Current static export is deployed as Cloudflare Workers Static Assets from `out/`.
+- If SSR, Server Actions, Route Handlers, or server-side auth become necessary, evaluate Cloudflare's current recommended Next.js path (currently vinext) before changing architecture.
 
 ## Data hierarchy
 Vision > Milestone > Quest > Task
@@ -33,7 +39,7 @@ Phase 1: MVP（コアループ）
 ## Commands
 - `npm run dev` — 開発サーバー
 - `npm run build` — ビルド（static export → out/）
-- `npx netlify deploy --prod` — デプロイ
+- `npx wrangler@latest deploy` — Cloudflareへデプロイ
 
 ## Branch strategy
 - `main` — Phase 1 MVP完成後にマージ
