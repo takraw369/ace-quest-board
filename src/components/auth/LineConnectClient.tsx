@@ -12,15 +12,30 @@ type LiffApi = {
   requestFriendship?: () => Promise<unknown>;
 };
 
+type RuntimeConfig = {
+  liffId?: string;
+  supabaseUrl?: string;
+};
+
 declare global {
   interface Window {
     liff?: LiffApi;
   }
 }
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'https://qydbtholbwbuwiswmqsr.supabase.co';
-const LIFF_ID = process.env.NEXT_PUBLIC_LIFF_ID ?? '';
+const DEFAULT_SUPABASE_URL = 'https://qydbtholbwbuwiswmqsr.supabase.co';
 const STORAGE_KEY = 'flow:pwa:bootstrap:v1';
+const ALLOWED_NEXT = new Set(['/today', '/learn', '/quest', '/me', '/people']);
+
+async function loadRuntimeConfig(): Promise<RuntimeConfig> {
+  try {
+    const response = await fetch('/app-config.json', { cache: 'no-store' });
+    if (!response.ok) return {};
+    return await response.json();
+  } catch {
+    return {};
+  }
+}
 
 export default function LineConnectClient() {
   const [sdkReady, setSdkReady] = useState(false);
@@ -32,7 +47,13 @@ export default function LineConnectClient() {
     let cancelled = false;
 
     const bootstrap = async () => {
-      if (!LIFF_ID) {
+      const runtime = await loadRuntimeConfig();
+      const liffId = runtime.liffId || process.env.NEXT_PUBLIC_LIFF_ID || '';
+      const supabaseUrl = runtime.supabaseUrl || process.env.NEXT_PUBLIC_SUPABASE_URL || DEFAULT_SUPABASE_URL;
+      const requestedNext = new URLSearchParams(window.location.search).get('next') || '/today';
+      const next = ALLOWED_NEXT.has(requestedNext) ? requestedNext : '/today';
+
+      if (!liffId) {
         setStatus('LIFFの設定待ちです。');
         setErrorCode('liff_not_configured');
         return;
@@ -47,7 +68,7 @@ export default function LineConnectClient() {
 
       try {
         setStatus('LINE本人確認中…');
-        await liff.init({ liffId: LIFF_ID });
+        await liff.init({ liffId });
         if (cancelled) return;
 
         if (!liff.isLoggedIn()) {
@@ -62,7 +83,7 @@ export default function LineConnectClient() {
         if (!idToken) throw new Error('id_token_unavailable');
 
         setStatus('FLOW OSのデータと接続しています…');
-        const response = await fetch(`${SUPABASE_URL}/functions/v1/line-pwa-bootstrap`, {
+        const response = await fetch(`${supabaseUrl}/functions/v1/line-pwa-bootstrap`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id_token: idToken }),
@@ -84,7 +105,7 @@ export default function LineConnectClient() {
 
         localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...payload, cached_at: new Date().toISOString() }));
         setStatus('接続できました。FLOW OSを開きます…');
-        window.location.replace('/today');
+        window.location.replace(next);
       } catch (error) {
         if (cancelled) return;
         const code = error instanceof Error ? error.message : 'connection_failed';
