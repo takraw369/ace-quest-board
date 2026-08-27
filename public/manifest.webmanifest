@@ -2,7 +2,7 @@
   "name": "FLOW OS Quest",
   "short_name": "FLOW Quest",
   "description": "自分を知り、学び、Questで一歩進むためのFLOW OS",
-  "start_url": "/",
+  "start_url": "/today",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
