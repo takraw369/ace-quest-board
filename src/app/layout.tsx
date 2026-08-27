@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import LayerSwitcher from "@/components/navigation/LayerSwitcher";
+import PwaRegister from "@/components/pwa/PwaRegister";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -15,7 +16,25 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "FLOW OS",
-  description: "Knowledge → Want to → Quest",
+  description: "自分を知り、学び、Questで一歩進むためのFLOW OS",
+  applicationName: "FLOW OS Quest",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "FLOW Quest",
+  },
+  icons: {
+    icon: "/icon-192.svg",
+    apple: "/icon-192.svg",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#090a08",
 };
 
 export default function RootLayout({
@@ -29,6 +48,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <PwaRegister />
         <LayerSwitcher />
         {children}
       </body>
