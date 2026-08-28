@@ -21,9 +21,11 @@ Knowledge Want to Quest
 - 編集・収集の作業台: Google Sheets `CONTENT_OS / 20_PAIN_FLOW`
 - アプリ正本: Supabase `public.ace_dictionary_entries`
 - Flower UI: `/dictionary`
-- AI lookup API: `/api/dictionary?q=...&category=...&limit=3`
+- AI lookup: Supabase RPC `search_ace_dictionary(search_query, category_filter, result_limit)`
 
 Flower と ACE AI は同じ Supabase 正本を参照する。
+
+`ace-quest-board` は `output: export` の静的アプリなので、AI検索の動的APIをNext.js Route Handlerとして持たせない。検索ロジックはSupabase側へ置き、Web App・LINE・AIから同じRPCを利用する。
 
 ## Flower experience
 
@@ -39,12 +41,21 @@ Flower と ACE AI は同じ Supabase 正本を参照する。
 ACE AI は辞典を診断装置として扱わない。
 
 1. **単一原因に決めつけない。** 1つの結果には複数要因があり得る。
-2. **原則3候補まで返す。** pain_text だけでなく FAQ / tags / hidden_want / reframe / root_structure / metaphor も検索する。
+2. **原則3候補まで返す。** `search_ace_dictionary(..., result_limit => 3)` を基本にする。pain_text だけでなく FAQ / tags / aliases / hidden_want / reframe / root_structure / metaphor も検索対象。
 3. **本人確認を入れる。** 「この中だとどれが近い？」のように選択権をFlowerへ返す。
 4. **Self first.** まず小さな自己理解・一手を優先する。販売CTAを自動で最優先にしない。
 5. **必要時のみ深める。** Content → Diagnose → Quest → Community / Service の順は状況に合わせる。
 6. **Safetyは別扱い。** 症状・負担が強い、長引く、生活に支障、安全懸念があるテーマでは、辞典内で完結させず適切な医療・公的・専門相談を優先する。
 7. **辞典にない時は捏造しない。** 近似候補であることを示すか、新しい悩み語として収集候補へ回す。
+
+### RPC example
+
+```sql
+select *
+from public.search_ace_dictionary('夫婦', null, 3);
+```
+
+返却候補には Pain ID / category / pain_text / root_structure / metaphor / reframe / first_action / CTA / match_score が含まれる。
 
 ## Data fields
 
