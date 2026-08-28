@@ -1,4 +1,5 @@
 export const APP_ROUTES = {
+  dictionary: '/dictionary',
   knowledge: '/knowledge',
   wantTo: '/want-to',
   quest: '/',
