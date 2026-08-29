@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import PwaNav from '@/components/navigation/PwaNav';
 import {
   DeepeningPayload,
+  growthAction,
   loadBootstrap,
   loadDeepeningContent,
   PwaBootstrap,
@@ -39,6 +40,8 @@ export default function LearnClient() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [savedIds, setSavedIds] = useState<string[]>([]);
   const impressionKeyRef = useRef<string | null>(null);
+  const readDepthSentRef = useRef<Set<string>>(new Set());
+  const openedAtRef = useRef<Record<string, number>>({});
 
   useEffect(() => setData(loadBootstrap()), []);
   const rec = useMemo(() => recommendationOf(data, 'education'), [data]);
@@ -72,15 +75,77 @@ export default function LearnClient() {
   }, [data, deepening, visibleItemIds, visibleItems]);
 
   useEffect(() => {
-    if (!deepening || typeof window === 'undefined' || !window.location.hash.startsWith('#content-')) return;
+    if (!data || !deepening || typeof window === 'undefined' || !window.location.hash.startsWith('#content-')) return;
     const id = decodeURIComponent(window.location.hash.slice('#content-'.length));
     const item = deepening.items.find((candidate) => candidate.id === id);
-    if (!item) return;
+    const index = deepening.items.slice(0, 3).findIndex((candidate) => candidate.id === id);
+    if (!item || index < 0) return;
+    openedAtRef.current[item.id] = Date.now();
     setExpandedId(item.id);
+    const tracking = contentTrackingPayload(item, index, deepening, 'learn');
+    void trackContentAction(data, 'content_opened', tracking).catch(() => undefined);
     window.setTimeout(() => {
       document.getElementById(`content-${item.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 50);
-  }, [deepening]);
+  }, [data, deepening]);
+
+  useEffect(() => {
+    if (!data || !deepening || !expandedId || typeof window === 'undefined' || !sessionIsUsable(data)) return;
+    const index = visibleItems.findIndex((item) => item.id === expandedId);
+    const item = index >= 0 ? visibleItems[index] : null;
+    if (!item?.body) return;
+
+    openedAtRef.current[item.id] ??= Date.now();
+    const tracking = contentTrackingPayload(item, index, deepening, 'learn');
+    let frame = 0;
+
+    const emit = (action: 'content_read_25' | 'content_read_50' | 'content_read_90' | 'content_completed', depth: number, dwellMs: number) => {
+      const key = `${deepening.flow_day ?? ''}:${item.id}:${action}`;
+      if (readDepthSentRef.current.has(key)) return;
+      readDepthSentRef.current.add(key);
+      void growthAction(data, action, null, {
+        ...tracking,
+        read_depth: depth,
+        dwell_ms: dwellMs,
+      }).catch(() => {
+        readDepthSentRef.current.delete(key);
+      });
+    };
+
+    const evaluate = () => {
+      const element = document.getElementById(`content-body-${item.id}`);
+      if (!element || document.visibilityState === 'hidden') return;
+      const rect = element.getBoundingClientRect();
+      const height = Math.max(element.scrollHeight, rect.height, 1);
+      const visibleThrough = window.innerHeight - rect.top;
+      const progress = Math.max(0, Math.min(1, visibleThrough / height));
+      const dwellMs = Math.max(0, Date.now() - (openedAtRef.current[item.id] ?? Date.now()));
+
+      if (progress >= 0.25) emit('content_read_25', 25, dwellMs);
+      if (progress >= 0.50) emit('content_read_50', 50, dwellMs);
+      if (progress >= 0.90) emit('content_read_90', 90, dwellMs);
+      if (progress >= 0.98 && dwellMs >= 5_000) emit('content_completed', 100, dwellMs);
+    };
+
+    const scheduleEvaluate = () => {
+      if (frame) cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(evaluate);
+    };
+
+    window.addEventListener('scroll', scheduleEvaluate, { passive: true });
+    window.addEventListener('resize', scheduleEvaluate);
+    document.addEventListener('visibilitychange', scheduleEvaluate);
+    const timer = window.setInterval(evaluate, 1_000);
+    window.setTimeout(evaluate, 80);
+
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      window.clearInterval(timer);
+      window.removeEventListener('scroll', scheduleEvaluate);
+      window.removeEventListener('resize', scheduleEvaluate);
+      document.removeEventListener('visibilitychange', scheduleEvaluate);
+    };
+  }, [data, deepening, expandedId, visibleItemIds]);
 
   if (!data?.ok || !sessionIsUsable(data)) {
     return <main className="min-h-screen bg-[#090a08] px-5 py-16 text-[#e9e1d1]"><div className="mx-auto max-w-md"><p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#789581]">LEARN</p><h1 className="mt-3 font-serif text-3xl font-semibold">LINEと接続して学びを始める</h1><p className="mt-4 text-sm leading-7 text-[#939a92]">本人データと接続すると、今の状態に合わせたEducationが出ます。</p><Link href="/connect/line" className="mt-7 inline-flex rounded-full bg-[#d9c18d] px-5 py-3 text-sm font-semibold text-[#171813]">LINEと接続</Link></div><PwaNav /></main>;
@@ -126,6 +191,11 @@ export default function LearnClient() {
                       type="button"
                       onClick={() => {
                         const nextExpanded = !expanded;
+                        if (nextExpanded) {
+                          openedAtRef.current[item.id] = Date.now();
+                        } else {
+                          delete openedAtRef.current[item.id];
+                        }
                         setExpandedId(nextExpanded ? item.id : null);
                         if (nextExpanded && tracking) {
                           void trackContentAction(data, 'content_opened', tracking).catch(() => undefined);
@@ -140,7 +210,7 @@ export default function LearnClient() {
                     </button>
 
                     {expanded && item.body && (
-                      <div className="mt-4 border-t border-white/10 pt-4">
+                      <div id={`content-body-${item.id}`} className="mt-4 border-t border-white/10 pt-4">
                         <p className="whitespace-pre-wrap text-sm leading-8 text-[#d5d8d2]">{item.body}</p>
                       </div>
                     )}
