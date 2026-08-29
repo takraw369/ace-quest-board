@@ -1,7 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-const ENGINE = "ace-recommendation-adapter-v1";
+const ENGINE = "ace-recommendation-adapter-v2";
 const AXES = ["BODY", "COGNITION", "EMOTION", "ACTION"] as const;
 type AceAxis = typeof AXES[number];
 
@@ -42,6 +42,31 @@ const axisLens: Record<AceAxis, { label:string; focus:string; intro:string; pred
   },
 };
 
+const bodyPath = ["N002", "N003", "N001"] as const;
+const progressionPrompts: Record<string, { intro:string; prediction:string; action:string; actual:string; reflection:string }> = {
+  N002: {
+    intro:"安全につかまれる場所で行う。",
+    prediction:"目を閉じて片足立ちを何秒できそうか、先に予想する。",
+    action:"実際に試して秒数を測る。無理はせず、ふらついたらすぐ足をつく。",
+    actual:"実際の秒数を記録する。",
+    reflection:"予想と実測はどれくらいズレた？ そのズレをどう感じた？",
+  },
+  N003: {
+    intro:"片足立ちで見えた『予想と実際の差』を、今度は日常の小さな行動で確かめる。",
+    prediction:"今日やる小さな行動を1つ選び、何分かかるか・どれくらい大変かを先に予想する。",
+    action:"その行動を実際に行い、かかった時間と感覚を記録する。",
+    actual:"実際にかかった時間と、やってみた感覚を記録する。",
+    reflection:"予測と結果のどこが一番ズレた？ 次に同じことを予測するなら何を変える？",
+  },
+  N001: {
+    intro:"直前の体験を1つ選び、反応を4つに分けて見る。",
+    prediction:"その出来事について、まず『事実だと思っていること』を一文で書く。",
+    action:"同じ出来事を、事実・解釈・感情・身体反応の4つに分けて書き直す。",
+    actual:"4つに分けたあと、最初の見え方と何が変わったかを書く。",
+    reflection:"最初は何と何が混ざっていた？ 分けたことで次の行動は変わりそう？",
+  },
+};
+
 function resolveLens(ace:any){
   const scores=ace?.scores??{};
   const values=AXES.map((axis)=>Number(scores?.[axis])).filter(Number.isFinite);
@@ -66,6 +91,14 @@ function resolveLens(ace:any){
   return {mode:"axis",axis,...axisLens[axis],spread:values.length===4?Math.max(...values)-Math.min(...values):null};
 }
 
+function nodeFromRecommendation(rec:any){
+  const fromMeta=String(rec?.metadata?.node_id??"").trim();
+  if(fromMeta)return fromMeta;
+  const ref=String(rec?.recommendation_ref??"");
+  const match=ref.match(/experiment:(N\d+):/);
+  return match?.[1]??null;
+}
+
 Deno.serve(async(req:Request)=>{
   if(req.method!=="POST")return new Response("method not allowed",{status:405});
   const adminKey=getAdminKey(),internal=req.headers.get("x-internal-key"),supabaseUrl=Deno.env.get("SUPABASE_URL");
@@ -83,13 +116,48 @@ Deno.serve(async(req:Request)=>{
     const lens=resolveLens(ace);
     if(!lens)return Response.json({ok:true,adapted:false,reason:"ace_unavailable"});
 
-    const {data:recs,error:re}=await supabase.from("education_recommendations")
-      .select("id,recommendation_type,reason,alternative,metadata,source_signals")
-      .eq("person_id",personId)
-      .in("status",["proposed","shown"])
-      .order("generated_at",{ascending:false})
-      .limit(6);
+    const [{data:recs,error:re},{data:lastCompleted,error:lce}]=await Promise.all([
+      supabase.from("education_recommendations")
+        .select("id,recommendation_type,recommendation_ref,reason,alternative,metadata,source_signals")
+        .eq("person_id",personId)
+        .in("status",["proposed","shown"])
+        .order("generated_at",{ascending:false})
+        .limit(6),
+      supabase.from("education_recommendations")
+        .select("id,recommendation_type,recommendation_ref,metadata,acted_at")
+        .eq("person_id",personId)
+        .eq("recommendation_type","quest")
+        .eq("status","completed")
+        .order("acted_at",{ascending:false})
+        .limit(1)
+        .maybeSingle(),
+    ]);
     if(re)throw re;
+    if(lce)throw lce;
+
+    const baseQuest=(recs??[]).find((rec:any)=>rec.recommendation_type==="quest")??null;
+    const baseNode=nodeFromRecommendation(baseQuest);
+    const previousNode=nodeFromRecommendation(lastCompleted);
+    let progression:any=null;
+
+    if(flow?.bottleneck==="body"&&baseNode==="N002"&&previousNode&&bodyPath.includes(previousNode as any)){
+      const index=bodyPath.indexOf(previousNode as any);
+      const targetNodeId=bodyPath[(index+1)%bodyPath.length];
+      if(targetNodeId!==baseNode){
+        const {data:targetNode,error:tne}=await supabase.from("curriculum_nodes")
+          .select("external_node_id,node_title,advance_evidence,branch,spine_stage")
+          .eq("external_node_id",targetNodeId)
+          .maybeSingle();
+        if(tne)throw tne;
+        progression={
+          previousNode,
+          targetNodeId,
+          targetTitle:targetNode?.node_title??targetNodeId,
+          advanceEvidence:targetNode?.advance_evidence??null,
+          prompt:progressionPrompts[targetNodeId],
+        };
+      }
+    }
 
     const ids:string[]=[];
     for(const rec of recs??[]){
@@ -97,17 +165,43 @@ Deno.serve(async(req:Request)=>{
       const meta={...(rec.metadata??{}),ace_adapter:ENGINE,ace_mode:lens.mode,ace_axis:lens.axis,ace_label:lens.label,ace_scores:ace?.scores??null,flow_bottleneck:flow?.bottleneck??null};
       const sourceSignals=[...(Array.isArray(rec.source_signals)?rec.source_signals:[]),{type:"ace",mode:lens.mode,result_axis:ace?.result_axis??null,scores:ace?.scores??null,assessment_id:ace?.assessment_id??null}];
       let reason=String(rec.reason??"");
+      let recommendationRef=rec.recommendation_ref;
+
+      if(progression&&(rec.recommendation_type==="education"||rec.recommendation_type==="quest")){
+        meta.node_id=progression.targetNodeId;
+        meta.node_title=progression.targetTitle;
+        meta.progression_adapter=ENGINE;
+        meta.previous_node_id=progression.previousNode;
+        meta.progression_path="N002>N003>N001";
+        sourceSignals.push({type:"progression",from:progression.previousNode,to:progression.targetNodeId,path:"N002>N003>N001"});
+
+        if(rec.recommendation_type==="education"){
+          recommendationRef=progression.targetNodeId;
+          alt.focus=progression.advanceEvidence??progression.prompt.reflection;
+          alt.experience=progression.prompt;
+          reason=`前のQuest「${progression.previousNode}」を完了したので、次は「${progression.targetTitle}」へ進む。体験を繰り返すだけでなく、今回の結果から次の見方を学ぶ。`;
+        }else{
+          const suffix=String(rec.recommendation_ref??"experiment:N002:today").split(":").pop()||"today";
+          recommendationRef=`experiment:${progression.targetNodeId}:${suffix}`;
+          alt.action=progression.prompt.action;
+          alt.experiment={...progression.prompt};
+          reason=`前のQuestを完了したので、同じ片足立ちを繰り返さず「${progression.targetTitle}」へ進む。前回の体験を材料に、次の実験を1周する。`;
+        }
+      }
 
       if(rec.recommendation_type==="education"){
-        alt.focus=lens.focus;
+        alt.focus=progression?.advanceEvidence??alt.focus??lens.focus;
         alt.ace_lens={mode:lens.mode,axis:lens.axis,label:lens.label};
         reason=`${reason} ACE Calibrationは「${lens.label}」として使い、${lens.focus}`;
       }else if(rec.recommendation_type==="quest"){
         const experiment={...((alt.experiment??{}) as Record<string,unknown>)};
-        experiment.intro=lens.intro;
-        experiment.prediction=lens.prediction;
-        if(lens.action)experiment.action=lens.action;
-        experiment.reflection=lens.reflection;
+        const baseIntro=String(experiment.intro??"").trim();
+        const basePrediction=String(experiment.prediction??"").trim();
+        const baseReflection=String(experiment.reflection??"").trim();
+        experiment.intro=baseIntro?`${baseIntro} ${lens.intro}`:lens.intro;
+        experiment.prediction=basePrediction||lens.prediction;
+        if(lens.action&&!progression)experiment.action=lens.action;
+        experiment.reflection=baseReflection?`${baseReflection} ACE観察: ${lens.reflection}`:lens.reflection;
         alt.experiment=experiment;
         alt.ace_lens={mode:lens.mode,axis:lens.axis,label:lens.label};
         reason=`${reason} ACE Calibrationは「${lens.label}」。このQuestではそのレンズで予測→実測→振り返りを行う。`;
@@ -115,15 +209,37 @@ Deno.serve(async(req:Request)=>{
         meta.ace_lens=lens.label;
       }
 
-      const {error:ue}=await supabase.from("education_recommendations").update({reason,alternative:alt,metadata:meta,source_signals:sourceSignals}).eq("id",rec.id);
+      const {error:ue}=await supabase.from("education_recommendations").update({recommendation_ref:recommendationRef,reason,alternative:alt,metadata:meta,source_signals:sourceSignals}).eq("id",rec.id);
       if(ue)throw ue;
       ids.push(rec.id);
     }
 
-    const current={...(contact.metadata?.current_recommendations??{}),ace_lens:{mode:lens.mode,axis:lens.axis,label:lens.label,focus:lens.focus,scores:ace?.scores??null,assessment_id:ace?.assessment_id??null,adapter:ENGINE},flow_target:flow?.bottleneck??null,adapted_at:new Date().toISOString()};
+    const currentBase={...(contact.metadata?.current_recommendations??{})};
+    const current=progression?{
+      ...currentBase,
+      node_id:progression.targetNodeId,
+      node_title:progression.targetTitle,
+      learn:{focus:progression.advanceEvidence??progression.prompt.reflection},
+      quest:{...(currentBase.quest??{}),experiment:progression.prompt},
+      progression:{path:"N002>N003>N001",previous_node_id:progression.previousNode,current_node_id:progression.targetNodeId,adapter:ENGINE,advanced_at:new Date().toISOString()},
+      ace_lens:{mode:lens.mode,axis:lens.axis,label:lens.label,focus:lens.focus,scores:ace?.scores??null,assessment_id:ace?.assessment_id??null,adapter:ENGINE},
+      flow_target:flow?.bottleneck??null,
+      adapted_at:new Date().toISOString(),
+    }:{
+      ...currentBase,
+      ace_lens:{mode:lens.mode,axis:lens.axis,label:lens.label,focus:lens.focus,scores:ace?.scores??null,assessment_id:ace?.assessment_id??null,adapter:ENGINE},
+      flow_target:flow?.bottleneck??null,
+      adapted_at:new Date().toISOString(),
+    };
+
+    if(progression){
+      const {error:cs}=await supabase.from("curriculum_states").update({recommended_node_id:progression.targetNodeId,updated_at:new Date().toISOString()}).eq("person_id",personId);
+      if(cs)throw cs;
+    }
+
     const {error:cu}=await supabase.from("contacts").update({metadata:{...(contact.metadata??{}),current_recommendations:current},updated_at:new Date().toISOString()}).eq("id",personId);
     if(cu)throw cu;
-    await supabase.from("funnel_events").insert({contact_id:personId,event_type:"ace_recommendations_adapted",channel:"system",payload:{engine:ENGINE,ace_mode:lens.mode,ace_axis:lens.axis,flow_bottleneck:flow?.bottleneck??null,recommendation_ids:ids}});
-    return Response.json({ok:true,adapted:true,ace_lens:current.ace_lens,recommendation_ids:ids});
+    await supabase.from("funnel_events").insert({contact_id:personId,event_type:"ace_recommendations_adapted",channel:"system",payload:{engine:ENGINE,ace_mode:lens.mode,ace_axis:lens.axis,flow_bottleneck:flow?.bottleneck??null,recommendation_ids:ids,progression:progression?{from:progression.previousNode,to:progression.targetNodeId,path:"N002>N003>N001"}:null}});
+    return Response.json({ok:true,adapted:true,ace_lens:current.ace_lens,progression:current.progression??null,recommendation_ids:ids});
   }catch(error){console.error("ace-recommendation-adapter error",error);return Response.json({ok:false,error:"adapt_failed",detail:String(error)},{status:500});}
 });
