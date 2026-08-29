@@ -62,6 +62,12 @@ export type DeepeningOffer = {
   checkout_url?: string | null;
 };
 
+export type DeepeningProgression = {
+  stage: 'discover' | 'collect' | 'connect' | 'go_deeper' | string;
+  quests_completed: number;
+  paid_offer_unlocked: boolean;
+};
+
 export type DeepeningPayload = {
   ok: boolean;
   unlocked: boolean;
@@ -72,6 +78,7 @@ export type DeepeningPayload = {
   reason?: string | null;
   items: DeepeningContentItem[];
   offer?: DeepeningOffer | null;
+  progression?: DeepeningProgression | null;
 };
 
 export type PwaBootstrap = {
@@ -154,6 +161,7 @@ export async function loadDeepeningContent(data: PwaBootstrap): Promise<Deepenin
     reason: result?.reason ?? null,
     items: Array.isArray(result?.items) ? result.items : [],
     offer: result?.offer ?? null,
+    progression: result?.progression ?? null,
   };
 }
 
