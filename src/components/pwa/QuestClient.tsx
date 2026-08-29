@@ -3,7 +3,16 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import PwaNav from '@/components/navigation/PwaNav';
-import { DailyQuestState, growthAction, loadBootstrap, PwaBootstrap, recommendationOf, sessionIsUsable } from '@/lib/pwa';
+import {
+  DailyQuestState,
+  DeepeningPayload,
+  growthAction,
+  loadBootstrap,
+  loadDeepeningContent,
+  PwaBootstrap,
+  recommendationOf,
+  sessionIsUsable,
+} from '@/lib/pwa';
 
 type Experiment = { intro?: string; prediction?: string; action?: string; actual?: string; reflection?: string };
 type CompletionResult = {
@@ -25,7 +34,37 @@ function unlockLabel(value?: string | null) {
   }).format(new Date(value));
 }
 
-function DailyComplete({ data }: { data: PwaBootstrap }) {
+function RelatedLearning({ deepening }: { deepening: DeepeningPayload | null }) {
+  if (!deepening) {
+    return <p className="mt-5 text-sm text-[#939a92]">今日の体験から、気になりそうな学びを選んでいます…</p>;
+  }
+
+  const items = deepening.items.slice(0, 3);
+  if (items.length === 0) return null;
+
+  return (
+    <section className="mt-6">
+      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#d2b97f]">TODAY&apos;S PICKS</p>
+      <h2 className="mt-2 font-serif text-xl font-semibold">この中で、ちょっと気になるのある？</h2>
+      <div className="mt-4 space-y-3">
+        {items.map((item) => (
+          <Link
+            key={item.id}
+            href={`/learn#content-${item.id}`}
+            className="block rounded-[22px] border border-[#c8ab72]/15 bg-white/[0.025] p-4 transition active:scale-[0.99]"
+          >
+            <p className="font-serif text-lg font-semibold leading-7 text-[#eee8dc]">{item.title}</p>
+            {item.why && <p className="mt-2 text-xs leading-6 text-[#8fa795]">{item.why}</p>}
+            <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.18em] text-[#d2b97f]">OPEN →</p>
+          </Link>
+        ))}
+      </div>
+      <p className="mt-3 text-xs leading-6 text-[#7f867f]">全部読む必要はなし。気になる1つだけ拾えばOK。</p>
+    </section>
+  );
+}
+
+function DailyComplete({ data, deepening }: { data: PwaBootstrap; deepening: DeepeningPayload | null }) {
   const unlock = unlockLabel(data.daily_quest?.next_unlock_at);
   return (
     <main className="min-h-screen bg-[#090a08] px-4 pb-28 pt-8 text-[#e9e1d1] sm:px-6">
@@ -35,15 +74,13 @@ function DailyComplete({ data }: { data: PwaBootstrap }) {
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#a9c0af]">TODAY COMPLETE</p>
           <h1 className="mt-3 font-serif text-3xl font-semibold">今日のQuestは完了</h1>
           <p className="mt-4 text-sm leading-7 text-[#aeb5ad]">今日はここで区切り。実行と振り返りはHuman Graphへ保存されています。</p>
-          <div className="mt-5 rounded-[22px] border border-[#d9c18d]/20 bg-black/15 p-5">
+          <RelatedLearning deepening={deepening} />
+          <div className="mt-6 rounded-[22px] border border-[#d9c18d]/20 bg-black/15 p-5">
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#d2b97f]">NEXT FLOW DAY</p>
             <p className="mt-2 font-serif text-xl font-semibold">次のQuestは {unlock} に更新</p>
             <p className="mt-2 text-xs leading-6 text-[#8fa795]">FLOW Dayは毎朝5:00に切り替わります。Questを連続消化するより、1日を使って変化を観察します。</p>
           </div>
-          <div className="mt-5 space-y-3">
-            <Link href="/learn" className="flex w-full items-center justify-center rounded-full bg-[#d9c18d] px-5 py-4 text-sm font-semibold text-[#171813]">気づきを深める →</Link>
-            <Link href="/today" className="flex w-full items-center justify-center rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-[#aeb5ad]">Todayへ戻る</Link>
-          </div>
+          <Link href="/today" className="mt-5 flex w-full items-center justify-center rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-[#aeb5ad]">Todayへ戻る</Link>
         </section>
       </div>
       <PwaNav />
@@ -58,16 +95,30 @@ export default function QuestClient() {
   const [reflection, setReflection] = useState('');
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<CompletionResult | null>(null);
+  const [deepening, setDeepening] = useState<DeepeningPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => setData(loadBootstrap()), []);
   const rec = useMemo(() => recommendationOf(data, 'quest'), [data]);
 
+  useEffect(() => {
+    if (!data || data.daily_quest?.status !== 'completed' || !sessionIsUsable(data)) return;
+    let cancelled = false;
+    void loadDeepeningContent(data)
+      .then((payload) => {
+        if (!cancelled) setDeepening(payload);
+      })
+      .catch(() => {
+        if (!cancelled) setDeepening({ ok: false, unlocked: true, items: [] });
+      });
+    return () => { cancelled = true; };
+  }, [data?.session_token, data?.daily_quest?.status, data?.daily_quest?.completed_recommendation_id]);
+
   if (!data?.ok || !sessionIsUsable(data)) {
     return <main className="min-h-screen bg-[#090a08] px-5 py-16 text-[#e9e1d1]"><div className="mx-auto max-w-md"><p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#789581]">QUEST</p><h1 className="mt-3 font-serif text-3xl font-semibold">LINEと接続してQuestを始める</h1><p className="mt-4 text-sm leading-7 text-[#939a92]">本人データと接続すると、今の状態に合う実験が出ます。</p><Link href="/connect/line" className="mt-7 inline-flex rounded-full bg-[#d9c18d] px-5 py-3 text-sm font-semibold text-[#171813]">LINEと接続</Link></div><PwaNav /></main>;
   }
 
-  if (!result && data.daily_quest?.status === 'completed') return <DailyComplete data={data} />;
+  if (!result && data.daily_quest?.status === 'completed') return <DailyComplete data={data} deepening={deepening} />;
   if (!result && !rec) return <main className="min-h-screen bg-[#090a08] px-5 py-16 text-[#e9e1d1]"><div className="mx-auto max-w-md"><h1 className="font-serif text-3xl font-semibold">Questを準備中</h1><p className="mt-4 text-sm text-[#939a92]">LINEからもう一度FLOW OSを開くと最新のQuestを取得します。</p></div><PwaNav /></main>;
 
   const alt = (rec?.alternative ?? {}) as Record<string, unknown>;
@@ -89,6 +140,8 @@ export default function QuestClient() {
         streak: out?.progress?.streak_current ?? data.progress?.streak_current ?? 0,
         dailyQuest: out?.daily_quest ?? latest?.daily_quest ?? null,
       });
+      const source = latest ?? data;
+      void loadDeepeningContent(source).then(setDeepening).catch(() => undefined);
     } catch (e) { setError(e instanceof Error ? e.message : 'complete_failed'); }
     finally { setBusy(false); }
   };
@@ -105,16 +158,14 @@ export default function QuestClient() {
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#a9c0af]">Quest Complete</p>
             <p className="mt-3 font-serif text-3xl font-semibold">+{result.xp ?? 0} XP</p>
             <p className="mt-2 text-sm text-[#aeb5ad]">累計 {result.total ?? 0} XP｜🔥 {result.streak ?? 0}日連続</p>
-            <p className="mt-3 text-sm leading-7 text-[#929992]">予想・実測・振り返りをHuman Graphへ記録しました。次は、この体験に関係する学びを少しだけ足して気づきを深めます。</p>
-            <div className="mt-5 rounded-[22px] border border-[#d9c18d]/20 bg-black/15 p-5">
+            <p className="mt-3 text-sm leading-7 text-[#929992]">予想・実測・振り返りをHuman Graphへ記録しました。</p>
+            <RelatedLearning deepening={deepening} />
+            <div className="mt-6 rounded-[22px] border border-[#d9c18d]/20 bg-black/15 p-5">
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#d2b97f]">NEXT FLOW DAY</p>
               <p className="mt-2 font-serif text-xl font-semibold">次のQuestは {unlockLabel(result.dailyQuest?.next_unlock_at)} に更新</p>
               <p className="mt-2 text-xs leading-6 text-[#8fa795]">今日はQuestを増やさず、体験→学び→日常観察で1日を閉じます。</p>
             </div>
-            <div className="mt-5 space-y-3">
-              <Link href="/learn" className="flex w-full items-center justify-center rounded-full bg-[#d9c18d] px-5 py-4 text-sm font-semibold text-[#171813]">気づきを深める →</Link>
-              <Link href="/today" className="flex w-full items-center justify-center rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-[#aeb5ad]">今日はここまで</Link>
-            </div>
+            <Link href="/today" className="mt-5 flex w-full items-center justify-center rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-[#aeb5ad]">今日はここまで</Link>
           </section>
         ) : (
           <div className="mt-7 space-y-4">
