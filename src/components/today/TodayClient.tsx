@@ -4,14 +4,16 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import PwaNav from '@/components/navigation/PwaNav';
 import { loadBootstrap, PwaBootstrap } from '@/lib/pwa';
+import { questContextLabel, questContextOf } from '@/lib/questContext';
 
 const domainLabel: Record<string, string> = { body: '身体', mind: '心・認知', environment: '環境', action: '行動' };
 
-function RecommendationCard({ eyebrow, title, body, href, action }: { eyebrow: string; title: string; body: string; href: string; action: string }) {
+function RecommendationCard({ eyebrow, title, body, href, action, detail }: { eyebrow: string; title: string; body: string; href: string; action: string; detail?: string }) {
   return (
     <article className="rounded-[26px] border border-[#c8ab72]/15 bg-white/[0.025] p-5 shadow-[0_22px_70px_rgba(0,0,0,0.22)]">
       <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-[#789581]">{eyebrow}</p>
       <h2 className="mt-2 font-serif text-xl font-semibold text-[#eee8dc]">{title}</h2>
+      {detail && <p className="mt-2 text-[11px] leading-5 text-[#d0bc91]">{detail}</p>}
       <p className="mt-3 text-sm leading-7 text-[#9ca097]">{body}</p>
       <Link href={href} className="mt-5 inline-flex rounded-full border border-[#c8ab72]/25 bg-[#c8ab72]/10 px-4 py-2.5 text-xs font-semibold text-[#e5d3aa]">{action}</Link>
     </article>
@@ -38,6 +40,9 @@ export default function TodayClient() {
   const progress = data.progress ?? {}, flow = data.flow ?? null, rank = String(progress.growth_rank ?? 'seed').toUpperCase(), bottleneck = flow?.bottleneck ? domainLabel[flow.bottleneck] ?? flow.bottleneck : '未判定', name = data.profile?.display_name || 'あなた';
   const educationTitle = (education?.metadata?.node_title as string | undefined) ?? education?.recommendation_ref ?? '今の自分を知る';
   const questAlt = (quest?.alternative ?? {}) as Record<string, unknown>;
+  const questContext = questContextOf(quest);
+  const questHeading = questContext.quest_mode === 'quick' ? '今できるQuest' : 'あとで向き合うQuest';
+  const questAction = questContext.quest_mode === 'quick' ? '今やってみる' : '時間を取って始める';
 
   return (
     <main className="min-h-screen bg-[#090a08] px-4 pb-28 pt-7 text-[#e9e1d1] sm:px-6">
@@ -51,9 +56,9 @@ export default function TodayClient() {
         </section>
 
         <section className="mt-8 space-y-4">
-          <div><p className="text-[9px] font-bold uppercase tracking-[0.22em] text-[#5e665f]">Recommended for you</p><h2 className="mt-1 font-serif text-2xl font-semibold">今、深める3つ。</h2></div>
+          <div><p className="text-[9px] font-bold uppercase tracking-[0.22em] text-[#5e665f]">Recommended for you</p><h2 className="mt-1 font-serif text-2xl font-semibold">今の状況に合う流れ。</h2></div>
           <RecommendationCard eyebrow="Education" title={educationTitle} body={education?.reason ?? data.curriculum?.reason ?? '体験と問いから、今の自分に必要な学びを選びます。'} href="/learn" action="体験から学ぶ" />
-          <RecommendationCard eyebrow="Quest" title={(questAlt.duration as string | undefined) ?? '今日のQuest'} body={quest?.reason ?? '今の実行履歴に合うサイズで、次の一手を現実にします。'} href="/quest" action="Questをやる" />
+          <RecommendationCard eyebrow={questContext.quest_mode === 'quick' ? 'Quick Quest' : 'Deep Quest'} title={questHeading} detail={questContextLabel(questContext)} body={quest?.reason ?? '今の実行履歴に合うサイズで、次の一手を現実にします。'} href="/quest" action={questAction} />
           <RecommendationCard eyebrow="People / Place" title="反応が増える出逢い" body={connection?.reason ?? '今のテーマに、違う視点や環境を1つ足します。'} href="/people" action="出逢いの方向を見る" />
         </section>
         {data.cached_at && <p className="mt-8 text-center text-[10px] text-[#505650]">最終同期 {new Date(data.cached_at).toLocaleString('ja-JP')}</p>}
