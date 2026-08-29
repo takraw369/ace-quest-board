@@ -25,7 +25,7 @@ declare global {
 
 const DEFAULT_SUPABASE_URL = 'https://qydbtholbwbuwiswmqsr.supabase.co';
 const STORAGE_KEY = 'flow:pwa:bootstrap:v1';
-const ALLOWED_NEXT = new Set(['/today', '/learn', '/quest', '/me', '/people']);
+const ALLOWED_NEXT = new Set(['/today', '/learn', '/quest', '/me', '/people', '/calibration']);
 
 async function loadRuntimeConfig(): Promise<RuntimeConfig> {
   try {
