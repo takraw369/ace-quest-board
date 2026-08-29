@@ -89,10 +89,38 @@ export async function growthAction(
       data: payload,
     }),
   });
-  const result = await response.json().catch(() => ({}));
+  let result = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(result?.error ?? `http_${response.status}`);
 
-  const hasFreshRecommendations = Array.isArray(result?.recommendations);
+  if (action === 'quest_complete') {
+    try {
+      const refreshResponse = await fetch(`${SUPABASE_URL}/functions/v1/pwa-refresh-recommendations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          session_token: data.session_token,
+          previous_recommendation_id: recommendationId ?? null,
+        }),
+      });
+      const refreshed = await refreshResponse.json().catch(() => ({}));
+      if (
+        refreshResponse.ok
+        && refreshed?.ok
+        && Array.isArray(refreshed?.recommendations)
+        && refreshed.recommendations.length > 0
+      ) {
+        result = {
+          ...result,
+          recommendations: refreshed.recommendations,
+          recommendation_summary: refreshed.recommendation_summary ?? null,
+        };
+      }
+    } catch {
+      // Quest completion is already durable. A refresh miss should not undo it.
+    }
+  }
+
+  const hasFreshRecommendations = Array.isArray(result?.recommendations) && result.recommendations.length > 0;
   if (result?.progress || hasFreshRecommendations || result?.recommendation_summary) {
     saveBootstrap({
       ...data,
