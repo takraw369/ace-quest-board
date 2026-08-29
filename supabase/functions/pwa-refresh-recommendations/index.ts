@@ -61,16 +61,12 @@ async function verifySession(token: string, secret: string) {
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function applyAceAdapter(supabaseUrl: string, adminKey: string, personId: string) {
-  try {
-    const response = await fetch(`${supabaseUrl}/functions/v1/ace-recommendation-adapter`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-internal-key": adminKey },
-      body: JSON.stringify({ contact_id: personId }),
-    });
-    if (!response.ok) console.error("ace adapter refresh failed", response.status);
-  } catch (error) {
-    console.error("ace adapter refresh error", error);
-  }
+  const response = await fetch(`${supabaseUrl}/functions/v1/ace-recommendation-adapter`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-internal-key": adminKey },
+    body: JSON.stringify({ contact_id: personId }),
+  });
+  if (!response.ok) throw new Error(`ace_adapter_${response.status}`);
 }
 
 Deno.serve(async (req: Request) => {
@@ -100,13 +96,13 @@ Deno.serve(async (req: Request) => {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
-    for (let attempt = 0; attempt < 10; attempt += 1) {
+    for (let attempt = 0; attempt < 20; attempt += 1) {
       const { data: rows, error } = await supabase
         .from("education_recommendations")
-        .select("id,recommendation_type,recommendation_ref,destination,reason,confidence,alternative,metadata,status,created_at")
+        .select("id,recommendation_type,recommendation_ref,destination,reason,confidence,alternative,metadata,status,generated_at")
         .eq("person_id", personId)
         .eq("status", "proposed")
-        .order("created_at", { ascending: false })
+        .order("generated_at", { ascending: false })
         .limit(12);
       if (error) throw error;
 
@@ -120,10 +116,10 @@ Deno.serve(async (req: Request) => {
 
         const { data: adaptedRows, error: adaptedError } = await supabase
           .from("education_recommendations")
-          .select("id,recommendation_type,recommendation_ref,destination,reason,confidence,alternative,metadata,status,created_at")
+          .select("id,recommendation_type,recommendation_ref,destination,reason,confidence,alternative,metadata,status,generated_at")
           .eq("person_id", personId)
           .eq("status", "proposed")
-          .order("created_at", { ascending: false })
+          .order("generated_at", { ascending: false })
           .limit(12);
         if (adaptedError) throw adaptedError;
 
@@ -146,7 +142,7 @@ Deno.serve(async (req: Request) => {
         }, { headers: cors });
       }
 
-      await sleep(200);
+      await sleep(250);
     }
 
     return Response.json({
