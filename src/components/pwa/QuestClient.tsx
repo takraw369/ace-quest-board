@@ -40,9 +40,9 @@ function DailyComplete({ data }: { data: PwaBootstrap }) {
             <p className="mt-2 font-serif text-xl font-semibold">次のQuestは {unlock} に更新</p>
             <p className="mt-2 text-xs leading-6 text-[#8fa795]">FLOW Dayは毎朝5:00に切り替わります。Questを連続消化するより、1日を使って変化を観察します。</p>
           </div>
-          <div className="mt-5 flex flex-wrap gap-3">
-            <Link href="/today" className="inline-flex rounded-full bg-[#d9c18d] px-5 py-3 text-sm font-semibold text-[#171813]">Todayへ</Link>
-            <Link href="/learn" className="inline-flex rounded-full border border-[#d9c18d]/30 px-5 py-3 text-sm font-semibold text-[#d9c18d]">Learnを見る</Link>
+          <div className="mt-5 space-y-3">
+            <Link href="/learn" className="flex w-full items-center justify-center rounded-full bg-[#d9c18d] px-5 py-4 text-sm font-semibold text-[#171813]">気づきを深める →</Link>
+            <Link href="/today" className="flex w-full items-center justify-center rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-[#aeb5ad]">Todayへ戻る</Link>
           </div>
         </section>
       </div>
@@ -105,15 +105,15 @@ export default function QuestClient() {
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#a9c0af]">Quest Complete</p>
             <p className="mt-3 font-serif text-3xl font-semibold">+{result.xp ?? 0} XP</p>
             <p className="mt-2 text-sm text-[#aeb5ad]">累計 {result.total ?? 0} XP｜🔥 {result.streak ?? 0}日連続</p>
-            <p className="mt-3 text-sm leading-7 text-[#929992]">予想・実測・振り返りをHuman Graphへ記録しました。今日のQuestはここで終了です。</p>
+            <p className="mt-3 text-sm leading-7 text-[#929992]">予想・実測・振り返りをHuman Graphへ記録しました。次は、この体験に関係する学びを少しだけ足して気づきを深めます。</p>
             <div className="mt-5 rounded-[22px] border border-[#d9c18d]/20 bg-black/15 p-5">
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#d2b97f]">NEXT FLOW DAY</p>
               <p className="mt-2 font-serif text-xl font-semibold">次のQuestは {unlockLabel(result.dailyQuest?.next_unlock_at)} に更新</p>
-              <p className="mt-2 text-xs leading-6 text-[#8fa795]">今日は実行結果を寝かせて、日常の中で変化を観察する時間にします。</p>
+              <p className="mt-2 text-xs leading-6 text-[#8fa795]">今日はQuestを増やさず、体験→学び→日常観察で1日を閉じます。</p>
             </div>
-            <div className="mt-5 flex flex-wrap gap-3">
-              <Link href="/today" className="inline-flex rounded-full bg-[#d9c18d] px-5 py-3 text-sm font-semibold text-[#171813]">Todayへ</Link>
-              <Link href="/learn" className="inline-flex rounded-full border border-[#d9c18d]/30 px-5 py-3 text-sm font-semibold text-[#d9c18d]">Learnを見る</Link>
+            <div className="mt-5 space-y-3">
+              <Link href="/learn" className="flex w-full items-center justify-center rounded-full bg-[#d9c18d] px-5 py-4 text-sm font-semibold text-[#171813]">気づきを深める →</Link>
+              <Link href="/today" className="flex w-full items-center justify-center rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-[#aeb5ad]">今日はここまで</Link>
             </div>
           </section>
         ) : (
