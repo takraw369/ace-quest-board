@@ -27,6 +27,15 @@ export type AceSnapshot = {
   };
 };
 
+export type DailyQuestState = {
+  status: 'available' | 'completed';
+  flow_day?: string;
+  completed_at?: string | null;
+  completed_recommendation_id?: string | null;
+  completed_node_id?: string | null;
+  next_unlock_at?: string | null;
+};
+
 export type PwaBootstrap = {
   ok: boolean;
   session_token?: string;
@@ -41,6 +50,7 @@ export type PwaBootstrap = {
     scores?: Record<string, number>;
   } | null;
   ace?: AceSnapshot | null;
+  daily_quest?: DailyQuestState | null;
   current_recommendations?: Record<string, unknown> | null;
   progress?: {
     xp_total?: number;
@@ -118,16 +128,13 @@ export async function growthAction(
         }),
       });
       const refreshed = await refreshResponse.json().catch(() => ({}));
-      if (
-        refreshResponse.ok
-        && refreshed?.ok
-        && Array.isArray(refreshed?.recommendations)
-        && refreshed.recommendations.length > 0
-      ) {
+      if (refreshResponse.ok && refreshed?.ok) {
         result = {
           ...result,
-          recommendations: refreshed.recommendations,
+          recommendations: Array.isArray(refreshed?.recommendations) ? refreshed.recommendations : [],
           recommendation_summary: refreshed.recommendation_summary ?? null,
+          daily_quest: refreshed.daily_quest ?? null,
+          daily_complete: refreshed.daily_complete === true,
         };
       }
     } catch {
@@ -136,13 +143,19 @@ export async function growthAction(
   }
 
   const hasFreshRecommendations = Array.isArray(result?.recommendations) && result.recommendations.length > 0;
-  if (result?.progress || hasFreshRecommendations || result?.recommendation_summary) {
+  const dailyQuest = result?.daily_quest as DailyQuestState | undefined;
+  const dailyComplete = dailyQuest?.status === 'completed' || result?.daily_complete === true;
+  if (result?.progress || hasFreshRecommendations || result?.recommendation_summary || dailyQuest) {
+    const recommendations = dailyComplete
+      ? (data.recommendations ?? []).filter((rec) => rec.recommendation_type !== 'quest')
+      : hasFreshRecommendations ? result.recommendations : data.recommendations;
     saveBootstrap({
       ...data,
       progress: result?.progress
         ? { ...(data.progress ?? {}), ...result.progress }
         : data.progress,
-      recommendations: hasFreshRecommendations ? result.recommendations : data.recommendations,
+      daily_quest: dailyQuest ?? data.daily_quest,
+      recommendations,
       current_recommendations: result?.recommendation_summary ?? data.current_recommendations,
     });
   }
