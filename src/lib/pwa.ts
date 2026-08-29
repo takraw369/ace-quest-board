@@ -13,6 +13,20 @@ export type Recommendation = {
   status?: string;
 };
 
+export type AceAxis = 'BODY' | 'COGNITION' | 'EMOTION' | 'ACTION';
+
+export type AceSnapshot = {
+  assessment_id?: string;
+  completed_at?: string;
+  assessed_at?: string;
+  contract_version?: string;
+  scores?: Partial<Record<AceAxis, number>>;
+  result_axis?: AceAxis;
+  context?: {
+    balance_skipped?: boolean;
+  };
+};
+
 export type PwaBootstrap = {
   ok: boolean;
   session_token?: string;
@@ -26,6 +40,7 @@ export type PwaBootstrap = {
     bottleneck?: string;
     scores?: Record<string, number>;
   } | null;
+  ace?: AceSnapshot | null;
   current_recommendations?: Record<string, unknown> | null;
   progress?: {
     xp_total?: number;
