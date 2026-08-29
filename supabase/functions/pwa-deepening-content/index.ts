@@ -80,6 +80,13 @@ function nodeFromQuest(quest: any) {
   return match?.[1] ?? null;
 }
 
+function progressionStage(questsCompleted: number) {
+  if (questsCompleted >= 10) return "go_deeper";
+  if (questsCompleted >= 7) return "connect";
+  if (questsCompleted >= 4) return "collect";
+  return "discover";
+}
+
 function checkoutForPerson(base: string | null, personId: string) {
   if (!base) return null;
   try {
@@ -129,6 +136,22 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
     if (questError) throw questError;
 
+    const { data: progressRow, error: progressError } = await supabase
+      .from("person_progress")
+      .select("quests_completed")
+      .eq("contact_id", personId)
+      .maybeSingle();
+    if (progressError) throw progressError;
+
+    const questsCompleted = Math.max(0, Number(progressRow?.quests_completed ?? 0));
+    const stage = progressionStage(questsCompleted);
+    const paidOfferUnlocked = stage === "go_deeper";
+    const progression = {
+      stage,
+      quests_completed: questsCompleted,
+      paid_offer_unlocked: paidOfferUnlocked,
+    };
+
     if (!completedQuest) {
       return Response.json({
         ok: true,
@@ -137,12 +160,21 @@ Deno.serve(async (req: Request) => {
         reason: "complete_today_quest_first",
         items: [],
         offer: null,
+        progression,
       }, { headers: cors });
     }
 
     const nodeId = nodeFromQuest(completedQuest);
     if (!nodeId) {
-      return Response.json({ ok: true, unlocked: true, flow_day: day.key, node_id: null, items: [], offer: null }, { headers: cors });
+      return Response.json({
+        ok: true,
+        unlocked: true,
+        flow_day: day.key,
+        node_id: null,
+        items: [],
+        offer: null,
+        progression,
+      }, { headers: cors });
     }
 
     const { data: links, error: linksError } = await supabase
@@ -185,23 +217,26 @@ Deno.serve(async (req: Request) => {
       };
     });
 
-    const offerSlug = (links ?? []).map((link: any) => link.offer_slug).find(Boolean) ?? "winning_os_90";
-    const { data: offerRow, error: offerError } = await supabase
-      .from("offers")
-      .select("slug,name,tier,price_jpy,status,checkout_url,description,metadata")
-      .eq("slug", offerSlug)
-      .eq("status", "active")
-      .maybeSingle();
-    if (offerError) throw offerError;
+    let offer = null;
+    if (paidOfferUnlocked) {
+      const offerSlug = (links ?? []).map((link: any) => link.offer_slug).find(Boolean) ?? "winning_os_90";
+      const { data: offerRow, error: offerError } = await supabase
+        .from("offers")
+        .select("slug,name,tier,price_jpy,status,checkout_url,description,metadata")
+        .eq("slug", offerSlug)
+        .eq("status", "active")
+        .maybeSingle();
+      if (offerError) throw offerError;
 
-    const offer = offerRow ? {
-      slug: offerRow.slug,
-      name: offerRow.name,
-      tier: offerRow.tier,
-      price_jpy: offerRow.price_jpy,
-      description: offerRow.description,
-      checkout_url: checkoutForPerson(offerRow.checkout_url, personId),
-    } : null;
+      offer = offerRow ? {
+        slug: offerRow.slug,
+        name: offerRow.name,
+        tier: offerRow.tier,
+        price_jpy: offerRow.price_jpy,
+        description: offerRow.description,
+        checkout_url: checkoutForPerson(offerRow.checkout_url, personId),
+      } : null;
+    }
 
     return Response.json({
       ok: true,
@@ -212,6 +247,7 @@ Deno.serve(async (req: Request) => {
       node_id: nodeId,
       items,
       offer,
+      progression,
     }, { headers: cors });
   } catch (error) {
     console.error("pwa-deepening-content error", error);
