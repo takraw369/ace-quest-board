@@ -13,22 +13,42 @@ async function refreshRecommendations(supabaseUrl:string,adminKey:string,personI
   if(ace&&!ace.ok)console.error("ace-recommendation-adapter refresh failed",ace.status,await ace.text());
 }
 
-const LINE_LOGIN_CHANNEL_ID = "2009606403";
+function flowDayWindow(now=new Date()){
+  const JST=9*60*60*1000,local=new Date(now.getTime()+JST),y=local.getUTCFullYear(),m=local.getUTCMonth(),d=local.getUTCDate(),beforeFive=local.getUTCHours()<5;
+  const localDayMs=Date.UTC(y,m,d)-(beforeFive?24*60*60*1000:0),start=new Date(localDayMs-JST+5*60*60*1000),next=new Date(start.getTime()+24*60*60*1000),keyLocal=new Date(start.getTime()+JST);
+  const key=`${keyLocal.getUTCFullYear()}-${String(keyLocal.getUTCMonth()+1).padStart(2,"0")}-${String(keyLocal.getUTCDate()).padStart(2,"0")}`;
+  return{start,next,key};
+}
+
+async function dailyQuestState(supabase:any,personId:string){
+  const window=flowDayWindow();
+  const{data,error}=await supabase.from("education_recommendations")
+    .select("id,recommendation_ref,acted_at,metadata")
+    .eq("person_id",personId).eq("recommendation_type","quest").eq("status","completed")
+    .gte("acted_at",window.start.toISOString()).lt("acted_at",window.next.toISOString())
+    .order("acted_at",{ascending:false}).limit(1).maybeSingle();
+  if(error)throw error;
+  return data?{status:"completed",flow_day:window.key,completed_at:data.acted_at,completed_recommendation_id:data.id,completed_node_id:data?.metadata?.node_id??null,next_unlock_at:window.next.toISOString()}:{status:"available",flow_day:window.key,completed_at:null,completed_recommendation_id:null,completed_node_id:null,next_unlock_at:window.next.toISOString()};
+}
+
+const LINE_LOGIN_CHANNEL_ID="2009606403";
 
 Deno.serve(async(req:Request)=>{const cors=corsHeaders(req);if(req.method==="OPTIONS")return new Response(null,{status:204,headers:cors});if(req.method!=="POST")return Response.json({ok:false,error:"method_not_allowed"},{status:405,headers:cors});
  const adminKey=getAdminKey(),supabaseUrl=Deno.env.get("SUPABASE_URL"),lineLoginChannelId=LINE_LOGIN_CHANNEL_ID;if(!adminKey||!supabaseUrl)return Response.json({ok:false,error:"server_not_configured"},{status:503,headers:cors});
  try{const{id_token:idToken}=await req.json().catch(()=>({}));if(!idToken||typeof idToken!=="string")return Response.json({ok:false,error:"id_token_required"},{status:400,headers:cors});const verified=await verifyLineIdToken(idToken,lineLoginChannelId);if(!verified)return Response.json({ok:false,error:"invalid_line_token"},{status:401,headers:cors});
   const lineUserId=String(verified.sub),supabase=createClient(supabaseUrl,adminKey,{auth:{persistSession:false,autoRefreshToken:false}});let{data:identity}=await supabase.from("person_identities").select("person_id").eq("channel","line").eq("external_user_id",lineUserId).maybeSingle();if(!identity){const{data:contactByLine}=await supabase.from("contacts").select("id").eq("line_user_id",lineUserId).maybeSingle();if(contactByLine)identity={person_id:contactByLine.id};}
   if(!identity?.person_id)return Response.json({ok:false,error:"line_contact_not_found",next:"add_official_account"},{status:404,headers:cors});const personId=identity.person_id;
-  await refreshRecommendations(supabaseUrl,adminKey,personId);
+  const dailyQuest=await dailyQuestState(supabase,personId);
+  if(dailyQuest.status!=="completed")await refreshRecommendations(supabaseUrl,adminKey,personId);
   const[{data:contact},{data:progress},{data:curriculum},{data:recommendations}]=await Promise.all([
    supabase.from("contacts").select("id,display_name,lifecycle_stage,metadata,updated_at").eq("id",personId).single(),
    supabase.from("person_progress").select("xp_total,growth_level,growth_rank,streak_current,streak_best,actions_completed,quests_completed,last_completion_date,updated_at").eq("contact_id",personId).maybeSingle(),
    supabase.from("curriculum_states").select("current_spine_stage,active_branch,learning_loop_position,support_mode,recommended_node_id,confidence,reason,updated_at").eq("person_id",personId).maybeSingle(),
    supabase.from("education_recommendations").select("id,recommendation_type,recommendation_ref,destination,reason,confidence,alternative,status,generated_at,metadata").eq("person_id",personId).in("status",["proposed","shown","accepted"]).order("generated_at",{ascending:false}).limit(6)
   ]);
+  const visibleRecommendations=dailyQuest.status==="completed"?(recommendations??[]).filter((r:any)=>r.recommendation_type!=="quest"):(recommendations??[]);
   const meta=contact?.metadata??{},profile={display_name:verified?.name??contact?.display_name??null,picture:verified?.picture??null,lifecycle_stage:contact?.lifecycle_stage??"registered"},session=await signSession(personId,adminKey);
-  await supabase.from("funnel_events").insert({contact_id:personId,event_type:"pwa_bootstrap_viewed",channel:"pwa",payload:{stage:profile.lifecycle_stage,source:"liff",has_flow:Boolean(meta?.current_flow),has_ace:Boolean(meta?.current_ace),session_version:1}});
-  return Response.json({ok:true,session_token:session.token,session_expires_at:session.expires_at,profile,flow:meta?.current_flow??null,ace:meta?.current_ace??null,current_recommendations:meta?.current_recommendations??null,progress:progress??{xp_total:0,growth_level:1,growth_rank:"seed",streak_current:0,streak_best:0,actions_completed:0,quests_completed:0},curriculum:curriculum??null,recommendations:recommendations??[]},{headers:{...cors,"Content-Type":"application/json"}});
+  await supabase.from("funnel_events").insert({contact_id:personId,event_type:"pwa_bootstrap_viewed",channel:"pwa",payload:{stage:profile.lifecycle_stage,source:"liff",has_flow:Boolean(meta?.current_flow),has_ace:Boolean(meta?.current_ace),session_version:1,flow_day:dailyQuest.flow_day,daily_quest_status:dailyQuest.status}});
+  return Response.json({ok:true,session_token:session.token,session_expires_at:session.expires_at,profile,flow:meta?.current_flow??null,ace:meta?.current_ace??null,current_recommendations:meta?.current_recommendations??null,daily_quest:dailyQuest,progress:progress??{xp_total:0,growth_level:1,growth_rank:"seed",streak_current:0,streak_best:0,actions_completed:0,quests_completed:0},curriculum:curriculum??null,recommendations:visibleRecommendations},{headers:{...cors,"Content-Type":"application/json"}});
  }catch(error){console.error("line-pwa-bootstrap error",error);return Response.json({ok:false,error:"bootstrap_failed"},{status:500,headers:cors});}
 });
