@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import PwaNav from '@/components/navigation/PwaNav';
 import {
   DailyQuestState,
@@ -12,6 +12,7 @@ import {
   PwaBootstrap,
   recommendationOf,
   sessionIsUsable,
+  trackContentAction,
 } from '@/lib/pwa';
 
 type Experiment = { intro?: string; prediction?: string; action?: string; actual?: string; reflection?: string };
@@ -34,12 +35,52 @@ function unlockLabel(value?: string | null) {
   }).format(new Date(value));
 }
 
-function RelatedLearning({ deepening }: { deepening: DeepeningPayload | null }) {
+function contentTrackingPayload(
+  item: DeepeningPayload['items'][number],
+  index: number,
+  deepening: DeepeningPayload,
+  surface: string,
+) {
+  return {
+    content_id: item.id,
+    asset_id: item.asset_id,
+    node_id: item.node_id ?? deepening.node_id ?? null,
+    title: item.title,
+    kind: item.kind,
+    position: index + 1,
+    surface,
+    flow_day: deepening.flow_day ?? null,
+    completed_quest_id: deepening.completed_quest_id ?? null,
+  };
+}
+
+function RelatedLearning({
+  data,
+  deepening,
+  surface,
+}: {
+  data: PwaBootstrap;
+  deepening: DeepeningPayload | null;
+  surface: 'quest_complete' | 'quest_daily_complete';
+}) {
+  const impressionKeyRef = useRef<string | null>(null);
+  const items = deepening?.items.slice(0, 3) ?? [];
+  const itemIds = items.map((item) => item.id).join(',');
+
+  useEffect(() => {
+    if (!deepening || items.length === 0 || !sessionIsUsable(data)) return;
+    const key = `${surface}:${deepening.flow_day ?? ''}:${deepening.completed_quest_id ?? ''}:${itemIds}`;
+    if (impressionKeyRef.current === key) return;
+    impressionKeyRef.current = key;
+    void trackContentAction(data, 'content_impression', {
+      items: items.map((item, index) => contentTrackingPayload(item, index, deepening, surface)),
+    }).catch(() => undefined);
+  }, [data, deepening, itemIds, items, surface]);
+
   if (!deepening) {
     return <p className="mt-5 text-sm text-[#939a92]">今日の体験から、気になりそうな学びを選んでいます…</p>;
   }
 
-  const items = deepening.items.slice(0, 3);
   if (items.length === 0) return null;
 
   return (
@@ -47,10 +88,17 @@ function RelatedLearning({ deepening }: { deepening: DeepeningPayload | null }) 
       <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#d2b97f]">TODAY&apos;S PICKS</p>
       <h2 className="mt-2 font-serif text-xl font-semibold">この中で、ちょっと気になるのある？</h2>
       <div className="mt-4 space-y-3">
-        {items.map((item) => (
+        {items.map((item, index) => (
           <Link
             key={item.id}
             href={`/learn#content-${item.id}`}
+            onClick={() => {
+              void trackContentAction(
+                data,
+                'content_opened',
+                contentTrackingPayload(item, index, deepening, surface),
+              ).catch(() => undefined);
+            }}
             className="block rounded-[22px] border border-[#c8ab72]/15 bg-white/[0.025] p-4 transition active:scale-[0.99]"
           >
             <p className="font-serif text-lg font-semibold leading-7 text-[#eee8dc]">{item.title}</p>
@@ -74,7 +122,7 @@ function DailyComplete({ data, deepening }: { data: PwaBootstrap; deepening: Dee
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#a9c0af]">TODAY COMPLETE</p>
           <h1 className="mt-3 font-serif text-3xl font-semibold">今日のQuestは完了</h1>
           <p className="mt-4 text-sm leading-7 text-[#aeb5ad]">今日はここで区切り。実行と振り返りはHuman Graphへ保存されています。</p>
-          <RelatedLearning deepening={deepening} />
+          <RelatedLearning data={data} deepening={deepening} surface="quest_daily_complete" />
           <div className="mt-6 rounded-[22px] border border-[#d9c18d]/20 bg-black/15 p-5">
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#d2b97f]">NEXT FLOW DAY</p>
             <p className="mt-2 font-serif text-xl font-semibold">次のQuestは {unlock} に更新</p>
@@ -159,7 +207,7 @@ export default function QuestClient() {
             <p className="mt-3 font-serif text-3xl font-semibold">+{result.xp ?? 0} XP</p>
             <p className="mt-2 text-sm text-[#aeb5ad]">累計 {result.total ?? 0} XP｜🔥 {result.streak ?? 0}日連続</p>
             <p className="mt-3 text-sm leading-7 text-[#929992]">予想・実測・振り返りをHuman Graphへ記録しました。</p>
-            <RelatedLearning deepening={deepening} />
+            <RelatedLearning data={data} deepening={deepening} surface="quest_complete" />
             <div className="mt-6 rounded-[22px] border border-[#d9c18d]/20 bg-black/15 p-5">
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#d2b97f]">NEXT FLOW DAY</p>
               <p className="mt-2 font-serif text-xl font-semibold">次のQuestは {unlockLabel(result.dailyQuest?.next_unlock_at)} に更新</p>
