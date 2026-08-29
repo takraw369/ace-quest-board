@@ -91,8 +91,17 @@ export async function growthAction(
   });
   const result = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(result?.error ?? `http_${response.status}`);
-  if (result?.progress) {
-    saveBootstrap({ ...data, progress: { ...(data.progress ?? {}), ...result.progress } });
+
+  const hasFreshRecommendations = Array.isArray(result?.recommendations);
+  if (result?.progress || hasFreshRecommendations || result?.recommendation_summary) {
+    saveBootstrap({
+      ...data,
+      progress: result?.progress
+        ? { ...(data.progress ?? {}), ...result.progress }
+        : data.progress,
+      recommendations: hasFreshRecommendations ? result.recommendations : data.recommendations,
+      current_recommendations: result?.recommendation_summary ?? data.current_recommendations,
+    });
   }
   return result;
 }
