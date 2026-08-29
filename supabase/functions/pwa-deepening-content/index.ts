@@ -81,7 +81,7 @@ function nodeFromQuest(quest: any) {
 }
 
 function progressionStage(questsCompleted: number) {
-  if (questsCompleted >= 10) return "go_deeper";
+  if (questsCompleted >= 11) return "go_deeper";
   if (questsCompleted >= 7) return "connect";
   if (questsCompleted >= 4) return "collect";
   return "discover";
