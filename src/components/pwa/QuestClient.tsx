@@ -6,6 +6,17 @@ import PwaNav from '@/components/navigation/PwaNav';
 import { growthAction, loadBootstrap, PwaBootstrap, recommendationOf, sessionIsUsable } from '@/lib/pwa';
 
 type Experiment = { intro?: string; prediction?: string; action?: string; actual?: string; reflection?: string };
+type CompletionResult = {
+  xp?: number;
+  total?: number;
+  streak?: number;
+  nextQuest?: {
+    title: string;
+    duration: string;
+    reason: string;
+    calibrationNeeded: boolean;
+  };
+};
 
 export default function QuestClient() {
   const [data, setData] = useState<PwaBootstrap | null>(null);
@@ -13,7 +24,7 @@ export default function QuestClient() {
   const [actual, setActual] = useState('');
   const [reflection, setReflection] = useState('');
   const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState<{ xp?: number; total?: number; streak?: number } | null>(null);
+  const [result, setResult] = useState<CompletionResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => setData(loadBootstrap()), []);
@@ -34,10 +45,37 @@ export default function QuestClient() {
     setBusy(true); setError(null);
     try {
       const out = await growthAction(data, 'quest_complete', rec.id, { prediction, actual, reflection });
-      setResult({ xp: out?.xp?.xp_amount ?? 0, total: out?.progress?.xp_total ?? data.progress?.xp_total ?? 0, streak: out?.progress?.streak_current ?? data.progress?.streak_current ?? 0 });
+      const freshRecommendations = Array.isArray(out?.recommendations)
+        ? out.recommendations as Array<Record<string, unknown>>
+        : [];
+      const next = freshRecommendations.find((item) => item.recommendation_type === 'quest');
+      const nextAlt = ((next?.alternative ?? {}) as Record<string, unknown>);
+      const nextMeta = ((next?.metadata ?? {}) as Record<string, unknown>);
+
       setData(loadBootstrap());
+      setResult({
+        xp: out?.xp?.xp_amount ?? 0,
+        total: out?.progress?.xp_total ?? data.progress?.xp_total ?? 0,
+        streak: out?.progress?.streak_current ?? data.progress?.streak_current ?? 0,
+        nextQuest: next ? {
+          title: typeof nextMeta.node_title === 'string'
+            ? nextMeta.node_title
+            : typeof nextAlt.duration === 'string' ? nextAlt.duration : '次のQuest',
+          duration: typeof nextAlt.duration === 'string' ? nextAlt.duration : '3分Quest',
+          reason: typeof next.reason === 'string' ? next.reason : '今回の結果を反映して、次の実験を更新しました。',
+          calibrationNeeded: nextMeta.calibration_needed === true,
+        } : undefined,
+      });
     } catch (e) { setError(e instanceof Error ? e.message : 'complete_failed'); }
     finally { setBusy(false); }
+  };
+
+  const startNextQuest = () => {
+    setPrediction('');
+    setActual('');
+    setReflection('');
+    setResult(null);
+    setError(null);
   };
 
   return (
@@ -48,7 +86,27 @@ export default function QuestClient() {
         <p className="mt-4 text-sm leading-7 text-[#9da29b]">{rec.reason}</p>
 
         {result ? (
-          <section className="mt-7 rounded-[28px] border border-[#789581]/25 bg-[#789581]/10 p-6"><p className="text-xs font-bold uppercase tracking-[0.2em] text-[#a9c0af]">Quest Complete</p><p className="mt-3 font-serif text-3xl font-semibold">+{result.xp ?? 0} XP</p><p className="mt-2 text-sm text-[#aeb5ad]">累計 {result.total ?? 0} XP｜🔥 {result.streak ?? 0}日連続</p><p className="mt-3 text-sm leading-7 text-[#929992]">予想・実測・振り返りをHuman Graphへ記録した。次の推薦はこの結果を使って変わる。</p><Link href="/today" className="mt-5 inline-flex rounded-full bg-[#d9c18d] px-5 py-3 text-sm font-semibold text-[#171813]">今日へ戻る</Link></section>
+          <section className="mt-7 rounded-[28px] border border-[#789581]/25 bg-[#789581]/10 p-6">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#a9c0af]">Quest Complete</p>
+            <p className="mt-3 font-serif text-3xl font-semibold">+{result.xp ?? 0} XP</p>
+            <p className="mt-2 text-sm text-[#aeb5ad]">累計 {result.total ?? 0} XP｜🔥 {result.streak ?? 0}日連続</p>
+            <p className="mt-3 text-sm leading-7 text-[#929992]">予想・実測・振り返りをHuman Graphへ記録し、その結果から次のQuestを再計算しました。</p>
+
+            {result.nextQuest && (
+              <div className="mt-5 rounded-[22px] border border-[#d9c18d]/20 bg-black/15 p-5">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#d2b97f]">{result.nextQuest.calibrationNeeded ? 'CALIBRATION / NEXT' : 'NEXT QUEST'}</p>
+                  <span className="rounded-full border border-[#c8ab72]/20 px-2.5 py-1 text-[9px] text-[#d6c293]">{result.nextQuest.duration}</span>
+                </div>
+                <h2 className="mt-3 font-serif text-xl font-semibold text-[#eee8dc]">{result.nextQuest.title}</h2>
+                <p className="mt-3 text-sm leading-7 text-[#aeb5ad]">{result.nextQuest.reason}</p>
+                {result.nextQuest.calibrationNeeded && <p className="mt-3 text-xs leading-6 text-[#8fa795]">予想と実測の差が大きかったため、負荷を上げずに再測定して「能力」ではなく「条件差」を見ます。</p>}
+                <button type="button" onClick={startNextQuest} className="mt-5 inline-flex rounded-full bg-[#d9c18d] px-5 py-3 text-sm font-semibold text-[#171813]">次Questへ</button>
+              </div>
+            )}
+
+            {!result.nextQuest && <Link href="/today" className="mt-5 inline-flex rounded-full bg-[#d9c18d] px-5 py-3 text-sm font-semibold text-[#171813]">今日へ戻る</Link>}
+          </section>
         ) : (
           <div className="mt-7 space-y-4">
             {experiment.intro && <section className="rounded-[28px] border border-[#c8ab72]/15 bg-white/[0.025] p-5"><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#d2b97f]">SETUP</p><p className="mt-3 text-sm leading-7 text-[#aeb2ac]">{experiment.intro}</p></section>}
