@@ -28,6 +28,20 @@ export default function QuestClient() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => setData(loadBootstrap()), []);
+  useEffect(() => {
+    if (!result?.nextQuest) return;
+    const timer = window.setTimeout(() => {
+      const latest = loadBootstrap();
+      if (latest) setData(latest);
+      setPrediction('');
+      setActual('');
+      setReflection('');
+      setResult(null);
+      setError(null);
+    }, 1200);
+    return () => window.clearTimeout(timer);
+  }, [result]);
+
   const rec = useMemo(() => recommendationOf(data, 'quest'), [data]);
 
   if (!data?.ok || !sessionIsUsable(data)) {
@@ -71,6 +85,8 @@ export default function QuestClient() {
   };
 
   const startNextQuest = () => {
+    const latest = loadBootstrap();
+    if (latest) setData(latest);
     setPrediction('');
     setActual('');
     setReflection('');
@@ -101,7 +117,8 @@ export default function QuestClient() {
                 <h2 className="mt-3 font-serif text-xl font-semibold text-[#eee8dc]">{result.nextQuest.title}</h2>
                 <p className="mt-3 text-sm leading-7 text-[#aeb5ad]">{result.nextQuest.reason}</p>
                 {result.nextQuest.calibrationNeeded && <p className="mt-3 text-xs leading-6 text-[#8fa795]">予想と実測の差が大きかったため、負荷を上げずに再測定して「能力」ではなく「条件差」を見ます。</p>}
-                <button type="button" onClick={startNextQuest} className="mt-5 inline-flex rounded-full bg-[#d9c18d] px-5 py-3 text-sm font-semibold text-[#171813]">次Questへ</button>
+                <p className="mt-4 text-[11px] text-[#8fa795]">次のQuestへ自動で進みます…</p>
+                <button type="button" onClick={startNextQuest} className="mt-3 inline-flex rounded-full border border-[#d9c18d]/30 px-4 py-2 text-xs font-semibold text-[#d9c18d]">すぐ次Questへ</button>
               </div>
             )}
 
