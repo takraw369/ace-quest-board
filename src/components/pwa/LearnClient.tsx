@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import PwaNav from '@/components/navigation/PwaNav';
 import {
   DeepeningPayload,
@@ -10,13 +10,35 @@ import {
   PwaBootstrap,
   recommendationOf,
   sessionIsUsable,
+  trackContentAction,
 } from '@/lib/pwa';
+
+function contentTrackingPayload(
+  item: DeepeningPayload['items'][number],
+  index: number,
+  deepening: DeepeningPayload,
+  surface: string,
+) {
+  return {
+    content_id: item.id,
+    asset_id: item.asset_id,
+    node_id: item.node_id ?? deepening.node_id ?? null,
+    title: item.title,
+    kind: item.kind,
+    position: index + 1,
+    surface,
+    flow_day: deepening.flow_day ?? null,
+    completed_quest_id: deepening.completed_quest_id ?? null,
+  };
+}
 
 export default function LearnClient() {
   const [data, setData] = useState<PwaBootstrap | null>(null);
   const [deepening, setDeepening] = useState<DeepeningPayload | null>(null);
   const [deepeningError, setDeepeningError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [savedIds, setSavedIds] = useState<string[]>([]);
+  const impressionKeyRef = useRef<string | null>(null);
 
   useEffect(() => setData(loadBootstrap()), []);
   const rec = useMemo(() => recommendationOf(data, 'education'), [data]);
@@ -35,6 +57,19 @@ export default function LearnClient() {
       });
     return () => { cancelled = true; };
   }, [data?.session_token, dailyDone]);
+
+  const visibleItems = deepening?.items.slice(0, 3) ?? [];
+  const visibleItemIds = visibleItems.map((item) => item.id).join(',');
+
+  useEffect(() => {
+    if (!data || !deepening || visibleItems.length === 0 || !sessionIsUsable(data)) return;
+    const key = `learn:${deepening.flow_day ?? ''}:${deepening.completed_quest_id ?? ''}:${visibleItemIds}`;
+    if (impressionKeyRef.current === key) return;
+    impressionKeyRef.current = key;
+    void trackContentAction(data, 'content_impression', {
+      items: visibleItems.map((item, index) => contentTrackingPayload(item, index, deepening, 'learn')),
+    }).catch(() => undefined);
+  }, [data, deepening, visibleItemIds, visibleItems]);
 
   useEffect(() => {
     if (!deepening || typeof window === 'undefined' || !window.location.hash.startsWith('#content-')) return;
@@ -78,14 +113,26 @@ export default function LearnClient() {
             <div className="mt-7 space-y-4">
               {items.slice(0, 3).map((item, index) => {
                 const expanded = expandedId === item.id;
+                const saved = savedIds.includes(item.id);
                 const kindLabel = item.kind === 'video' ? 'VIDEO' : item.kind === 'audio' ? 'AUDIO' : 'ARTICLE';
+                const tracking = deepening ? contentTrackingPayload(item, index, deepening, 'learn') : null;
                 return (
                   <article id={`content-${item.id}`} key={item.id} className="scroll-mt-6 rounded-[28px] border border-[#c8ab72]/15 bg-white/[0.025] p-5">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#d2b97f]">0{index + 1} / {kindLabel}</p>
                       {item.genre && <span className="rounded-full border border-white/10 px-2.5 py-1 text-[9px] uppercase tracking-[0.12em] text-[#8f958e]">{item.genre}</span>}
                     </div>
-                    <button type="button" onClick={() => setExpandedId(expanded ? null : item.id)} className="mt-3 w-full text-left">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const nextExpanded = !expanded;
+                        setExpandedId(nextExpanded ? item.id : null);
+                        if (nextExpanded && tracking) {
+                          void trackContentAction(data, 'content_opened', tracking).catch(() => undefined);
+                        }
+                      }}
+                      className="mt-3 w-full text-left"
+                    >
                       <h2 className="font-serif text-xl font-semibold leading-8 text-[#eee8dc]">{item.title}</h2>
                       {item.why && <p className="mt-3 text-xs leading-6 text-[#8fa795]">{item.why}</p>}
                       {item.summary && <p className="mt-3 text-sm leading-7 text-[#aeb5ad]">{item.summary}</p>}
@@ -99,6 +146,20 @@ export default function LearnClient() {
                     )}
 
                     <div className="mt-4 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        disabled={saved}
+                        onClick={() => {
+                          if (saved || !tracking) return;
+                          setSavedIds((current) => current.includes(item.id) ? current : [...current, item.id]);
+                          void trackContentAction(data, 'content_saved', tracking).catch(() => {
+                            setSavedIds((current) => current.filter((id) => id !== item.id));
+                          });
+                        }}
+                        className="rounded-full border border-[#789581]/30 px-4 py-2 text-xs font-semibold text-[#a9c0af] disabled:opacity-60"
+                      >
+                        {saved ? '保存済み ✓' : 'あとで見る +'}
+                      </button>
                       {item.url && <a href={item.url} className="rounded-full border border-white/10 px-4 py-2 text-xs text-[#aeb5ad]">関連コンテンツを見る</a>}
                       {item.kind === 'video' && !item.url && <span className="rounded-full border border-white/10 px-4 py-2 text-xs text-[#777d77]">動画準備中</span>}
                     </div>
