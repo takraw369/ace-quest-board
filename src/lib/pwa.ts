@@ -81,6 +81,8 @@ export type DeepeningPayload = {
   progression?: DeepeningProgression | null;
 };
 
+export type ContentTrackingAction = 'content_impression' | 'content_opened' | 'content_saved';
+
 export type PwaBootstrap = {
   ok: boolean;
   session_token?: string;
@@ -163,6 +165,28 @@ export async function loadDeepeningContent(data: PwaBootstrap): Promise<Deepenin
     offer: result?.offer ?? null,
     progression: result?.progression ?? null,
   };
+}
+
+export async function trackContentAction(
+  data: PwaBootstrap,
+  action: ContentTrackingAction,
+  payload: Record<string, unknown>,
+) {
+  if (!sessionIsUsable(data)) throw new Error('session_expired');
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/pwa-growth-action`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      session_token: data.session_token,
+      action,
+      recommendation_id: null,
+      data: payload,
+    }),
+    keepalive: true,
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result?.error ?? `http_${response.status}`);
+  return result;
 }
 
 export async function growthAction(
