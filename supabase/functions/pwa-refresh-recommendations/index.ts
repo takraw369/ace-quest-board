@@ -58,15 +58,50 @@ async function verifySession(token: string, secret: string) {
   }
 }
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+function flowDayWindow(now = new Date()) {
+  const JST = 9 * 60 * 60 * 1000;
+  const local = new Date(now.getTime() + JST);
+  const y = local.getUTCFullYear();
+  const m = local.getUTCMonth();
+  const d = local.getUTCDate();
+  const beforeFive = local.getUTCHours() < 5;
+  const localDayMs = Date.UTC(y, m, d) - (beforeFive ? 24 * 60 * 60 * 1000 : 0);
+  const start = new Date(localDayMs - JST + 5 * 60 * 60 * 1000);
+  const next = new Date(start.getTime() + 24 * 60 * 60 * 1000);
+  const keyLocal = new Date(start.getTime() + JST);
+  const key = `${keyLocal.getUTCFullYear()}-${String(keyLocal.getUTCMonth() + 1).padStart(2, "0")}-${String(keyLocal.getUTCDate()).padStart(2, "0")}`;
+  return { start, next, key };
+}
 
-async function applyAceAdapter(supabaseUrl: string, adminKey: string, personId: string) {
-  const response = await fetch(`${supabaseUrl}/functions/v1/ace-recommendation-adapter`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "x-internal-key": adminKey },
-    body: JSON.stringify({ contact_id: personId }),
-  });
-  if (!response.ok) throw new Error(`ace_adapter_${response.status}`);
+async function currentDailyQuest(supabase: any, personId: string) {
+  const window = flowDayWindow();
+  const { data, error } = await supabase
+    .from("education_recommendations")
+    .select("id,recommendation_ref,acted_at,metadata")
+    .eq("person_id", personId)
+    .eq("recommendation_type", "quest")
+    .eq("status", "completed")
+    .gte("acted_at", window.start.toISOString())
+    .lt("acted_at", window.next.toISOString())
+    .order("acted_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? {
+    status: "completed",
+    flow_day: window.key,
+    completed_at: data.acted_at,
+    completed_recommendation_id: data.id,
+    completed_node_id: data?.metadata?.node_id ?? null,
+    next_unlock_at: window.next.toISOString(),
+  } : {
+    status: "available",
+    flow_day: window.key,
+    completed_at: null,
+    completed_recommendation_id: null,
+    completed_node_id: null,
+    next_unlock_at: window.next.toISOString(),
+  };
 }
 
 Deno.serve(async (req: Request) => {
@@ -83,9 +118,6 @@ Deno.serve(async (req: Request) => {
   try {
     const body = await req.json().catch(() => ({}));
     const token = String(body?.session_token ?? "");
-    const previousRecommendationId = body?.previous_recommendation_id
-      ? String(body.previous_recommendation_id)
-      : null;
     const session = await verifySession(token, adminKey);
     if (!session) {
       return Response.json({ ok: false, error: "invalid_or_expired_session" }, { status: 401, headers: cors });
@@ -96,61 +128,46 @@ Deno.serve(async (req: Request) => {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
-    for (let attempt = 0; attempt < 20; attempt += 1) {
-      const { data: rows, error } = await supabase
-        .from("education_recommendations")
-        .select("id,recommendation_type,recommendation_ref,destination,reason,confidence,alternative,metadata,status,generated_at")
-        .eq("person_id", personId)
-        .eq("status", "proposed")
-        .order("generated_at", { ascending: false })
-        .limit(12);
-      if (error) throw error;
+    const dailyQuest = await currentDailyQuest(supabase, personId);
+    const { data: contact } = await supabase
+      .from("contacts")
+      .select("metadata")
+      .eq("id", personId)
+      .maybeSingle();
 
-      const recommendations = rows ?? [];
-      const freshQuest = recommendations.find((row) =>
-        row.recommendation_type === "quest" && row.id !== previousRecommendationId
-      );
-
-      if (freshQuest) {
-        await applyAceAdapter(supabaseUrl, adminKey, personId);
-
-        const { data: adaptedRows, error: adaptedError } = await supabase
-          .from("education_recommendations")
-          .select("id,recommendation_type,recommendation_ref,destination,reason,confidence,alternative,metadata,status,generated_at")
-          .eq("person_id", personId)
-          .eq("status", "proposed")
-          .order("generated_at", { ascending: false })
-          .limit(12);
-        if (adaptedError) throw adaptedError;
-
-        const latestByType = ["education", "quest", "connection"]
-          .map((type) => (adaptedRows ?? []).find((row) => row.recommendation_type === type))
-          .filter(Boolean);
-
-        const { data: contact } = await supabase
-          .from("contacts")
-          .select("metadata")
-          .eq("id", personId)
-          .maybeSingle();
-
-        return Response.json({
-          ok: true,
-          pending: false,
-          recommendations: latestByType,
-          recommendation_summary: contact?.metadata?.current_recommendations ?? null,
-          ace_adapted: latestByType.some((row: any) => String(row?.metadata?.ace_adapter ?? "").startsWith("ace-recommendation-adapter-v")),
-        }, { headers: cors });
-      }
-
-      await sleep(250);
+    if (dailyQuest.status === "completed") {
+      return Response.json({
+        ok: true,
+        pending: false,
+        daily_complete: true,
+        daily_quest: dailyQuest,
+        recommendations: [],
+        recommendation_summary: contact?.metadata?.current_recommendations ?? null,
+      }, { headers: cors });
     }
+
+    const { data: rows, error } = await supabase
+      .from("education_recommendations")
+      .select("id,recommendation_type,recommendation_ref,destination,reason,confidence,alternative,metadata,status,generated_at")
+      .eq("person_id", personId)
+      .eq("status", "proposed")
+      .order("generated_at", { ascending: false })
+      .limit(12);
+    if (error) throw error;
+
+    const latestByType = ["education", "quest", "connection"]
+      .map((type) => (rows ?? []).find((row) => row.recommendation_type === type))
+      .filter(Boolean);
 
     return Response.json({
       ok: true,
-      pending: true,
-      recommendations: [],
-      recommendation_summary: null,
-    }, { status: 202, headers: cors });
+      pending: false,
+      daily_complete: false,
+      daily_quest: dailyQuest,
+      recommendations: latestByType,
+      recommendation_summary: contact?.metadata?.current_recommendations ?? null,
+      ace_adapted: latestByType.some((row: any) => String(row?.metadata?.ace_adapter ?? "").startsWith("ace-recommendation-adapter-v")),
+    }, { headers: cors });
   } catch (error) {
     console.error("pwa-refresh-recommendations error", error);
     return Response.json({ ok: false, error: "refresh_failed" }, { status: 500, headers: cors });
