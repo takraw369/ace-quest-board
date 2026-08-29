@@ -138,7 +138,7 @@ Deno.serve(async (req: Request) => {
           pending: false,
           recommendations: latestByType,
           recommendation_summary: contact?.metadata?.current_recommendations ?? null,
-          ace_adapted: latestByType.some((row: any) => row?.metadata?.ace_adapter === "ace-recommendation-adapter-v1"),
+          ace_adapted: latestByType.some((row: any) => String(row?.metadata?.ace_adapter ?? "").startsWith("ace-recommendation-adapter-v")),
         }, { headers: cors });
       }
 
