@@ -36,6 +36,44 @@ export type DailyQuestState = {
   next_unlock_at?: string | null;
 };
 
+export type DeepeningContentItem = {
+  id: string;
+  asset_id: string;
+  node_id?: string | null;
+  kind: 'article' | 'video' | 'audio' | 'guide' | string;
+  title: string;
+  why?: string | null;
+  summary?: string | null;
+  body?: string | null;
+  url?: string | null;
+  access_tier?: string | null;
+  genre?: string | null;
+  source_asset_title?: string | null;
+  source_project?: string | null;
+  readiness?: string | null;
+};
+
+export type DeepeningOffer = {
+  slug: string;
+  name: string;
+  tier?: string | null;
+  price_jpy?: number | null;
+  description?: string | null;
+  checkout_url?: string | null;
+};
+
+export type DeepeningPayload = {
+  ok: boolean;
+  unlocked: boolean;
+  flow_day?: string;
+  completed_quest_id?: string | null;
+  completed_at?: string | null;
+  node_id?: string | null;
+  reason?: string | null;
+  items: DeepeningContentItem[];
+  offer?: DeepeningOffer | null;
+};
+
 export type PwaBootstrap = {
   ok: boolean;
   session_token?: string;
@@ -95,6 +133,28 @@ export function recommendationOf(data: PwaBootstrap | null, type: string) {
 export function sessionIsUsable(data: PwaBootstrap | null) {
   if (!data?.session_token || !data.session_expires_at) return false;
   return new Date(data.session_expires_at).getTime() > Date.now() + 30_000;
+}
+
+export async function loadDeepeningContent(data: PwaBootstrap): Promise<DeepeningPayload> {
+  if (!sessionIsUsable(data)) throw new Error('session_expired');
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/pwa-deepening-content`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ session_token: data.session_token }),
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result?.error ?? `http_${response.status}`);
+  return {
+    ok: result?.ok === true,
+    unlocked: result?.unlocked === true,
+    flow_day: result?.flow_day,
+    completed_quest_id: result?.completed_quest_id ?? null,
+    completed_at: result?.completed_at ?? null,
+    node_id: result?.node_id ?? null,
+    reason: result?.reason ?? null,
+    items: Array.isArray(result?.items) ? result.items : [],
+    offer: result?.offer ?? null,
+  };
 }
 
 export async function growthAction(
