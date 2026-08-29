@@ -79,6 +79,8 @@ function contentPayload(data: any) {
     surface: data?.surface ? String(data.surface).slice(0, 80) : "learn",
     flow_day: data?.flow_day ? String(data.flow_day) : null,
     completed_quest_id: data?.completed_quest_id ? String(data.completed_quest_id) : null,
+    read_depth: Number.isFinite(Number(data?.read_depth)) ? Math.max(0, Math.min(100, Number(data.read_depth))) : null,
+    dwell_ms: Number.isFinite(Number(data?.dwell_ms)) ? Math.max(0, Math.round(Number(data.dwell_ms))) : null,
   };
 }
 
@@ -115,27 +117,39 @@ Deno.serve(async (req: Request) => {
       return Response.json({ ok: true, event: "content_impression", count: rows.length }, { headers: cors });
     }
 
-    if (action === "content_opened" || action === "content_saved") {
+    const contentActions = new Set([
+      "content_opened",
+      "content_saved",
+      "content_read_25",
+      "content_read_50",
+      "content_read_90",
+      "content_completed",
+    ]);
+    if (contentActions.has(action)) {
       const payload = contentPayload(data);
       if (!payload.content_id) return Response.json({ ok: false, error: "content_id_required" }, { status: 400, headers: cors });
 
-      if (action === "content_saved") {
-        const { data: existing, error: existingError } = await supabase
+      const shouldDedupe = action !== "content_opened";
+      if (shouldDedupe) {
+        let query = supabase
           .from("funnel_events")
           .select("id")
           .eq("contact_id", personId)
-          .eq("event_type", "content_saved")
-          .contains("payload", { content_id: payload.content_id })
-          .limit(1)
-          .maybeSingle();
+          .eq("event_type", action)
+          .contains("payload", { content_id: payload.content_id });
+        if (action !== "content_saved" && payload.flow_day) {
+          query = query.contains("payload", { flow_day: payload.flow_day });
+        }
+        const { data: existing, error: existingError } = await query.limit(1).maybeSingle();
         if (existingError) throw existingError;
-        if (existing) return Response.json({ ok: true, event: "content_saved", saved: true, duplicate: true }, { headers: cors });
+        if (existing) {
+          return Response.json({ ok: true, event: action, saved: action === "content_saved", duplicate: true }, { headers: cors });
+        }
       }
 
-      const eventType = action;
-      const { error } = await supabase.from("funnel_events").insert({ contact_id: personId, event_type: eventType, channel: "pwa", payload });
+      const { error } = await supabase.from("funnel_events").insert({ contact_id: personId, event_type: action, channel: "pwa", payload });
       if (error) throw error;
-      return Response.json({ ok: true, event: eventType, saved: action === "content_saved" }, { headers: cors });
+      return Response.json({ ok: true, event: action, saved: action === "content_saved", duplicate: false }, { headers: cors });
     }
 
     let rec: any = null;
