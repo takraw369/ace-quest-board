@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { useState } from 'react';
 import PwaNav from '@/components/navigation/PwaNav';
 import { PROTOTYPE_SELECTION } from '@/lib/dailyHarness';
-import type { HarnessCard, HarnessDeck } from '@/types/dailyHarness';
+import { drawHarnessSelection } from '@/lib/dailyHarnessDraw';
+import type { HarnessCard, HarnessDeck, HarnessSelection } from '@/types/dailyHarness';
 
 const deckOrder: HarnessDeck[] = ['vision', 'theme', 'medium'];
 
@@ -49,11 +50,13 @@ const deckVisual: Record<
 function PlayingCard({
   card,
   flipped,
+  disabled,
   onToggle,
   onFocus,
 }: {
   card: HarnessCard;
   flipped: boolean;
+  disabled: boolean;
   onToggle: () => void;
   onFocus: () => void;
 }) {
@@ -62,12 +65,13 @@ function PlayingCard({
   return (
     <button
       type="button"
+      disabled={disabled}
       aria-label={`${visual.label}カードを${flipped ? '裏返す' : '表にする'}`}
       onClick={() => {
         onFocus();
         onToggle();
       }}
-      className="block w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#d9c18d]/60"
+      className="block w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#d9c18d]/60 disabled:cursor-default"
       style={{ perspective: 1000 }}
     >
       <motion.div
@@ -91,7 +95,9 @@ function PlayingCard({
               <div className={`mx-auto flex h-9 w-9 items-center justify-center rounded-full border ${visual.border} bg-black/20 font-serif text-lg sm:h-12 sm:w-12 sm:text-xl ${visual.accent}`}>
                 {visual.label.slice(0, 1)}
               </div>
-              <p className="mt-3 text-[8px] uppercase tracking-[0.18em] text-white/35 sm:text-[9px]">tap to reveal</p>
+              <p className="mt-3 text-[8px] uppercase tracking-[0.18em] text-white/35 sm:text-[9px]">
+                {disabled ? 'draw first' : 'tap to reveal'}
+              </p>
             </div>
             <div className="flex items-end justify-between">
               <span className="font-serif text-[11px] text-white/25 sm:text-xs">ACE</span>
@@ -121,16 +127,27 @@ function PlayingCard({
   );
 }
 
+const closedState: Record<HarnessDeck, boolean> = {
+  vision: false,
+  theme: false,
+  medium: false,
+};
+
 export default function DailyHarnessClient() {
-  const [flipped, setFlipped] = useState<Record<HarnessDeck, boolean>>({
-    vision: false,
-    theme: false,
-    medium: false,
-  });
+  const [selection, setSelection] = useState<HarnessSelection>(PROTOTYPE_SELECTION);
+  const [hasDrawn, setHasDrawn] = useState(false);
+  const [flipped, setFlipped] = useState<Record<HarnessDeck, boolean>>(closedState);
   const [focusedDeck, setFocusedDeck] = useState<HarnessDeck>('theme');
 
-  const focusedCard = PROTOTYPE_SELECTION[focusedDeck];
+  const focusedCard = selection[focusedDeck];
   const allOpen = deckOrder.every((deck) => flipped[deck]);
+
+  const drawToday = () => {
+    setSelection(drawHarnessSelection());
+    setFlipped(closedState);
+    setFocusedDeck('theme');
+    setHasDrawn(true);
+  };
 
   const toggleDeck = (deck: HarnessDeck) => {
     setFlipped((current) => ({ ...current, [deck]: !current[deck] }));
@@ -140,8 +157,8 @@ export default function DailyHarnessClient() {
     setFlipped({ vision: true, theme: true, medium: true });
   };
 
-  const resetCards = () => {
-    setFlipped({ vision: false, theme: false, medium: false });
+  const hideAll = () => {
+    setFlipped(closedState);
     setFocusedDeck('theme');
   };
 
@@ -159,32 +176,30 @@ export default function DailyHarnessClient() {
               <p className="text-[9px] font-bold uppercase tracking-[0.24em] text-[#789581]">ACE · DAILY HARNESS</p>
               <h1 className="mt-2 font-serif text-3xl font-semibold tracking-tight">今日の3枚。</h1>
             </div>
-            <Link
-              href="/today"
-              className="rounded-full border border-[#c8ab72]/15 px-3 py-1.5 text-[10px] font-semibold text-[#8c938c]"
-            >
+            <Link href="/today" className="rounded-full border border-[#c8ab72]/15 px-3 py-1.5 text-[10px] font-semibold text-[#8c938c]">
               Todayへ
             </Link>
           </div>
           <p className="mt-4 max-w-lg text-sm leading-7 text-[#8f958e]">
-            どこへ向かうか。何を扱うか。どこで形にするか。3枚をめくって、今日の練習メニューを観察する。
+            どこへ向かうか。何を扱うか。どこで形にするか。3枚を引いて、今日の練習メニューを観察する。
           </p>
         </header>
 
         <section>
           <div className="mb-3 flex items-center justify-between gap-3">
-            <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#5f675f]">DH-02 · UI PROTOTYPE</p>
-            <p className="text-[9px] text-[#555c56]">抽選・履歴は次フェーズ</p>
+            <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#5f675f]">DH-03 · WEIGHTED DRAW</p>
+            <p className="text-[9px] text-[#555c56]">active × baseWeight</p>
           </div>
 
           <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
             {deckOrder.map((deck) => {
-              const card = PROTOTYPE_SELECTION[deck];
+              const card = selection[deck];
               return (
                 <PlayingCard
-                  key={card.id}
+                  key={`${card.id}-${hasDrawn ? 'drawn' : 'idle'}`}
                   card={card}
                   flipped={flipped[deck]}
+                  disabled={!hasDrawn}
                   onToggle={() => toggleDeck(deck)}
                   onFocus={() => setFocusedDeck(deck)}
                 />
@@ -192,22 +207,32 @@ export default function DailyHarnessClient() {
             })}
           </div>
 
-          <div className="mt-5 grid grid-cols-2 gap-3">
+          {!hasDrawn ? (
             <button
               type="button"
-              onClick={allOpen ? resetCards : revealAll}
-              className="rounded-full bg-[#d9c18d] px-4 py-3 text-sm font-semibold text-[#171813]"
+              onClick={drawToday}
+              className="mt-5 w-full rounded-full bg-[#d9c18d] px-4 py-3.5 text-sm font-semibold text-[#171813]"
             >
-              {allOpen ? '3枚を伏せる' : '3枚をめくる'}
+              今日の3枚を引く
             </button>
-            <button
-              type="button"
-              onClick={resetCards}
-              className="rounded-full border border-[#c8ab72]/20 bg-white/[0.02] px-4 py-3 text-sm font-semibold text-[#b8b1a3]"
-            >
-              リセット
-            </button>
-          </div>
+          ) : (
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={allOpen ? hideAll : revealAll}
+                className="rounded-full bg-[#d9c18d] px-4 py-3 text-sm font-semibold text-[#171813]"
+              >
+                {allOpen ? '3枚を伏せる' : '3枚をめくる'}
+              </button>
+              <button
+                type="button"
+                onClick={hideAll}
+                className="rounded-full border border-[#c8ab72]/20 bg-white/[0.02] px-4 py-3 text-sm font-semibold text-[#b8b1a3]"
+              >
+                伏せる
+              </button>
+            </div>
+          )}
         </section>
 
         <section className="mt-7 rounded-[28px] border border-[#c8ab72]/15 bg-white/[0.025] p-5">
@@ -215,23 +240,29 @@ export default function DailyHarnessClient() {
             <span className={`rounded-full border px-3 py-1 text-[9px] font-bold tracking-[0.16em] ${deckVisual[focusedDeck].chip}`}>
               {deckVisual[focusedDeck].label}
             </span>
-            <span className="text-[10px] text-[#626963]">カードをタップすると、この問いが切り替わります</span>
+            <span className="text-[10px] text-[#626963]">
+              {hasDrawn ? 'カードをタップすると、この問いが切り替わります' : 'まず今日の3枚を引く'}
+            </span>
           </div>
-          <h2 className="mt-4 font-serif text-2xl font-semibold">{focusedCard.title}</h2>
-          <p className="mt-3 text-sm leading-7 text-[#9ca097]">{focusedCard.question}</p>
-          <div className="mt-5 flex flex-wrap gap-2">
-            {focusedCard.ignitionWords.map((word) => (
-              <span key={word} className="rounded-full border border-white/[0.06] bg-black/10 px-3 py-1.5 text-[10px] text-[#7e857e]">
-                {word}
-              </span>
-            ))}
-          </div>
+          <h2 className="mt-4 font-serif text-2xl font-semibold">{hasDrawn ? focusedCard.title : 'まだ見ない。まず引く。'}</h2>
+          <p className="mt-3 text-sm leading-7 text-[#9ca097]">
+            {hasDrawn ? focusedCard.question : 'Vision / Theme / Medium は、それぞれ現在のactiveカードとbaseWeightから独立して抽選されます。'}
+          </p>
+          {hasDrawn && (
+            <div className="mt-5 flex flex-wrap gap-2">
+              {focusedCard.ignitionWords.map((word) => (
+                <span key={word} className="rounded-full border border-white/[0.06] bg-black/10 px-3 py-1.5 text-[10px] text-[#7e857e]">
+                  {word}
+                </span>
+              ))}
+            </div>
+          )}
         </section>
 
         <section className="mt-5 rounded-[24px] border border-[#789581]/20 bg-[#789581]/[0.05] p-4">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#8aa391]">Layer 0 note</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#8aa391]">Layer 0 rule</p>
           <p className="mt-2 text-xs leading-6 text-[#929a93]">
-            次フェーズでは「引き直し」を入れる。ただし、引き直す前に「なぜ違うと感じたか」を残す。カード選択そのものより、その反応を自己認知データとして扱う。
+            この段階では自由な引き直しを入れない。次のDH-05で「違う」と感じた理由を先に言語化してから引き直せるようにし、その反応自体を自己認知データにする。
           </p>
         </section>
       </div>
