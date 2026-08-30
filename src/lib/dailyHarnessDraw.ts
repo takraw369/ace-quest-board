@@ -26,3 +26,13 @@ export function drawHarnessSelection(random: HarnessRandom = Math.random): Harne
     return selection;
   }, {} as HarnessSelection);
 }
+
+export function redrawHarnessCard(
+  deck: HarnessDeck,
+  currentCardId: string,
+  random: HarnessRandom = Math.random,
+): HarnessCard {
+  const active = getActiveHarnessCards(deck);
+  const alternatives = active.filter((card) => card.id !== currentCardId);
+  return weightedPick(alternatives.length > 0 ? alternatives : active, random);
+}
