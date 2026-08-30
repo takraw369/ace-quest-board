@@ -14,6 +14,68 @@ import {
   trackContentAction,
 } from '@/lib/pwa';
 
+const CONTENT_ACTION_STATE_KEY = 'flow:content:action-state:v1';
+
+type ContentActionState = {
+  liked: string[];
+  saved: string[];
+};
+
+function readActionState(): ContentActionState {
+  if (typeof window === 'undefined') return { liked: [], saved: [] };
+  try {
+    const raw = window.localStorage.getItem(CONTENT_ACTION_STATE_KEY);
+    if (!raw) return { liked: [], saved: [] };
+    const parsed = JSON.parse(raw) as Partial<ContentActionState>;
+    return {
+      liked: Array.isArray(parsed.liked) ? parsed.liked : [],
+      saved: Array.isArray(parsed.saved) ? parsed.saved : [],
+    };
+  } catch {
+    return { liked: [], saved: [] };
+  }
+}
+
+function writeActionState(liked: string[], saved: string[]) {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(CONTENT_ACTION_STATE_KEY, JSON.stringify({ liked, saved }));
+}
+
+function ReadIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5 fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 5.5c2.8-.7 5.1-.2 8 1.7v12c-2.9-1.9-5.2-2.4-8-1.7z" />
+      <path d="M20 5.5c-2.8-.7-5.1-.2-8 1.7v12c2.9-1.9 5.2-2.4 8-1.7z" />
+    </svg>
+  );
+}
+
+function HeartIcon({ active }: { active: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className={`h-5 w-5 stroke-current ${active ? 'fill-current' : 'fill-none'}`} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20.8 4.7a5.5 5.5 0 0 0-7.8 0L12 5.8l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.4 1.1-1.1a5.5 5.5 0 0 0-.1-7.8z" />
+    </svg>
+  );
+}
+
+function BookmarkIcon({ active }: { active: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className={`h-5 w-5 stroke-current ${active ? 'fill-current' : 'fill-none'}`} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6.5 4.5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2V21L12 17.4 6.5 21z" />
+    </svg>
+  );
+}
+
+function ShareIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5 fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3v12" />
+      <path d="m7.5 7.5 4.5-4.5 4.5 4.5" />
+      <path d="M5 12.5v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" />
+    </svg>
+  );
+}
+
 function contentTrackingPayload(
   item: DeepeningPayload['items'][number],
   index: number,
@@ -38,12 +100,20 @@ export default function LearnClient() {
   const [deepening, setDeepening] = useState<DeepeningPayload | null>(null);
   const [deepeningError, setDeepeningError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [likedIds, setLikedIds] = useState<string[]>([]);
   const [savedIds, setSavedIds] = useState<string[]>([]);
+  const [sharedId, setSharedId] = useState<string | null>(null);
   const impressionKeyRef = useRef<string | null>(null);
   const readDepthSentRef = useRef<Set<string>>(new Set());
   const openedAtRef = useRef<Record<string, number>>({});
 
-  useEffect(() => setData(loadBootstrap()), []);
+  useEffect(() => {
+    setData(loadBootstrap());
+    const actionState = readActionState();
+    setLikedIds(actionState.liked);
+    setSavedIds(actionState.saved);
+  }, []);
+
   const rec = useMemo(() => recommendationOf(data, 'education'), [data]);
   const dailyDone = data?.daily_quest?.status === 'completed';
 
@@ -178,36 +248,85 @@ export default function LearnClient() {
             <div className="mt-7 space-y-4">
               {items.slice(0, 3).map((item, index) => {
                 const expanded = expandedId === item.id;
+                const liked = likedIds.includes(item.id);
                 const saved = savedIds.includes(item.id);
                 const kindLabel = item.kind === 'video' ? 'VIDEO' : item.kind === 'audio' ? 'AUDIO' : 'ARTICLE';
                 const tracking = deepening ? contentTrackingPayload(item, index, deepening, 'learn') : null;
+
+                const toggleRead = () => {
+                  if (!item.body && item.url) {
+                    if (tracking) void trackContentAction(data, 'content_opened', tracking).catch(() => undefined);
+                    window.open(item.url, '_blank', 'noopener,noreferrer');
+                    return;
+                  }
+                  if (!item.body) return;
+                  const nextExpanded = !expanded;
+                  if (nextExpanded) {
+                    openedAtRef.current[item.id] = Date.now();
+                  } else {
+                    delete openedAtRef.current[item.id];
+                  }
+                  setExpandedId(nextExpanded ? item.id : null);
+                  if (nextExpanded && tracking) {
+                    void trackContentAction(data, 'content_opened', tracking).catch(() => undefined);
+                  }
+                };
+
+                const toggleLike = () => {
+                  setLikedIds((current) => {
+                    const next = current.includes(item.id)
+                      ? current.filter((id) => id !== item.id)
+                      : [...current, item.id];
+                    writeActionState(next, savedIds);
+                    return next;
+                  });
+                };
+
+                const saveItem = () => {
+                  if (saved || !tracking) return;
+                  setSavedIds((current) => {
+                    const next = current.includes(item.id) ? current : [...current, item.id];
+                    writeActionState(likedIds, next);
+                    return next;
+                  });
+                  void trackContentAction(data, 'content_saved', tracking).catch(() => {
+                    setSavedIds((current) => {
+                      const next = current.filter((id) => id !== item.id);
+                      writeActionState(likedIds, next);
+                      return next;
+                    });
+                  });
+                };
+
+                const shareItem = async () => {
+                  if (typeof window === 'undefined') return;
+                  const shareUrl = item.url ?? `${window.location.origin}/learn#content-${encodeURIComponent(item.id)}`;
+                  const shareText = item.why ?? item.summary ?? 'FLOW OSで見つけた学び';
+                  try {
+                    if (navigator.share) {
+                      await navigator.share({ title: item.title, text: shareText, url: shareUrl });
+                    } else if (navigator.clipboard) {
+                      await navigator.clipboard.writeText(`${item.title}\n${shareUrl}`);
+                    }
+                    setSharedId(item.id);
+                    window.setTimeout(() => setSharedId((current) => current === item.id ? null : current), 1800);
+                  } catch {
+                    // Cancelling the native share sheet is not an error state for the user.
+                  }
+                };
+
                 return (
                   <article id={`content-${item.id}`} key={item.id} className="scroll-mt-6 rounded-[28px] border border-[#c8ab72]/15 bg-white/[0.025] p-5">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#d2b97f]">0{index + 1} / {kindLabel}</p>
                       {item.genre && <span className="rounded-full border border-white/10 px-2.5 py-1 text-[9px] uppercase tracking-[0.12em] text-[#8f958e]">{item.genre}</span>}
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const nextExpanded = !expanded;
-                        if (nextExpanded) {
-                          openedAtRef.current[item.id] = Date.now();
-                        } else {
-                          delete openedAtRef.current[item.id];
-                        }
-                        setExpandedId(nextExpanded ? item.id : null);
-                        if (nextExpanded && tracking) {
-                          void trackContentAction(data, 'content_opened', tracking).catch(() => undefined);
-                        }
-                      }}
-                      className="mt-3 w-full text-left"
-                    >
+
+                    <div className="mt-3">
                       <h2 className="font-serif text-xl font-semibold leading-8 text-[#eee8dc]">{item.title}</h2>
                       {item.why && <p className="mt-3 text-xs leading-6 text-[#8fa795]">{item.why}</p>}
                       {item.summary && <p className="mt-3 text-sm leading-7 text-[#aeb5ad]">{item.summary}</p>}
-                      {item.body && <p className="mt-4 text-xs font-semibold text-[#d9c18d]">{expanded ? '閉じる ↑' : '読む →'}</p>}
-                    </button>
+                    </div>
 
                     {expanded && item.body && (
                       <div id={`content-body-${item.id}`} className="mt-4 border-t border-white/10 pt-4">
@@ -215,23 +334,44 @@ export default function LearnClient() {
                       </div>
                     )}
 
-                    <div className="mt-4 flex flex-wrap gap-2">
+                    <div className="mt-4 grid grid-cols-4 border-t border-white/10 pt-2">
                       <button
                         type="button"
-                        disabled={saved}
-                        onClick={() => {
-                          if (saved || !tracking) return;
-                          setSavedIds((current) => current.includes(item.id) ? current : [...current, item.id]);
-                          void trackContentAction(data, 'content_saved', tracking).catch(() => {
-                            setSavedIds((current) => current.filter((id) => id !== item.id));
-                          });
-                        }}
-                        className="rounded-full border border-[#789581]/30 px-4 py-2 text-xs font-semibold text-[#a9c0af] disabled:opacity-60"
+                        onClick={toggleRead}
+                        disabled={!item.body && !item.url}
+                        aria-label={expanded ? '記事を閉じる' : '記事を読む'}
+                        className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl text-[10px] transition active:scale-95 disabled:opacity-30 ${expanded ? 'text-[#d9c18d]' : 'text-[#9aa09a]'}`}
                       >
-                        {saved ? '保存済み ✓' : 'あとで見る +'}
+                        <ReadIcon />
+                        <span>{expanded ? '閉じる' : '読む'}</span>
                       </button>
-                      {item.url && <a href={item.url} className="rounded-full border border-white/10 px-4 py-2 text-xs text-[#aeb5ad]">関連コンテンツを見る</a>}
-                      {item.kind === 'video' && !item.url && <span className="rounded-full border border-white/10 px-4 py-2 text-xs text-[#777d77]">動画準備中</span>}
+                      <button
+                        type="button"
+                        onClick={toggleLike}
+                        aria-label={liked ? 'いいねを外す' : 'いいね'}
+                        className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl text-[10px] transition active:scale-95 ${liked ? 'text-[#d6a0a0]' : 'text-[#9aa09a]'}`}
+                      >
+                        <HeartIcon active={liked} />
+                        <span>{liked ? 'Liked' : 'Like'}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={saveItem}
+                        aria-label={saved ? '保存済み' : '保存'}
+                        className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl text-[10px] transition active:scale-95 ${saved ? 'text-[#a9c0af]' : 'text-[#9aa09a]'}`}
+                      >
+                        <BookmarkIcon active={saved} />
+                        <span>{saved ? '保存済み' : '保存'}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void shareItem()}
+                        aria-label="共有"
+                        className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl text-[10px] transition active:scale-95 ${sharedId === item.id ? 'text-[#d9c18d]' : 'text-[#9aa09a]'}`}
+                      >
+                        <ShareIcon />
+                        <span>{sharedId === item.id ? '共有済み' : '共有'}</span>
+                      </button>
                     </div>
                   </article>
                 );
