@@ -164,9 +164,14 @@ export default function CalibrationClient() {
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok || payload?.ok === false) throw new Error(payload?.error ?? `http_${response.status}`);
-      saveBootstrap({ ...bootstrap, ace: payload.current_ace ?? { ...result, assessment_id: payload.assessment_id } });
+      saveBootstrap({
+        ...bootstrap,
+        ace: payload.current_ace ?? { ...result, assessment_id: payload.assessment_id },
+        recommendations: Array.isArray(payload.recommendations) ? payload.recommendations : bootstrap.recommendations,
+        current_recommendations: payload.current_recommendations ?? bootstrap.current_recommendations,
+      });
       setSaved(true);
-      setStatus('保存しました。Today / Learn / Questへつながりました。');
+      setStatus('保存しました。Today / Learn / Questのおすすめも更新しました。');
     } catch (error) {
       setStatus(`保存に失敗しました: ${error instanceof Error ? error.message : 'unknown_error'}`);
     } finally {
