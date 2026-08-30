@@ -13,7 +13,7 @@ To Do / Want to を入力 → ビジョンへの道筋がゲームボード上�
 
 ## Deployment policy
 - Netlify is retired for this repository. Do not add new Netlify deploys, hooks, plugins, or build settings.
-- `netlify.toml` exists only as a temporary retirement guard that skips Git-triggered Netlify builds. Delete it after the Netlify project is stopped/disabled in the Netlify UI.
+- `dev` is connected directly to Cloudflare Workers Builds for automatic production deployment.
 - Current static export is deployed as Cloudflare Workers Static Assets from `out/`.
 - If SSR, Server Actions, Route Handlers, or server-side auth become necessary, evaluate Cloudflare's current recommended Next.js path (currently vinext) before changing architecture.
 
