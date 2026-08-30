@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import AceCalibrationSummary from '@/components/calibration/AceCalibrationSummary';
 import PwaNav from '@/components/navigation/PwaNav';
 import { loadBootstrap, PwaBootstrap } from '@/lib/pwa';
 
@@ -38,6 +39,8 @@ export default function MeClient() {
             {['body','mind','environment','action'].map((key) => <div key={key} className="rounded-2xl bg-white/[0.025] p-4"><p className="text-[10px] text-[#6f766f]">{domainLabel[key]}</p><p className="mt-1 font-serif text-xl font-semibold">{scores[key] ?? 0}<span className="ml-1 text-xs font-normal text-[#656c65]">/12</span></p></div>)}
           </div>
         </section>
+
+        <AceCalibrationSummary data={data} />
 
         <section className="mt-4 rounded-[28px] border border-[#c8ab72]/15 bg-white/[0.025] p-5">
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#789581]">CURRENT CURRICULUM</p>

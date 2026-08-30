@@ -2,16 +2,11 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
+import AceCalibrationSummary from '@/components/calibration/AceCalibrationSummary';
 import PwaNav from '@/components/navigation/PwaNav';
-import { AceAxis, loadBootstrap, PwaBootstrap } from '@/lib/pwa';
+import { loadBootstrap, PwaBootstrap } from '@/lib/pwa';
 
 const domainLabel: Record<string, string> = { body: '身体', mind: '心・認知', environment: '環境', action: '行動' };
-const aceLabel: Record<AceAxis, string> = {
-  BODY: '身体の条件',
-  COGNITION: '認知の焦点',
-  EMOTION: '戻る手順',
-  ACTION: '実行条件',
-};
 
 function RecommendationCard({ eyebrow, title, body, href, action }: { eyebrow: string; title: string; body: string; href: string; action: string }) {
   return (
@@ -21,42 +16,6 @@ function RecommendationCard({ eyebrow, title, body, href, action }: { eyebrow: s
       <p className="mt-3 text-sm leading-7 text-[#9ca097]">{body}</p>
       <Link href={href} className="mt-5 inline-flex rounded-full border border-[#c8ab72]/25 bg-[#c8ab72]/10 px-4 py-2.5 text-xs font-semibold text-[#e5d3aa]">{action}</Link>
     </article>
-  );
-}
-
-function AceCalibrationCard({ data }: { data: PwaBootstrap }) {
-  const ace = data.ace;
-  if (!ace?.result_axis) return null;
-
-  const axis = ace.result_axis;
-  const scores = ace.scores ?? {};
-  const assessedAt = ace.assessed_at ?? ace.completed_at;
-
-  return (
-    <section className="mt-5 rounded-[28px] border border-[#789581]/25 bg-[#789581]/[0.055] p-5">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-[#789581]">ACE Calibration</p>
-          <p className="mt-2 text-xs text-[#7f887f]">今回、最初に触る場所</p>
-          <h2 className="mt-1 font-serif text-2xl font-semibold text-[#eee8dc]">{axis}｜{aceLabel[axis]}</h2>
-        </div>
-        {typeof scores[axis] === 'number' && (
-          <div className="rounded-full border border-[#789581]/20 px-3 py-1.5 text-xs font-semibold text-[#b8c8bc]">
-            {scores[axis]?.toFixed(2)} / 4
-          </div>
-        )}
-      </div>
-      <p className="mt-4 text-sm leading-7 text-[#9ca097]">固定タイプではなく、今回の状態から見たCalibrationです。FLOWのボトルネックとは別の観察レイヤーとして、今日の学びとQuestの判断材料に使います。</p>
-      <div className="mt-4 grid grid-cols-4 gap-2 border-t border-[#789581]/15 pt-4 text-center">
-        {(['BODY', 'COGNITION', 'EMOTION', 'ACTION'] as AceAxis[]).map((item) => (
-          <div key={item}>
-            <p className="text-[8px] text-[#687169]">{item}</p>
-            <p className="mt-1 text-xs font-semibold text-[#c5cdc5]">{typeof scores[item] === 'number' ? scores[item]?.toFixed(1) : '—'}</p>
-          </div>
-        ))}
-      </div>
-      {assessedAt && <p className="mt-4 text-[10px] text-[#626a63]">Calibration {new Date(assessedAt).toLocaleString('ja-JP')}</p>}
-    </section>
   );
 }
 
@@ -92,7 +51,7 @@ export default function TodayClient() {
           <div className="mt-5 grid grid-cols-4 gap-2 border-t border-[#c8ab72]/10 pt-4 text-center"><div><p className="text-[9px] text-[#626963]">FLOW</p><p className="mt-1 text-sm font-semibold">{bottleneck}</p></div><div><p className="text-[9px] text-[#626963]">ACTION</p><p className="mt-1 text-sm font-semibold">{progress.actions_completed ?? 0}</p></div><div><p className="text-[9px] text-[#626963]">QUEST</p><p className="mt-1 text-sm font-semibold">{progress.quests_completed ?? 0}</p></div><div><p className="text-[9px] text-[#626963]">LEARN</p><p className="mt-1 text-sm font-semibold">{progress.education_completed ?? 0}</p></div></div>
         </section>
 
-        <AceCalibrationCard data={data} />
+        <AceCalibrationSummary data={data} />
 
         <section className="mt-8 space-y-4">
           <div><p className="text-[9px] font-bold uppercase tracking-[0.22em] text-[#5e665f]">Recommended for you</p><h2 className="mt-1 font-serif text-2xl font-semibold">今、深める3つ。</h2></div>
