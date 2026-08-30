@@ -2,10 +2,10 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { useState } from 'react';
+import { FormEvent, useState } from 'react';
 import PwaNav from '@/components/navigation/PwaNav';
 import { PROTOTYPE_SELECTION } from '@/lib/dailyHarness';
-import { drawHarnessSelection } from '@/lib/dailyHarnessDraw';
+import { drawHarnessSelection, redrawHarnessCard } from '@/lib/dailyHarnessDraw';
 import type { HarnessCard, HarnessDeck, HarnessSelection } from '@/types/dailyHarness';
 
 const deckOrder: HarnessDeck[] = ['vision', 'theme', 'medium'];
@@ -133,13 +133,24 @@ const closedState: Record<HarnessDeck, boolean> = {
   medium: false,
 };
 
+type RedrawLog = {
+  deck: HarnessDeck;
+  fromCardId: string;
+  toCardId: string;
+  reason: string;
+};
+
 export default function DailyHarnessClient() {
   const [selection, setSelection] = useState<HarnessSelection>(PROTOTYPE_SELECTION);
   const [hasDrawn, setHasDrawn] = useState(false);
   const [flipped, setFlipped] = useState<Record<HarnessDeck, boolean>>(closedState);
   const [focusedDeck, setFocusedDeck] = useState<HarnessDeck>('theme');
+  const [redrawDeck, setRedrawDeck] = useState<HarnessDeck | null>(null);
+  const [redrawReason, setRedrawReason] = useState('');
+  const [redrawLog, setRedrawLog] = useState<RedrawLog[]>([]);
 
   const focusedCard = selection[focusedDeck];
+  const focusedRevealed = hasDrawn && flipped[focusedDeck];
   const allOpen = deckOrder.every((deck) => flipped[deck]);
 
   const drawToday = () => {
@@ -147,10 +158,17 @@ export default function DailyHarnessClient() {
     setFlipped(closedState);
     setFocusedDeck('theme');
     setHasDrawn(true);
+    setRedrawDeck(null);
+    setRedrawReason('');
+    setRedrawLog([]);
   };
 
   const toggleDeck = (deck: HarnessDeck) => {
     setFlipped((current) => ({ ...current, [deck]: !current[deck] }));
+    if (redrawDeck && redrawDeck !== deck) {
+      setRedrawDeck(null);
+      setRedrawReason('');
+    }
   };
 
   const revealAll = () => {
@@ -160,6 +178,37 @@ export default function DailyHarnessClient() {
   const hideAll = () => {
     setFlipped(closedState);
     setFocusedDeck('theme');
+    setRedrawDeck(null);
+    setRedrawReason('');
+  };
+
+  const startRedraw = () => {
+    setRedrawDeck(focusedDeck);
+    setRedrawReason('');
+  };
+
+  const cancelRedraw = () => {
+    setRedrawDeck(null);
+    setRedrawReason('');
+  };
+
+  const confirmRedraw = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const reason = redrawReason.trim();
+    if (!redrawDeck || !reason) return;
+
+    const previous = selection[redrawDeck];
+    const next = redrawHarnessCard(redrawDeck, previous.id);
+
+    setSelection((current) => ({ ...current, [redrawDeck]: next }));
+    setFlipped((current) => ({ ...current, [redrawDeck]: false }));
+    setFocusedDeck(redrawDeck);
+    setRedrawLog((current) => [
+      ...current,
+      { deck: redrawDeck, fromCardId: previous.id, toCardId: next.id, reason },
+    ]);
+    setRedrawDeck(null);
+    setRedrawReason('');
   };
 
   return (
@@ -187,7 +236,7 @@ export default function DailyHarnessClient() {
 
         <section>
           <div className="mb-3 flex items-center justify-between gap-3">
-            <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#5f675f]">DH-03 · WEIGHTED DRAW</p>
+            <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#5f675f]">DH-03 / 05 · DRAW + NOTICE</p>
             <p className="text-[9px] text-[#555c56]">active × baseWeight</p>
           </div>
 
@@ -196,7 +245,7 @@ export default function DailyHarnessClient() {
               const card = selection[deck];
               return (
                 <PlayingCard
-                  key={`${card.id}-${hasDrawn ? 'drawn' : 'idle'}`}
+                  key={`${deck}-${card.id}`}
                   card={card}
                   flipped={flipped[deck]}
                   disabled={!hasDrawn}
@@ -241,29 +290,97 @@ export default function DailyHarnessClient() {
               {deckVisual[focusedDeck].label}
             </span>
             <span className="text-[10px] text-[#626963]">
-              {hasDrawn ? 'カードをタップすると、この問いが切り替わります' : 'まず今日の3枚を引く'}
+              {!hasDrawn ? 'まず今日の3枚を引く' : focusedRevealed ? 'この反応も練習メニューの一部' : 'カードをめくると問いが現れます'}
             </span>
           </div>
-          <h2 className="mt-4 font-serif text-2xl font-semibold">{hasDrawn ? focusedCard.title : 'まだ見ない。まず引く。'}</h2>
-          <p className="mt-3 text-sm leading-7 text-[#9ca097]">
-            {hasDrawn ? focusedCard.question : 'Vision / Theme / Medium は、それぞれ現在のactiveカードとbaseWeightから独立して抽選されます。'}
-          </p>
-          {hasDrawn && (
-            <div className="mt-5 flex flex-wrap gap-2">
-              {focusedCard.ignitionWords.map((word) => (
-                <span key={word} className="rounded-full border border-white/[0.06] bg-black/10 px-3 py-1.5 text-[10px] text-[#7e857e]">
-                  {word}
-                </span>
-              ))}
-            </div>
+
+          {!hasDrawn ? (
+            <>
+              <h2 className="mt-4 font-serif text-2xl font-semibold">まだ見ない。まず引く。</h2>
+              <p className="mt-3 text-sm leading-7 text-[#9ca097]">
+                Vision / Theme / Medium は、それぞれ現在のactiveカードとbaseWeightから独立して抽選されます。
+              </p>
+            </>
+          ) : focusedRevealed ? (
+            <>
+              <h2 className="mt-4 font-serif text-2xl font-semibold">{focusedCard.title}</h2>
+              <p className="mt-3 text-sm leading-7 text-[#9ca097]">{focusedCard.question}</p>
+              <div className="mt-5 flex flex-wrap gap-2">
+                {focusedCard.ignitionWords.map((word) => (
+                  <span key={word} className="rounded-full border border-white/[0.06] bg-black/10 px-3 py-1.5 text-[10px] text-[#7e857e]">
+                    {word}
+                  </span>
+                ))}
+              </div>
+              {!redrawDeck && (
+                <button
+                  type="button"
+                  onClick={startRedraw}
+                  className="mt-5 rounded-full border border-[#789581]/25 bg-[#789581]/10 px-4 py-2.5 text-xs font-semibold text-[#a9c1ae]"
+                >
+                  このカードを引き直したい
+                </button>
+              )}
+            </>
+          ) : (
+            <>
+              <h2 className="mt-4 font-serif text-2xl font-semibold">まだ伏せておく。</h2>
+              <p className="mt-3 text-sm leading-7 text-[#9ca097]">先に意味を探さず、カードをめくった瞬間の反応から観察する。</p>
+            </>
           )}
         </section>
 
+        {redrawDeck && (
+          <form onSubmit={confirmRedraw} className="mt-5 rounded-[24px] border border-[#789581]/25 bg-[#789581]/[0.07] p-5">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#9bb2a1]">REDRAW · NOTICE FIRST</p>
+            <h3 className="mt-2 font-serif text-xl font-semibold">なぜ「違う」と感じた？</h3>
+            <p className="mt-2 text-xs leading-6 text-[#8f978f]">
+              正しい理由を書く必要はありません。今の反応を1行残してから、{deckVisual[redrawDeck].label}だけ引き直します。
+            </p>
+            <textarea
+              value={redrawReason}
+              onChange={(event) => setRedrawReason(event.target.value)}
+              rows={3}
+              autoFocus
+              placeholder="例：今日は発信より、まず体系を整理したい感覚がある"
+              className="mt-4 w-full resize-none rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm leading-6 text-[#e9e1d1] outline-none placeholder:text-[#555d56] focus:border-[#789581]/50"
+            />
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <button
+                type="submit"
+                disabled={!redrawReason.trim()}
+                className="rounded-full bg-[#9fbaa7] px-4 py-3 text-sm font-semibold text-[#10140f] disabled:cursor-not-allowed disabled:opacity-35"
+              >
+                理由を残して引き直す
+              </button>
+              <button
+                type="button"
+                onClick={cancelRedraw}
+                className="rounded-full border border-white/10 px-4 py-3 text-sm font-semibold text-[#9aa099]"
+              >
+                今のカードに戻る
+              </button>
+            </div>
+          </form>
+        )}
+
         <section className="mt-5 rounded-[24px] border border-[#789581]/20 bg-[#789581]/[0.05] p-4">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#8aa391]">Layer 0 rule</p>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#8aa391]">Layer 0 rule</p>
+            {redrawLog.length > 0 && <span className="text-[10px] text-[#789581]">引き直し理由 {redrawLog.length}件</span>}
+          </div>
           <p className="mt-2 text-xs leading-6 text-[#929a93]">
-            この段階では自由な引き直しを入れない。次のDH-05で「違う」と感じた理由を先に言語化してから引き直せるようにし、その反応自体を自己認知データにする。
+            引き直しそのものを禁止しない。ただし、その前に起きた違和感を観測する。選んだカードだけでなく、避けたカードと理由を自己認知データにする。
           </p>
+          {redrawLog.length > 0 && (
+            <div className="mt-3 space-y-2 border-t border-white/[0.06] pt-3">
+              {redrawLog.map((item, index) => (
+                <p key={`${item.deck}-${index}`} className="text-[11px] leading-5 text-[#788079]">
+                  {deckVisual[item.deck].label}：{item.reason}
+                </p>
+              ))}
+            </div>
+          )}
         </section>
       </div>
 
