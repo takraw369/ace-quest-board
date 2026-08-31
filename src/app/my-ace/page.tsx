@@ -10,8 +10,13 @@ import {
   type MyAceSnapshot,
 } from "@/lib/auth/supabaseAuth";
 
+const NAVY = "#07182f";
+const SURFACE = "#0b274a";
+const SURFACE_DEEP = "#081f3d";
+const ORANGE = "#f47a20";
+
 function label(value: string | null | undefined) {
-  if (!value) return "観察中";
+  if (!value) return null;
   return value.replaceAll("_", " ").replaceAll("-", " ");
 }
 
@@ -24,6 +29,11 @@ function rankLabel(rank: string) {
     flower: "Flower",
   };
   return map[rank] ?? rank;
+}
+
+function nextHref(snapshot: MyAceSnapshot | null) {
+  const destination = snapshot?.recommendation?.destination;
+  return destination?.startsWith("/") ? destination : "/today";
 }
 
 export default function MyAcePage() {
@@ -66,10 +76,10 @@ export default function MyAcePage() {
 
   if (loading) {
     return (
-      <main className="grid min-h-screen place-items-center bg-[#06162f] px-6 text-white">
+      <main className="grid min-h-screen place-items-center px-6 text-white" style={{ background: NAVY }}>
         <div className="text-center">
-          <div className="mx-auto h-10 w-10 animate-pulse rounded-full bg-[#ff8126]" />
-          <p className="mt-5 text-sm tracking-[0.18em] text-blue-100/60">MY ACE LOADING</p>
+          <div className="mx-auto h-10 w-10 animate-pulse rounded-full" style={{ background: ORANGE }} />
+          <p className="mt-5 text-xs font-bold tracking-[0.2em] text-blue-100/55">MY ACE LOADING</p>
         </div>
       </main>
     );
@@ -90,222 +100,195 @@ export default function MyAcePage() {
   };
   const curriculum = snapshot?.curriculum ?? null;
   const recommendation = snapshot?.recommendation ?? null;
+  const curriculumLabels = [
+    ["Stage", label(curriculum?.stage)],
+    ["Branch", label(curriculum?.branch)],
+    ["Loop", label(curriculum?.loopPosition)],
+  ].filter((item): item is [string, string] => Boolean(item[1]));
 
   return (
-    <main className="min-h-screen bg-[#06162f] px-4 pb-16 pt-8 text-white sm:px-6 sm:pt-12">
-      <div className="mx-auto max-w-6xl">
-        <header className="rounded-[28px] border border-white/10 bg-[#0a2148] p-6 shadow-2xl shadow-black/20 sm:p-8">
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="text-[11px] font-black tracking-[0.28em] text-[#ff8a2b]">MY ACE</span>
-                <span className="rounded-full border border-[#ff8a2b]/35 bg-[#ff8a2b]/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-[#ffad66]">
-                  {identity.role}
-                </span>
-                {snapshot?.serialCode && (
-                  <span className="text-[10px] tracking-[0.12em] text-blue-100/45">{snapshot.serialCode}</span>
-                )}
-              </div>
-              <h1 className="mt-4 text-3xl font-black tracking-tight sm:text-4xl">{name}</h1>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-blue-100/65">
-                今の状態を見て、今日の一歩を選び、体験からまた自分を更新していく場所。
-              </p>
+    <main className="min-h-screen px-4 pb-20 pt-6 text-white sm:px-6 sm:pt-10" style={{ background: NAVY }}>
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute -right-36 -top-36 h-96 w-96 rounded-full bg-orange-500/10 blur-[120px]" />
+        <div className="absolute -left-40 top-[32rem] h-96 w-96 rounded-full bg-blue-400/[0.06] blur-[130px]" />
+      </div>
+
+      <div className="relative z-10 mx-auto max-w-5xl">
+        <header className="flex items-start justify-between gap-5 px-1 pb-6">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="text-[10px] font-black tracking-[0.28em]" style={{ color: ORANGE }}>MY ACE</span>
+              <span className="rounded-full border border-orange-400/30 bg-orange-400/10 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.14em] text-orange-200">
+                {identity.role}
+              </span>
+              {snapshot?.serialCode && <span className="text-[9px] tracking-[0.12em] text-blue-100/35">{snapshot.serialCode}</span>}
             </div>
-            <div className="flex gap-2">
-              <Link
-                href="/me"
-                className="rounded-xl border border-white/10 px-4 py-2 text-sm font-semibold text-blue-100/70 transition hover:bg-white/5"
-              >
-                Profile
-              </Link>
-              <button
-                type="button"
-                onClick={async () => {
-                  await signOut();
-                  window.location.replace("/login");
-                }}
-                className="rounded-xl border border-white/10 px-4 py-2 text-sm font-semibold text-blue-100/70 transition hover:bg-white/5"
-              >
-                ログアウト
-              </button>
-            </div>
+            <h1 className="mt-3 truncate text-2xl font-black tracking-tight sm:text-3xl">{name}</h1>
+            <p className="mt-2 text-sm text-blue-100/55">今日は、何をひとつ動かす？</p>
           </div>
 
-          <div className="mt-8 grid gap-3 sm:grid-cols-4">
-            <Metric label="GROWTH" value={rankLabel(progress.growthRank)} note={`Lv.${progress.growthLevel}`} />
-            <Metric label="XP" value={progress.xpTotal.toLocaleString("ja-JP")} note="TOTAL" />
-            <Metric label="STREAK" value={`${progress.streakCurrent}日`} note="CURRENT" />
-            <Metric label="LEARN" value={`${learningTotal}`} note="NODES" />
+          <div className="flex shrink-0 gap-2">
+            <Link href="/me" className="rounded-xl border border-white/10 px-3 py-2 text-xs font-semibold text-blue-100/65 hover:bg-white/5">
+              Profile
+            </Link>
+            <button
+              type="button"
+              onClick={async () => {
+                await signOut();
+                window.location.replace("/login");
+              }}
+              className="rounded-xl border border-white/10 px-3 py-2 text-xs font-semibold text-blue-100/65 hover:bg-white/5"
+            >
+              Logout
+            </button>
           </div>
         </header>
 
+        {isAdmin && (
+          <a
+            href="https://masahiro-yamada.com/dashboard"
+            className="mb-4 flex items-center justify-between gap-4 rounded-2xl border border-orange-400/25 bg-orange-400/[0.07] px-4 py-3 text-sm transition hover:bg-orange-400/[0.12]"
+          >
+            <span><strong className="text-orange-200">ADMIN</strong><span className="ml-2 text-blue-100/55">運営・戦略は管理Dashboardへ</span></span>
+            <span className="font-black text-orange-300">→</span>
+          </a>
+        )}
+
         {error && (
-          <div className="mt-5 rounded-2xl border border-amber-400/20 bg-amber-400/10 px-5 py-4 text-sm text-amber-100">
-            一部の成長データをまだ読み込めませんでした。ログイン自体は有効です。
+          <div className="mb-4 rounded-2xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
+            一部データをまだ読み込めません。ログインは有効です。
           </div>
         )}
 
-        <section className="mt-5 grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="rounded-[28px] border border-white/10 bg-[#0a2148] p-6 sm:p-7">
-            <div className="text-[10px] font-black tracking-[0.25em] text-[#ff8a2b]">NOW / 今の自分</div>
-            <h2 className="mt-3 text-2xl font-black">現在地</h2>
-            <div className="mt-6 grid gap-3 sm:grid-cols-3">
-              <State label="STAGE" value={label(curriculum?.stage)} />
-              <State label="BRANCH" value={label(curriculum?.branch)} />
-              <State label="LOOP" value={label(curriculum?.loopPosition)} />
+        <section
+          className="overflow-hidden rounded-[30px] border border-orange-400/25 p-6 shadow-2xl shadow-black/20 sm:p-8"
+          style={{ background: `linear-gradient(135deg, #12315b 0%, ${SURFACE} 58%, ${SURFACE_DEEP} 100%)` }}
+        >
+          <div className="max-w-2xl">
+            <div className="text-[10px] font-black tracking-[0.28em]" style={{ color: ORANGE }}>TODAY / 今日の一歩</div>
+            <h2 className="mt-3 text-3xl font-black leading-tight sm:text-4xl">
+              {recommendation ? "今おすすめの体験から始める" : "まず、5分だけ動いてみる"}
+            </h2>
+            <p className="mt-4 text-sm leading-7 text-blue-50/70 sm:text-base">
+              {recommendation?.reason ?? "考え続けなくてOK。今できる小さな一歩を1つ選ぶと、その記録から次のQuestやLearnが育ちます。"}
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link
+                href={nextHref(snapshot)}
+                className="inline-flex items-center rounded-2xl px-5 py-3.5 text-sm font-black text-[#07182f] transition hover:brightness-110"
+                style={{ background: ORANGE }}
+              >
+                今日の一歩を選ぶ →
+              </Link>
+              <a href="#now" className="inline-flex items-center rounded-2xl border border-white/12 px-5 py-3.5 text-sm font-bold text-blue-50/75 hover:bg-white/5">
+                今の自分を見る
+              </a>
             </div>
-            <p className="mt-5 text-sm leading-7 text-blue-100/60">
-              {curriculum?.reason ?? "まだ決めつけない。Action・Quest・Learnの記録が増えるほど、今の自分に合うルートが見えてきます。"}
-            </p>
-          </div>
-
-          <div className="rounded-[28px] border border-[#ff8a2b]/25 bg-gradient-to-br from-[#122b58] to-[#0a2148] p-6 sm:p-7">
-            <div className="text-[10px] font-black tracking-[0.25em] text-[#ff9a43]">NEXT / 次の一手</div>
-            <h2 className="mt-3 text-2xl font-black">{recommendation ? "今おすすめの体験" : "まず1つ動いてみる"}</h2>
-            <p className="mt-4 text-sm leading-7 text-blue-50/75">
-              {recommendation?.reason ?? "今日の一歩・Quest・Learnのどれか1つでOK。行動の記録が、次のおすすめを育てます。"}
-            </p>
-            {recommendation?.destination?.startsWith("/") ? (
-              <Link
-                href={recommendation.destination}
-                className="mt-6 inline-flex rounded-2xl bg-[#ff8126] px-5 py-3 font-black text-[#06162f] transition hover:bg-[#ff9b4f]"
-              >
-                おすすめへ →
-              </Link>
-            ) : (
-              <Link
-                href="/today"
-                className="mt-6 inline-flex rounded-2xl bg-[#ff8126] px-5 py-3 font-black text-[#06162f] transition hover:bg-[#ff9b4f]"
-              >
-                今日の一歩へ →
-              </Link>
-            )}
           </div>
         </section>
 
-        <section className="mt-5 grid gap-4 md:grid-cols-3">
-          <JourneyCard
-            href="/today"
-            eyebrow="ACTION"
-            icon="⚡"
-            title="今日の一歩"
-            description="考え続けるより、今できる小さな一歩を選ぶ。"
-            count={`${progress.actionsCompleted} actions`}
-          />
-          <JourneyCard
-            href="/quest"
-            eyebrow="QUEST"
-            icon="🗺️"
-            title="体験して確かめる"
-            description="予想して、やってみて、実際どうだったかを見る。"
-            count={`${progress.questsCompleted} quests`}
-          />
-          <JourneyCard
-            href="/learn"
-            eyebrow="LEARN"
-            icon="📚"
-            title="理解を深める"
-            description="体験から生まれた疑問を、自分の言葉に変える。"
-            count={`${progress.educationCompleted} learned`}
-          />
-        </section>
+        <section id="now" className="mt-5 grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
+          <article className="rounded-[26px] border border-white/10 p-6" style={{ background: SURFACE }}>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="text-[9px] font-black tracking-[0.24em] text-blue-100/40">NOW / 現在地</div>
+                <h2 className="mt-2 text-2xl font-black">今の自分</h2>
+              </div>
+              <span className="rounded-full bg-white/[0.05] px-3 py-1.5 text-xs font-bold text-blue-100/55">
+                {rankLabel(progress.growthRank)} Lv.{progress.growthLevel}
+              </span>
+            </div>
 
-        <section className="mt-5 grid gap-5 lg:grid-cols-[1fr_0.8fr]">
-          <div className="rounded-[28px] border border-white/10 bg-[#0a2148] p-6">
-            <div className="text-[10px] font-black tracking-[0.25em] text-[#ff8a2b]">RECENT</div>
-            <h2 className="mt-2 text-xl font-black">最近の変化</h2>
-            {snapshot?.recentEvents.length ? (
-              <div className="mt-5 space-y-3">
-                {snapshot.recentEvents.map((event, index) => (
-                  <div key={`${event.occurredAt}-${index}`} className="rounded-2xl border border-white/8 bg-white/[0.025] p-4">
-                    <div className="text-xs font-bold text-[#ff9a43]">{label(event.eventType)}</div>
-                    {event.capturedSignal && <p className="mt-2 text-sm leading-6 text-blue-100/70">{event.capturedSignal}</p>}
-                    <p className="mt-2 text-[10px] text-blue-100/35">{new Date(event.occurredAt).toLocaleString("ja-JP")}</p>
+            {curriculumLabels.length ? (
+              <div className="mt-5 flex flex-wrap gap-2">
+                {curriculumLabels.map(([key, value]) => (
+                  <div key={key} className="rounded-xl border border-white/8 bg-[#071c36] px-3 py-2">
+                    <span className="mr-2 text-[9px] uppercase tracking-[0.14em] text-blue-100/35">{key}</span>
+                    <span className="text-sm font-bold text-blue-50">{value}</span>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="mt-5 text-sm leading-7 text-blue-100/55">まだ記録はありません。最初のActionやQuestから、ここに変化が積み上がります。</p>
+              <div className="mt-5 rounded-2xl border border-dashed border-white/10 bg-[#071c36]/70 p-4">
+                <p className="font-bold text-blue-50">まだ観察中</p>
+                <p className="mt-2 text-sm leading-6 text-blue-100/50">Action・Quest・Learnが増えるほど、現在地を決めつけずに少しずつ解像度を上げます。</p>
+              </div>
             )}
-          </div>
 
-          {isAdmin ? (
-            <div className="rounded-[28px] border border-[#ff8a2b]/30 bg-[#101f3d] p-6">
-              <div className="text-[10px] font-black tracking-[0.25em] text-[#ff8a2b]">ADMIN LAYER</div>
-              <h2 className="mt-3 text-xl font-black">ACEを育てる側へ</h2>
-              <p className="mt-3 text-sm leading-7 text-blue-100/60">
-                FlowerとしてのMy ACEと、運営・戦略の管理Dashboardは分離しています。
-              </p>
-              <a
-                href="https://masahiro-yamada.com/dashboard"
-                className="mt-6 inline-flex rounded-2xl border border-[#ff8a2b]/35 px-5 py-3 font-bold text-[#ffad66] transition hover:bg-[#ff8a2b]/10"
-              >
-                Admin Dashboard →
-              </a>
+            {curriculum?.reason && <p className="mt-5 text-sm leading-7 text-blue-100/55">{curriculum.reason}</p>}
+          </article>
+
+          <article className="rounded-[26px] border border-white/10 p-6" style={{ background: SURFACE_DEEP }}>
+            <div className="text-[9px] font-black tracking-[0.24em]" style={{ color: ORANGE }}>NEXT ROUTES</div>
+            <h2 className="mt-2 text-xl font-black">次に使う2つ</h2>
+            <div className="mt-5 space-y-3">
+              <MiniRoute href="/quest" icon="🗺️" title="Quest" body="体験して確かめる" value={`${progress.questsCompleted} completed`} />
+              <MiniRoute href="/learn" icon="📚" title="Learn" body="体験を理解に変える" value={`${learningTotal} nodes`} />
             </div>
-          ) : (
-            <div className="rounded-[28px] border border-white/10 bg-[#0a2148] p-6">
-              <div className="text-[10px] font-black tracking-[0.25em] text-[#ff8a2b]">ACE LOOP</div>
-              <h2 className="mt-3 text-xl font-black">Action → Quest → Learn</h2>
-              <p className="mt-3 text-sm leading-7 text-blue-100/60">
-                正解を当てる場所ではなく、自分で試して、自分の変化を見つけていく場所です。
-              </p>
-            </div>
-          )}
+          </article>
         </section>
+
+        <section className="mt-5 rounded-[26px] border border-white/10 p-5 sm:p-6" style={{ background: SURFACE }}>
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <div className="text-[9px] font-black tracking-[0.24em] text-blue-100/40">GROWTH</div>
+              <h2 className="mt-1 text-lg font-black">積み上がり</h2>
+            </div>
+            <span className="text-xs text-blue-100/35">結果ではなく、動いた記録</span>
+          </div>
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <Metric label="XP" value={progress.xpTotal.toLocaleString("ja-JP")} />
+            <Metric label="STREAK" value={`${progress.streakCurrent}日`} />
+            <Metric label="ACTION" value={`${progress.actionsCompleted}`} />
+            <Metric label="LEARN" value={`${learningTotal}`} />
+          </div>
+        </section>
+
+        {snapshot?.recentEvents.length ? (
+          <section className="mt-5 rounded-[26px] border border-white/10 p-6" style={{ background: SURFACE_DEEP }}>
+            <div className="text-[9px] font-black tracking-[0.24em] text-blue-100/40">RECENT</div>
+            <h2 className="mt-2 text-lg font-black">最近の変化</h2>
+            <div className="mt-4 space-y-3">
+              {snapshot.recentEvents.map((event, index) => (
+                <div key={`${event.occurredAt}-${index}`} className="flex gap-3 rounded-2xl border border-white/7 bg-white/[0.025] p-4">
+                  <div className="mt-1 h-2 w-2 shrink-0 rounded-full" style={{ background: ORANGE }} />
+                  <div>
+                    <div className="text-xs font-bold text-orange-200">{label(event.eventType) ?? "更新"}</div>
+                    {event.capturedSignal && <p className="mt-1 text-sm leading-6 text-blue-100/55">{event.capturedSignal}</p>}
+                    <p className="mt-1 text-[10px] text-blue-100/30">{new Date(event.occurredAt).toLocaleString("ja-JP")}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        <p className="mt-8 text-center text-[10px] tracking-[0.12em] text-blue-100/25">ACTION → QUEST → LEARN → UPDATE</p>
       </div>
     </main>
   );
 }
 
-function Metric({ label: metricLabel, value, note }: { label: string; value: string; note: string }) {
+function Metric({ label: metricLabel, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-white/8 bg-[#071a39] p-4">
-      <div className="text-[9px] font-black tracking-[0.2em] text-blue-100/40">{metricLabel}</div>
-      <div className="mt-2 text-2xl font-black text-white">{value}</div>
-      <div className="mt-1 text-[9px] tracking-[0.16em] text-[#ff8a2b]/70">{note}</div>
+    <div className="rounded-2xl border border-white/8 bg-[#071c36] px-4 py-4">
+      <div className="text-[9px] font-black tracking-[0.18em] text-blue-100/35">{metricLabel}</div>
+      <div className="mt-2 text-xl font-black text-white">{value}</div>
     </div>
   );
 }
 
-function State({ label: stateLabel, value }: { label: string; value: string }) {
+function MiniRoute({ href, icon, title, body, value }: { href: string; icon: string; title: string; body: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-white/8 bg-[#071a39] p-4">
-      <div className="text-[9px] font-black tracking-[0.18em] text-blue-100/40">{stateLabel}</div>
-      <div className="mt-2 text-sm font-bold text-blue-50">{value}</div>
-    </div>
-  );
-}
-
-function JourneyCard({
-  href,
-  eyebrow,
-  icon,
-  title,
-  description,
-  count,
-}: {
-  href: string;
-  eyebrow: string;
-  icon: string;
-  title: string;
-  description: string;
-  count: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="group rounded-[26px] border border-white/10 bg-[#0a2148] p-6 transition hover:-translate-y-0.5 hover:border-[#ff8a2b]/45 hover:bg-[#0c2754]"
-    >
-      <div className="flex items-center justify-between">
-        <span className="text-[10px] font-black tracking-[0.22em] text-[#ff8a2b]">{eyebrow}</span>
-        <span className="text-2xl">{icon}</span>
+    <Link href={href} className="group flex items-center gap-4 rounded-2xl border border-white/8 bg-[#071c36] p-4 transition hover:border-orange-400/30 hover:bg-[#092342]">
+      <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-white/[0.05] text-xl">{icon}</div>
+      <div className="min-w-0 flex-1">
+        <div className="font-black text-white">{title}</div>
+        <div className="mt-0.5 text-xs text-blue-100/50">{body}</div>
       </div>
-      <h3 className="mt-5 text-xl font-black">{title}</h3>
-      <p className="mt-3 text-sm leading-7 text-blue-100/55">{description}</p>
-      <div className="mt-5 flex items-center justify-between text-xs">
-        <span className="text-blue-100/35">{count}</span>
-        <span className="font-bold text-[#ff9a43] transition group-hover:translate-x-1">OPEN →</span>
+      <div className="text-right">
+        <div className="text-[9px] text-blue-100/30">{value}</div>
+        <div className="mt-1 font-black text-orange-300 transition group-hover:translate-x-0.5">→</div>
       </div>
     </Link>
   );
