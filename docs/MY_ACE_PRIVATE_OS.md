@@ -34,6 +34,40 @@ Canonical navigation remains one tap away. Sync cards and quick links open Calen
 
 Calendar remains canonical externally for now; do not introduce a second calendar store until a stable calendar read model is intentionally added.
 
+## Vitality 8 v0.1
+
+My ACE adds a lightweight **HEALTH × BURNING** observation layer below `NOW / 現在地`.
+
+It intentionally remains separate from ACE Calibration:
+
+- ACE Calibration = BODY / COGNITION / EMOTION / ACTION state sensor.
+- Vitality 8 = a higher-level life-system observation model.
+
+Vitality 8 has two groups:
+
+- **HEALTH / 壊れず続く** — SENSING, MARGIN, LEARNING, REGULATION.
+- **BURNING / 前へ進む** — WANT, SPACE, ENERGY, LOOP.
+
+Each element is self-rated from 0 to 5 for the current moment. The UI shows:
+
+- an 8-element SVG radar,
+- HEALTH average,
+- BURNING average,
+- the lowest-scoring bottleneck,
+- a HEALTH × BURNING quadrant: `FLOW`, `STABLE`, `OVERDRIVE`, or `RESET`.
+
+The bottleneck is more important than the total score. Do not present Vitality 8 as a fixed personality type or scientifically validated diagnostic instrument; it is an ACE conceptual observation model.
+
+### Persistence boundary
+
+v0.1 stores the snapshot in namespaced browser localStorage (`ace.vitality8.v1.<auth-user-id>`). This is deliberate:
+
+- no fabricated mapping from the existing 4-axis Calibration is allowed,
+- no new Supabase source-of-truth table is introduced before usage evidence exists,
+- the stored payload is versioned so it can later migrate to a Supabase history model without breaking existing users.
+
+Promote Vitality 8 to Supabase only after repeated use shows that cross-device history, coach visibility, recommendation input, or time-series analysis is worth the additional schema and operational coupling.
+
 ## Security
 
 Browser reads use the user's Supabase access token and publishable key. RLS policies allow private OS reads only when the authenticated user has `user_roles.role = 'admin'`.
