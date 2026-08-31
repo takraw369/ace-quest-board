@@ -52,11 +52,16 @@ function authHeaders(accessToken?: string) {
 export function beginGoogleLogin(returnTo = "/my-ace") {
   if (typeof window === "undefined") return;
   sessionStorage.setItem(RETURN_TO_KEY, returnTo);
-  const redirectTo = `${window.location.origin}/auth/callback`;
+  const redirectTo = `${window.location.origin}/login`;
   const url = new URL(`${SUPABASE_URL}/auth/v1/authorize`);
   url.searchParams.set("provider", "google");
   url.searchParams.set("redirect_to", redirectTo);
   window.location.assign(url.toString());
+}
+
+export function hasOAuthCallbackHash() {
+  if (typeof window === "undefined") return false;
+  return window.location.hash.includes("access_token=") || window.location.hash.includes("error=");
 }
 
 export function consumeOAuthCallback(): string {
