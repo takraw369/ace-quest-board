@@ -84,6 +84,15 @@ function authHeaders(accessToken?: string) {
   };
 }
 
+function metadataDisplayName(user: AceUser): string | null {
+  const metadata = user.user_metadata ?? {};
+  const candidates = [metadata.full_name, metadata.name, metadata.user_name, metadata.preferred_username];
+  for (const candidate of candidates) {
+    if (typeof candidate === "string" && candidate.trim()) return candidate.trim();
+  }
+  return null;
+}
+
 export function beginGoogleLogin(returnTo = "/my-ace") {
   if (typeof window === "undefined") return;
   sessionStorage.setItem(RETURN_TO_KEY, returnTo);
@@ -193,10 +202,14 @@ export async function getCurrentIdentity(): Promise<AceIdentity | null> {
     restSelect<{ id: string }>(`contacts?select=id&auth_user_id=eq.${encodeURIComponent(user.id)}`, accessToken),
   ]);
 
+  const profileName = profiles[0]?.display_name?.trim() || null;
+  const googleName = metadataDisplayName(user);
+  const displayName = profileName && !profileName.includes("@") ? profileName : googleName ?? profileName;
+
   return {
     user,
     role: roles[0]?.role ?? "flower",
-    displayName: profiles[0]?.display_name ?? null,
+    displayName,
     contactId: contacts[0]?.id ?? null,
   };
 }
