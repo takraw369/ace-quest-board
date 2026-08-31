@@ -11,6 +11,9 @@ export type AdminOsSyncState = {
   rowCount: number;
   lastSyncedAt: string | null;
   lastError: string | null;
+  sourceId: string | null;
+  sourceTab: string | null;
+  sourceUrl: string | null;
 };
 
 export type AdminOsProject = {
@@ -37,10 +40,18 @@ export type AdminOsTask = {
   actionRecordedAt: string | null;
 };
 
+export type AdminOsRevenue = {
+  liveRevenueJpy: number;
+  livePurchaseCount: number;
+  liveCustomerCount: number;
+  latestLivePurchaseAt: string | null;
+};
+
 export type AdminOsSnapshot = {
   sync: AdminOsSyncState[];
   projects: AdminOsProject[];
   tasks: AdminOsTask[];
+  revenue: AdminOsRevenue;
 };
 
 export type PrivateOsActionResult = {
@@ -62,6 +73,8 @@ type SyncRow = {
   row_count: number;
   last_synced_at: string | null;
   last_error: string | null;
+  source_id: string | null;
+  source_tab: string | null;
 };
 
 type ProjectRow = {
@@ -92,6 +105,15 @@ type ActionRow = {
   occurred_at: string;
 };
 
+type PurchaseRow = {
+  id: string;
+  contact_id: string | null;
+  provider: string | null;
+  amount_jpy: number | null;
+  status: string | null;
+  purchased_at: string | null;
+};
+
 type ActionRpcRow = {
   recorded?: boolean;
   already_recorded?: boolean;
@@ -120,6 +142,11 @@ async function adminSelect<T>(path: string, accessToken: string): Promise<T[]> {
 
   if (!response.ok) throw new Error(`admin_os_rest_${response.status}`);
   return (await response.json()) as T[];
+}
+
+function spreadsheetUrl(sourceId: string | null) {
+  if (!sourceId) return null;
+  return `https://docs.google.com/spreadsheets/d/${encodeURIComponent(sourceId)}/edit`;
 }
 
 export async function completePrivateOsAction(taskId: string): Promise<PrivateOsActionResult> {
@@ -157,9 +184,9 @@ export async function getAdminOsSnapshot(identity: AceIdentity): Promise<AdminOs
   const accessToken = await getAccessToken();
   if (!accessToken) return null;
 
-  const [syncRows, projectRows, taskRows, actionRows] = await Promise.all([
+  const [syncRows, projectRows, taskRows, actionRows, purchaseRows] = await Promise.all([
     adminSelect<SyncRow>(
-      "os_sync_state?select=sync_key,status,row_count,last_synced_at,last_error&order=sync_key.asc",
+      "os_sync_state?select=sync_key,status,row_count,last_synced_at,last_error,source_id,source_tab&order=sync_key.asc",
       accessToken,
     ),
     adminSelect<ProjectRow>(
@@ -174,6 +201,10 @@ export async function getAdminOsSnapshot(identity: AceIdentity): Promise<AdminOs
       "funnel_events?select=payload,occurred_at&event_type=eq.micro_action_completed&channel=eq.my_ace_private_os&order=occurred_at.desc&limit=200",
       accessToken,
     ),
+    adminSelect<PurchaseRow>(
+      "purchases?select=id,contact_id,provider,amount_jpy,status,purchased_at&status=eq.paid&order=purchased_at.desc&limit=500",
+      accessToken,
+    ),
   ]);
 
   const actionRecordedAt = new Map<string, string>();
@@ -184,6 +215,9 @@ export async function getAdminOsSnapshot(identity: AceIdentity): Promise<AdminOs
     }
   }
 
+  const livePurchases = purchaseRows.filter((row) => row.provider !== "stripe_test" && (row.amount_jpy ?? 0) > 0);
+  const liveCustomerIds = new Set(livePurchases.map((row) => row.contact_id).filter((value): value is string => Boolean(value)));
+
   return {
     sync: syncRows.map((row) => ({
       syncKey: row.sync_key,
@@ -191,6 +225,9 @@ export async function getAdminOsSnapshot(identity: AceIdentity): Promise<AdminOs
       rowCount: row.row_count,
       lastSyncedAt: row.last_synced_at,
       lastError: row.last_error,
+      sourceId: row.source_id,
+      sourceTab: row.source_tab,
+      sourceUrl: spreadsheetUrl(row.source_id),
     })),
     projects: projectRows.map((row) => ({
       projectId: row.project_id,
@@ -214,5 +251,11 @@ export async function getAdminOsSnapshot(identity: AceIdentity): Promise<AdminOs
       nextAction: row.next_action,
       actionRecordedAt: row.task_id ? actionRecordedAt.get(row.task_id) ?? null : null,
     })),
+    revenue: {
+      liveRevenueJpy: livePurchases.reduce((sum, row) => sum + (row.amount_jpy ?? 0), 0),
+      livePurchaseCount: livePurchases.length,
+      liveCustomerCount: liveCustomerIds.size,
+      latestLivePurchaseAt: livePurchases[0]?.purchased_at ?? null,
+    },
   };
 }
