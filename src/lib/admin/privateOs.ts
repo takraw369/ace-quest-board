@@ -105,13 +105,11 @@ type ActionRow = {
   occurred_at: string;
 };
 
-type PurchaseRow = {
-  id: string;
-  contact_id: string | null;
-  provider: string | null;
-  amount_jpy: number | null;
-  status: string | null;
-  purchased_at: string | null;
+type RevenueRpcRow = {
+  live_revenue_jpy?: number;
+  live_purchase_count?: number;
+  live_customer_count?: number;
+  latest_live_purchase_at?: string | null;
 };
 
 type ActionRpcRow = {
@@ -144,6 +142,20 @@ async function adminSelect<T>(path: string, accessToken: string): Promise<T[]> {
   return (await response.json()) as T[];
 }
 
+async function adminRpc<T>(name: string, accessToken: string, body: Record<string, unknown> = {}): Promise<T> {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${name}`, {
+    method: "POST",
+    headers: {
+      ...adminHeaders(accessToken),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) throw new Error(`admin_os_rpc_${name}_${response.status}`);
+  return (await response.json()) as T;
+}
+
 function spreadsheetUrl(sourceId: string | null) {
   if (!sourceId) return null;
   return `https://docs.google.com/spreadsheets/d/${encodeURIComponent(sourceId)}/edit`;
@@ -153,17 +165,7 @@ export async function completePrivateOsAction(taskId: string): Promise<PrivateOs
   const accessToken = await getAccessToken();
   if (!accessToken) throw new Error("private_os_action_not_authenticated");
 
-  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/complete_private_os_action`, {
-    method: "POST",
-    headers: {
-      ...adminHeaders(accessToken),
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ p_task_id: taskId }),
-  });
-
-  if (!response.ok) throw new Error(`private_os_action_${response.status}`);
-  const row = (await response.json()) as ActionRpcRow;
+  const row = await adminRpc<ActionRpcRow>("complete_private_os_action", accessToken, { p_task_id: taskId });
 
   return {
     recorded: Boolean(row.recorded),
@@ -184,7 +186,7 @@ export async function getAdminOsSnapshot(identity: AceIdentity): Promise<AdminOs
   const accessToken = await getAccessToken();
   if (!accessToken) return null;
 
-  const [syncRows, projectRows, taskRows, actionRows, purchaseRows] = await Promise.all([
+  const [syncRows, projectRows, taskRows, actionRows, revenueRow] = await Promise.all([
     adminSelect<SyncRow>(
       "os_sync_state?select=sync_key,status,row_count,last_synced_at,last_error,source_id,source_tab&order=sync_key.asc",
       accessToken,
@@ -201,10 +203,7 @@ export async function getAdminOsSnapshot(identity: AceIdentity): Promise<AdminOs
       "funnel_events?select=payload,occurred_at&event_type=eq.micro_action_completed&channel=eq.my_ace_private_os&order=occurred_at.desc&limit=200",
       accessToken,
     ),
-    adminSelect<PurchaseRow>(
-      "purchases?select=id,contact_id,provider,amount_jpy,status,purchased_at&status=eq.paid&order=purchased_at.desc&limit=500",
-      accessToken,
-    ),
+    adminRpc<RevenueRpcRow>("get_admin_revenue_summary", accessToken),
   ]);
 
   const actionRecordedAt = new Map<string, string>();
@@ -214,9 +213,6 @@ export async function getAdminOsSnapshot(identity: AceIdentity): Promise<AdminOs
       actionRecordedAt.set(taskId, row.occurred_at);
     }
   }
-
-  const livePurchases = purchaseRows.filter((row) => row.provider !== "stripe_test" && (row.amount_jpy ?? 0) > 0);
-  const liveCustomerIds = new Set(livePurchases.map((row) => row.contact_id).filter((value): value is string => Boolean(value)));
 
   return {
     sync: syncRows.map((row) => ({
@@ -252,10 +248,10 @@ export async function getAdminOsSnapshot(identity: AceIdentity): Promise<AdminOs
       actionRecordedAt: row.task_id ? actionRecordedAt.get(row.task_id) ?? null : null,
     })),
     revenue: {
-      liveRevenueJpy: livePurchases.reduce((sum, row) => sum + (row.amount_jpy ?? 0), 0),
-      livePurchaseCount: livePurchases.length,
-      liveCustomerCount: liveCustomerIds.size,
-      latestLivePurchaseAt: livePurchases[0]?.purchased_at ?? null,
+      liveRevenueJpy: typeof revenueRow.live_revenue_jpy === "number" ? revenueRow.live_revenue_jpy : 0,
+      livePurchaseCount: typeof revenueRow.live_purchase_count === "number" ? revenueRow.live_purchase_count : 0,
+      liveCustomerCount: typeof revenueRow.live_customer_count === "number" ? revenueRow.live_customer_count : 0,
+      latestLivePurchaseAt: revenueRow.latest_live_purchase_at ?? null,
     },
   };
 }
