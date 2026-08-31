@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { getCurrentIdentity, type AceIdentity } from "@/lib/auth/supabaseAuth";
+import CommandCenterSummary from "@/components/admin/CommandCenterSummary";
 import {
   completePrivateOsAction,
   getAdminOsSnapshot,
@@ -185,17 +186,29 @@ export default function PrivateOsPanel() {
           </div>
         ) : snapshot ? (
           <>
+            <CommandCenterSummary snapshot={snapshot} />
+
             <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {snapshot.sync.map((item) => (
-                <div key={item.syncKey} className="rounded-2xl border border-ace-border bg-ace-surface p-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[9px] font-black tracking-[0.16em] text-ace-text-muted">{syncLabels[item.syncKey] ?? item.syncKey}</span>
-                    <span className={`h-2 w-2 rounded-full ${item.status === "ok" ? "bg-ace-accent" : "bg-ace-warning"}`} />
-                  </div>
-                  <div className="mt-2 text-2xl font-black">{item.rowCount.toLocaleString("ja-JP")}</div>
-                  <div className="mt-1 text-[10px] text-ace-text-muted">{formatSyncTime(item.lastSyncedAt)}</div>
-                </div>
-              ))}
+              {snapshot.sync.map((item) => {
+                const card = (
+                  <>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[9px] font-black tracking-[0.16em] text-ace-text-muted">{syncLabels[item.syncKey] ?? item.syncKey}</span>
+                      <span className={`h-2 w-2 rounded-full ${item.status === "ok" ? "bg-ace-accent" : "bg-ace-warning"}`} />
+                    </div>
+                    <div className="mt-2 text-2xl font-black">{item.rowCount.toLocaleString("ja-JP")}</div>
+                    <div className="mt-1 text-[10px] text-ace-text-muted">{formatSyncTime(item.lastSyncedAt)}</div>
+                  </>
+                );
+
+                return item.sourceUrl ? (
+                  <a key={item.syncKey} href={item.sourceUrl} target="_blank" rel="noreferrer" className="rounded-2xl border border-ace-border bg-ace-surface p-4 transition hover:border-ace-accent/30">
+                    {card}
+                  </a>
+                ) : (
+                  <div key={item.syncKey} className="rounded-2xl border border-ace-border bg-ace-surface p-4">{card}</div>
+                );
+              })}
             </div>
 
             {snapshot.sync.some((item) => item.status !== "ok") ? (
