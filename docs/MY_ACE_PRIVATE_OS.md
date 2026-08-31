@@ -38,7 +38,7 @@ Calendar remains canonical externally for now; do not introduce a second calenda
 
 Browser reads use the user's Supabase access token and publishable key. RLS policies allow private OS reads only when the authenticated user has `user_roles.role = 'admin'`.
 
-The purchase summary uses an admin-only SELECT policy and only reads fields needed for aggregate revenue. The UI does not request purchase metadata or customer email fields.
+Revenue is returned through the admin-gated `get_admin_revenue_summary()` RPC. Purchase-detail SELECT access is not granted to the dashboard; the browser receives only aggregate revenue, purchase count, customer count, and latest live purchase time.
 
 No Supabase secret key, service-role credential, Google service-account key, or Drive credential is exposed to the browser.
 
