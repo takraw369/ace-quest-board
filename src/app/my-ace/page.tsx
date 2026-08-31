@@ -64,6 +64,29 @@ export default function MyAcePage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!identity) return;
+    let cancelled = false;
+
+    const refreshProgress = () => {
+      void getMyAceSnapshot(identity)
+        .then((next) => {
+          if (cancelled) return;
+          setSnapshot(next);
+          setError(null);
+        })
+        .catch((reason) => {
+          if (!cancelled) setError(reason instanceof Error ? reason.message : "my_ace_refresh_failed");
+        });
+    };
+
+    window.addEventListener("ace:progress-updated", refreshProgress);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("ace:progress-updated", refreshProgress);
+    };
+  }, [identity]);
+
   const learningTotal = useMemo(
     () => Object.values(snapshot?.learningCounts ?? {}).reduce((sum, count) => sum + count, 0),
     [snapshot],

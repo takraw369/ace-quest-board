@@ -34,12 +34,26 @@ export type AdminOsTask = {
   dueDate: string | null;
   timeHint: string | null;
   nextAction: string | null;
+  actionRecordedAt: string | null;
 };
 
 export type AdminOsSnapshot = {
   sync: AdminOsSyncState[];
   projects: AdminOsProject[];
   tasks: AdminOsTask[];
+};
+
+export type PrivateOsActionResult = {
+  recorded: boolean;
+  alreadyRecorded: boolean;
+  taskId: string;
+  eventId: number | null;
+  xpAwarded: number;
+  xpTotal: number;
+  growthLevel: number;
+  growthRank: string;
+  streak: number;
+  actionsCompleted: number;
 };
 
 type SyncRow = {
@@ -73,17 +87,69 @@ type TaskRow = {
   next_action: string | null;
 };
 
+type ActionRow = {
+  payload: Record<string, unknown> | null;
+  occurred_at: string;
+};
+
+type ActionRpcRow = {
+  recorded?: boolean;
+  already_recorded?: boolean;
+  task_id?: string;
+  event_id?: number;
+  xp_awarded?: number;
+  xp_total?: number;
+  growth_level?: number;
+  growth_rank?: string;
+  streak?: number;
+  actions_completed?: number;
+};
+
+function adminHeaders(accessToken: string) {
+  return {
+    apikey: SUPABASE_PUBLISHABLE_KEY,
+    Authorization: `Bearer ${accessToken}`,
+    Accept: "application/json",
+  };
+}
+
 async function adminSelect<T>(path: string, accessToken: string): Promise<T[]> {
   const response = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-    headers: {
-      apikey: SUPABASE_PUBLISHABLE_KEY,
-      Authorization: `Bearer ${accessToken}`,
-      Accept: "application/json",
-    },
+    headers: adminHeaders(accessToken),
   });
 
   if (!response.ok) throw new Error(`admin_os_rest_${response.status}`);
   return (await response.json()) as T[];
+}
+
+export async function completePrivateOsAction(taskId: string): Promise<PrivateOsActionResult> {
+  const accessToken = await getAccessToken();
+  if (!accessToken) throw new Error("private_os_action_not_authenticated");
+
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/complete_private_os_action`, {
+    method: "POST",
+    headers: {
+      ...adminHeaders(accessToken),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ p_task_id: taskId }),
+  });
+
+  if (!response.ok) throw new Error(`private_os_action_${response.status}`);
+  const row = (await response.json()) as ActionRpcRow;
+
+  return {
+    recorded: Boolean(row.recorded),
+    alreadyRecorded: Boolean(row.already_recorded),
+    taskId: row.task_id ?? taskId,
+    eventId: typeof row.event_id === "number" ? row.event_id : null,
+    xpAwarded: typeof row.xp_awarded === "number" ? row.xp_awarded : 0,
+    xpTotal: typeof row.xp_total === "number" ? row.xp_total : 0,
+    growthLevel: typeof row.growth_level === "number" ? row.growth_level : 1,
+    growthRank: row.growth_rank ?? "seed",
+    streak: typeof row.streak === "number" ? row.streak : 0,
+    actionsCompleted: typeof row.actions_completed === "number" ? row.actions_completed : 0,
+  };
 }
 
 export async function getAdminOsSnapshot(identity: AceIdentity): Promise<AdminOsSnapshot | null> {
@@ -91,7 +157,7 @@ export async function getAdminOsSnapshot(identity: AceIdentity): Promise<AdminOs
   const accessToken = await getAccessToken();
   if (!accessToken) return null;
 
-  const [syncRows, projectRows, taskRows] = await Promise.all([
+  const [syncRows, projectRows, taskRows, actionRows] = await Promise.all([
     adminSelect<SyncRow>(
       "os_sync_state?select=sync_key,status,row_count,last_synced_at,last_error&order=sync_key.asc",
       accessToken,
@@ -104,7 +170,19 @@ export async function getAdminOsSnapshot(identity: AceIdentity): Promise<AdminOs
       "os_tasks?select=task_id,status,priority,task,project,due_date,time_hint,next_action&order=source_row.asc",
       accessToken,
     ),
+    adminSelect<ActionRow>(
+      "funnel_events?select=payload,occurred_at&event_type=eq.micro_action_completed&channel=eq.my_ace_private_os&order=occurred_at.desc&limit=200",
+      accessToken,
+    ),
   ]);
+
+  const actionRecordedAt = new Map<string, string>();
+  for (const row of actionRows) {
+    const taskId = row.payload?.task_id;
+    if (typeof taskId === "string" && taskId && !actionRecordedAt.has(taskId)) {
+      actionRecordedAt.set(taskId, row.occurred_at);
+    }
+  }
 
   return {
     sync: syncRows.map((row) => ({
@@ -134,6 +212,7 @@ export async function getAdminOsSnapshot(identity: AceIdentity): Promise<AdminOs
       dueDate: row.due_date,
       timeHint: row.time_hint,
       nextAction: row.next_action,
+      actionRecordedAt: row.task_id ? actionRecordedAt.get(row.task_id) ?? null : null,
     })),
   };
 }
