@@ -1,17 +1,39 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { beginGoogleLogin, getCurrentIdentity } from "@/lib/auth/supabaseAuth";
+import {
+  beginGoogleLogin,
+  consumeOAuthCallback,
+  getCurrentIdentity,
+  hasOAuthCallbackHash,
+} from "@/lib/auth/supabaseAuth";
 
 export default function LoginPage() {
   const [checking, setChecking] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    getCurrentIdentity()
-      .then((identity) => {
-        if (identity) window.location.replace(identity.role === "admin" ? "/my-ace?mode=admin" : "/my-ace");
-      })
-      .finally(() => setChecking(false));
+    async function boot() {
+      try {
+        if (hasOAuthCallbackHash()) {
+          const returnTo = consumeOAuthCallback();
+          window.location.replace(returnTo);
+          return;
+        }
+
+        const identity = await getCurrentIdentity();
+        if (identity) {
+          window.location.replace(identity.role === "admin" ? "/my-ace?mode=admin" : "/my-ace");
+          return;
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "ログイン処理に失敗しました");
+      } finally {
+        setChecking(false);
+      }
+    }
+
+    void boot();
   }, []);
 
   return (
@@ -24,6 +46,12 @@ export default function LoginPage() {
             Quest、Learn、今日の一歩、成長記録をひとつのアカウントに繋げます。
           </p>
         </div>
+
+        {error && (
+          <div className="mb-5 rounded-2xl border border-red-300/20 bg-red-400/10 p-4 text-sm text-red-100">
+            {error}
+          </div>
+        )}
 
         <button
           type="button"
