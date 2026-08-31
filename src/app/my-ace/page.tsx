@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import Vitality8Panel from "@/components/my-ace/Vitality8Panel";
 import {
   getCurrentIdentity,
   getMyAceSnapshot,
@@ -244,6 +245,8 @@ export default function MyAcePage() {
             </div>
           </article>
         </section>
+
+        <Vitality8Panel userId={identity.user.id} />
 
         <section className="mt-5 rounded-[26px] border border-ace-border bg-ace-surface p-5 sm:p-6">
           <div className="flex items-center justify-between gap-4">
