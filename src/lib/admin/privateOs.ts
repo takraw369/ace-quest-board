@@ -11,6 +11,9 @@ export type AdminOsSyncState = {
   rowCount: number;
   lastSyncedAt: string | null;
   lastError: string | null;
+  sourceId: string | null;
+  sourceTab: string | null;
+  sourceUrl: string | null;
 };
 
 export type AdminOsProject = {
@@ -37,10 +40,18 @@ export type AdminOsTask = {
   actionRecordedAt: string | null;
 };
 
+export type AdminOsRevenue = {
+  liveRevenueJpy: number;
+  livePurchaseCount: number;
+  liveCustomerCount: number;
+  latestLivePurchaseAt: string | null;
+};
+
 export type AdminOsSnapshot = {
   sync: AdminOsSyncState[];
   projects: AdminOsProject[];
   tasks: AdminOsTask[];
+  revenue: AdminOsRevenue;
 };
 
 export type PrivateOsActionResult = {
@@ -62,6 +73,8 @@ type SyncRow = {
   row_count: number;
   last_synced_at: string | null;
   last_error: string | null;
+  source_id: string | null;
+  source_tab: string | null;
 };
 
 type ProjectRow = {
@@ -90,6 +103,13 @@ type TaskRow = {
 type ActionRow = {
   payload: Record<string, unknown> | null;
   occurred_at: string;
+};
+
+type RevenueRpcRow = {
+  live_revenue_jpy?: number;
+  live_purchase_count?: number;
+  live_customer_count?: number;
+  latest_live_purchase_at?: string | null;
 };
 
 type ActionRpcRow = {
@@ -122,21 +142,30 @@ async function adminSelect<T>(path: string, accessToken: string): Promise<T[]> {
   return (await response.json()) as T[];
 }
 
-export async function completePrivateOsAction(taskId: string): Promise<PrivateOsActionResult> {
-  const accessToken = await getAccessToken();
-  if (!accessToken) throw new Error("private_os_action_not_authenticated");
-
-  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/complete_private_os_action`, {
+async function adminRpc<T>(name: string, accessToken: string, body: Record<string, unknown> = {}): Promise<T> {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${name}`, {
     method: "POST",
     headers: {
       ...adminHeaders(accessToken),
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ p_task_id: taskId }),
+    body: JSON.stringify(body),
   });
 
-  if (!response.ok) throw new Error(`private_os_action_${response.status}`);
-  const row = (await response.json()) as ActionRpcRow;
+  if (!response.ok) throw new Error(`admin_os_rpc_${name}_${response.status}`);
+  return (await response.json()) as T;
+}
+
+function spreadsheetUrl(sourceId: string | null) {
+  if (!sourceId) return null;
+  return `https://docs.google.com/spreadsheets/d/${encodeURIComponent(sourceId)}/edit`;
+}
+
+export async function completePrivateOsAction(taskId: string): Promise<PrivateOsActionResult> {
+  const accessToken = await getAccessToken();
+  if (!accessToken) throw new Error("private_os_action_not_authenticated");
+
+  const row = await adminRpc<ActionRpcRow>("complete_private_os_action", accessToken, { p_task_id: taskId });
 
   return {
     recorded: Boolean(row.recorded),
@@ -157,9 +186,9 @@ export async function getAdminOsSnapshot(identity: AceIdentity): Promise<AdminOs
   const accessToken = await getAccessToken();
   if (!accessToken) return null;
 
-  const [syncRows, projectRows, taskRows, actionRows] = await Promise.all([
+  const [syncRows, projectRows, taskRows, actionRows, revenueRow] = await Promise.all([
     adminSelect<SyncRow>(
-      "os_sync_state?select=sync_key,status,row_count,last_synced_at,last_error&order=sync_key.asc",
+      "os_sync_state?select=sync_key,status,row_count,last_synced_at,last_error,source_id,source_tab&order=sync_key.asc",
       accessToken,
     ),
     adminSelect<ProjectRow>(
@@ -174,6 +203,7 @@ export async function getAdminOsSnapshot(identity: AceIdentity): Promise<AdminOs
       "funnel_events?select=payload,occurred_at&event_type=eq.micro_action_completed&channel=eq.my_ace_private_os&order=occurred_at.desc&limit=200",
       accessToken,
     ),
+    adminRpc<RevenueRpcRow>("get_admin_revenue_summary", accessToken),
   ]);
 
   const actionRecordedAt = new Map<string, string>();
@@ -191,6 +221,9 @@ export async function getAdminOsSnapshot(identity: AceIdentity): Promise<AdminOs
       rowCount: row.row_count,
       lastSyncedAt: row.last_synced_at,
       lastError: row.last_error,
+      sourceId: row.source_id,
+      sourceTab: row.source_tab,
+      sourceUrl: spreadsheetUrl(row.source_id),
     })),
     projects: projectRows.map((row) => ({
       projectId: row.project_id,
@@ -214,5 +247,11 @@ export async function getAdminOsSnapshot(identity: AceIdentity): Promise<AdminOs
       nextAction: row.next_action,
       actionRecordedAt: row.task_id ? actionRecordedAt.get(row.task_id) ?? null : null,
     })),
+    revenue: {
+      liveRevenueJpy: typeof revenueRow.live_revenue_jpy === "number" ? revenueRow.live_revenue_jpy : 0,
+      livePurchaseCount: typeof revenueRow.live_purchase_count === "number" ? revenueRow.live_purchase_count : 0,
+      liveCustomerCount: typeof revenueRow.live_customer_count === "number" ? revenueRow.live_customer_count : 0,
+      latestLivePurchaseAt: revenueRow.latest_live_purchase_at ?? null,
+    },
   };
 }
