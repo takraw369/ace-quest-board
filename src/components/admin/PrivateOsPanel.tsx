@@ -50,6 +50,23 @@ function formatSyncTime(value: string | null) {
   });
 }
 
+function wait(ms: number) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+async function getIdentityAfterAuthSettles() {
+  try {
+    const identity = await getCurrentIdentity();
+    if (identity) return identity;
+  } catch {
+    // My ACE and this admin panel can mount together immediately after OAuth.
+    // A short retry avoids treating that transient auth race as an RLS failure.
+  }
+
+  await wait(300);
+  return getCurrentIdentity();
+}
+
 export default function PrivateOsPanel() {
   const [snapshot, setSnapshot] = useState<AdminOsSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
@@ -58,7 +75,7 @@ export default function PrivateOsPanel() {
   useEffect(() => {
     let cancelled = false;
 
-    void getCurrentIdentity()
+    void getIdentityAfterAuthSettles()
       .then(async (identity) => {
         if (!identity || identity.role !== "admin") return;
         const next = await getAdminOsSnapshot(identity);
@@ -79,6 +96,8 @@ export default function PrivateOsPanel() {
   const projects = useMemo(() => sortProjects(snapshot?.projects ?? []).slice(0, 6), [snapshot]);
   const tasks = useMemo(() => sortTasks(snapshot?.tasks ?? []).slice(0, 6), [snapshot]);
   const hasSyncError = snapshot?.sync.some((item) => item.status !== "ok") ?? false;
+  const statusNeedsAttention = Boolean(error || hasSyncError);
+  const statusLabel = loading ? "SYNC CHECK" : error ? "LOAD ERROR" : hasSyncError ? "SYNC ATTENTION" : "SYNC HEALTHY";
 
   if (!loading && !snapshot && !error) return null;
 
@@ -93,14 +112,15 @@ export default function PrivateOsPanel() {
               Drive / Sheetsを正本、Supabaseをread model、My ACEを判断UIとして表示。編集は正本側に残します。
             </p>
           </div>
-          <div className={`rounded-full border px-3 py-1.5 text-[10px] font-black tracking-[0.12em] ${hasSyncError ? "border-ace-warning/35 text-ace-warning" : "border-ace-accent/30 text-ace-accent-soft"}`}>
-            {loading ? "SYNC CHECK" : hasSyncError ? "SYNC ATTENTION" : "SYNC HEALTHY"}
+          <div className={`rounded-full border px-3 py-1.5 text-[10px] font-black tracking-[0.12em] ${statusNeedsAttention ? "border-ace-warning/35 text-ace-warning" : "border-ace-accent/30 text-ace-accent-soft"}`}>
+            {statusLabel}
           </div>
         </div>
 
         {error ? (
           <div className="mt-5 rounded-2xl border border-ace-warning/25 bg-ace-surface p-4 text-sm text-ace-text-secondary">
-            Private OSデータを読み込めませんでした。ログイン権限またはRLSを確認してください。
+            <div>Private OSデータを読み込めませんでした。認証状態を再確認しています。</div>
+            <div className="mt-2 font-mono text-[10px] text-ace-text-muted">{error}</div>
           </div>
         ) : null}
 
