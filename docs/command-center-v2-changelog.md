@@ -1,5 +1,0 @@
-- Added TODAY CONTROL summary
-- Added live revenue summary excluding Stripe test payments
-- Added deadline and overdue visibility
-- Added S-priority focus project
-- Added direct links back to canonical Sheets and Calendar
