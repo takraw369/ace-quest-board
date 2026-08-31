@@ -7,7 +7,6 @@ const ACTIVE_TASK_STATUSES = new Set(["NOW", "NEXT", "REVIEW", "WAIT"]);
 const ACTIVE_PROJECT_STATUSES = new Set(["ACTIVE", "BUILD", "REVIEW", "DESIGN"]);
 const TASK_PRIORITY: Record<string, number> = { P0: 0, P1: 1, P2: 2, P3: 3 };
 const TASK_STATUS: Record<string, number> = { NOW: 0, REVIEW: 1, NEXT: 2, WAIT: 3 };
-const PROJECT_STATUS: Record<string, number> = { ACTIVE: 0, BUILD: 1, REVIEW: 2, DESIGN: 3 };
 
 function localDateKey(date: Date) {
   const year = date.getFullYear();
@@ -46,14 +45,16 @@ function pickFocusTask(tasks: AdminOsTask[], todayKey: string) {
     })[0] ?? null;
 }
 
-function pickFocusProject(projects: AdminOsProject[]) {
-  return [...projects]
-    .filter((project) => project.priority === "S" && ACTIVE_PROJECT_STATUSES.has(project.status ?? ""))
-    .sort((a, b) => {
-      const statusDiff = (PROJECT_STATUS[a.status ?? ""] ?? 9) - (PROJECT_STATUS[b.status ?? ""] ?? 9);
-      if (statusDiff !== 0) return statusDiff;
-      return a.projectId.localeCompare(b.projectId);
-    })[0] ?? null;
+function resolveFocusProject(projects: AdminOsProject[]) {
+  const sProjects = projects.filter(
+    (project) => project.priority === "S" && ACTIVE_PROJECT_STATUSES.has(project.status ?? ""),
+  );
+  const activeSProjects = sProjects.filter((project) => project.status === "ACTIVE");
+
+  if (activeSProjects.length === 1) return { project: activeSProjects[0], ambiguous: false, sProjects };
+  if (activeSProjects.length > 1) return { project: null, ambiguous: true, sProjects };
+  if (sProjects.length === 1) return { project: sProjects[0], ambiguous: false, sProjects };
+  return { project: null, ambiguous: sProjects.length > 1, sProjects };
 }
 
 export default function CommandCenterSummary({ snapshot }: { snapshot: AdminOsSnapshot }) {
@@ -63,17 +64,17 @@ export default function CommandCenterSummary({ snapshot }: { snapshot: AdminOsSn
 
   const activeTasks = snapshot.tasks.filter((task) => ACTIVE_TASK_STATUSES.has(task.status ?? ""));
   const focusTask = pickFocusTask(activeTasks, todayKey);
-  const focusProject = pickFocusProject(snapshot.projects);
-  const sProjects = snapshot.projects.filter((project) => project.priority === "S" && ACTIVE_PROJECT_STATUSES.has(project.status ?? ""));
+  const { project: focusProject, ambiguous: focusAmbiguous, sProjects } = resolveFocusProject(snapshot.projects);
   const dueThisWeek = activeTasks.filter((task) => task.dueDate && task.dueDate >= todayKey && task.dueDate <= weekEndKey);
   const overdue = activeTasks.filter((task) => task.dueDate && task.dueDate < todayKey);
   const syncIssues = snapshot.sync.filter((item) => item.status !== "ok");
   const taskBoardUrl = snapshot.sync.find((item) => item.syncKey === "task_board_tasks")?.sourceUrl ?? null;
+  const projectsUrl = snapshot.sync.find((item) => item.syncKey === "master_dashboard_projects")?.sourceUrl ?? null;
 
   const sourceLinks = [
     ["Calendar", "https://calendar.google.com/calendar/u/0/r"],
-    ["TASK BOARD", snapshot.sync.find((item) => item.syncKey === "task_board_tasks")?.sourceUrl],
-    ["PROJECTS", snapshot.sync.find((item) => item.syncKey === "master_dashboard_projects")?.sourceUrl],
+    ["TASK BOARD", taskBoardUrl],
+    ["PROJECTS", projectsUrl],
     ["CONTENT", snapshot.sync.find((item) => item.syncKey === "content_os_master")?.sourceUrl],
     ["Want to", snapshot.sync.find((item) => item.syncKey === "want_to_master")?.sourceUrl],
   ].filter((entry): entry is [string, string] => Boolean(entry[1]));
@@ -118,10 +119,12 @@ export default function CommandCenterSummary({ snapshot }: { snapshot: AdminOsSn
           <div className="mt-2 text-xl font-black">{dueThisWeek.length}</div>
           <div className={`mt-1 text-[10px] ${overdue.length ? "text-ace-warning" : "text-ace-text-muted"}`}>期限超過 {overdue.length}</div>
         </div>
-        <div className="rounded-2xl border border-ace-border bg-ace-deep p-4">
+        <div className={`rounded-2xl border bg-ace-deep p-4 ${focusAmbiguous ? "border-ace-warning/30" : "border-ace-border"}`}>
           <div className="text-[9px] font-black tracking-[0.16em] text-ace-text-muted">S PROJECTS</div>
           <div className="mt-2 text-xl font-black">{sProjects.length}</div>
-          <div className="mt-1 line-clamp-1 text-[10px] text-ace-text-muted">{focusProject?.projectName ?? "要Focus指定"}</div>
+          <div className={`mt-1 line-clamp-1 text-[10px] ${focusAmbiguous ? "text-ace-warning" : "text-ace-text-muted"}`}>
+            {focusProject?.projectName ?? (focusAmbiguous ? "Focus未指定" : "S Projectなし")}
+          </div>
         </div>
         <div className={`rounded-2xl border bg-ace-deep p-4 ${syncIssues.length ? "border-ace-warning/30" : "border-ace-border"}`}>
           <div className="text-[9px] font-black tracking-[0.16em] text-ace-text-muted">SYSTEM</div>
@@ -139,6 +142,12 @@ export default function CommandCenterSummary({ snapshot }: { snapshot: AdminOsSn
           </div>
           <div className="mt-2 text-sm font-black">{focusProject.projectName}</div>
           {focusProject.nextAction ? <div className="mt-2 text-xs leading-5 text-ace-text-muted">NEXT: {focusProject.nextAction}</div> : null}
+        </a>
+      ) : focusAmbiguous ? (
+        <a href={projectsUrl ?? "#"} target={projectsUrl ? "_blank" : undefined} rel={projectsUrl ? "noreferrer" : undefined} className="mt-3 block rounded-2xl border border-ace-warning/30 bg-ace-deep p-4">
+          <div className="text-[9px] font-black tracking-[0.16em] text-ace-warning">FOCUS PROJECT 未指定</div>
+          <div className="mt-2 text-sm font-black">S優先Projectが {sProjects.length} 件あります</div>
+          <div className="mt-2 text-xs leading-5 text-ace-text-muted">司令塔で勝手に選ばず、MASTER_DASHBOARD側でFocusを1つに絞るべき状態として表示しています。</div>
         </a>
       ) : null}
 
