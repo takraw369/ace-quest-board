@@ -27,7 +27,7 @@ It answers five questions first:
 1. **FIRST MOVE** — which current TASK_BOARD item should move first today.
 2. **DEADLINE 7D** — how many active tasks are due in the next seven days, plus overdue hygiene debt.
 3. **LIVE REVENUE** — paid production revenue and customers, excluding Stripe test payments.
-4. **FOCUS PROJECT** — an S-priority ACTIVE project and its next action.
+4. **FOCUS PROJECT** — surface the S-priority ACTIVE project only when the source makes the focus unambiguous. If multiple S/ACTIVE projects compete, show `Focus未指定` rather than inventing a priority in the UI.
 5. **SYSTEM** — whether Drive → Supabase sync is healthy or needs attention.
 
 Canonical navigation remains one tap away. Sync cards and quick links open Calendar / TASK_BOARD / Projects / Content / Want to at their source for editing.
