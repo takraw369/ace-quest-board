@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { getCurrentIdentity } from "@/lib/auth/supabaseAuth";
+import { getCurrentIdentity, type AceIdentity } from "@/lib/auth/supabaseAuth";
 import {
+  completePrivateOsAction,
   getAdminOsSnapshot,
   type AdminOsProject,
   type AdminOsSnapshot,
@@ -50,6 +51,15 @@ function formatSyncTime(value: string | null) {
   });
 }
 
+function formatActionTime(value: string) {
+  return new Date(value).toLocaleString("ja-JP", {
+    month: "numeric",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 function wait(ms: number) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
@@ -68,17 +78,22 @@ async function getIdentityAfterAuthSettles() {
 }
 
 export default function PrivateOsPanel() {
+  const [identity, setIdentity] = useState<AceIdentity | null>(null);
   const [snapshot, setSnapshot] = useState<AdminOsSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [recordingTaskId, setRecordingTaskId] = useState<string | null>(null);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
     void getIdentityAfterAuthSettles()
-      .then(async (identity) => {
-        if (!identity || identity.role !== "admin") return;
-        const next = await getAdminOsSnapshot(identity);
+      .then(async (currentIdentity) => {
+        if (!currentIdentity || currentIdentity.role !== "admin") return;
+        if (!cancelled) setIdentity(currentIdentity);
+        const next = await getAdminOsSnapshot(currentIdentity);
         if (!cancelled) setSnapshot(next);
       })
       .catch((reason) => {
@@ -98,6 +113,34 @@ export default function PrivateOsPanel() {
   const hasSyncError = snapshot?.sync.some((item) => item.status !== "ok") ?? false;
   const statusNeedsAttention = Boolean(error || hasSyncError);
   const statusLabel = loading ? "SYNC CHECK" : error ? "LOAD ERROR" : hasSyncError ? "SYNC ATTENTION" : "SYNC HEALTHY";
+
+  async function recordAction(task: AdminOsTask) {
+    if (!identity || !task.taskId || recordingTaskId) return;
+
+    setRecordingTaskId(task.taskId);
+    setActionError(null);
+    setActionMessage(null);
+
+    try {
+      const result = await completePrivateOsAction(task.taskId);
+      const next = await getAdminOsSnapshot(identity);
+      setSnapshot(next);
+
+      if (result.alreadyRecorded) {
+        setActionMessage(`${task.taskId} はACE ACTIONとして記録済みです。`);
+      } else {
+        setActionMessage(
+          `ACTION +${result.xpAwarded} XP｜XP ${result.xpTotal}｜STREAK ${result.streak}日｜ACTION ${result.actionsCompleted}`,
+        );
+      }
+
+      window.dispatchEvent(new CustomEvent("ace:progress-updated"));
+    } catch (reason) {
+      setActionError(reason instanceof Error ? reason.message : "private_os_action_failed");
+    } finally {
+      setRecordingTaskId(null);
+    }
+  }
 
   if (!loading && !snapshot && !error) return null;
 
@@ -121,6 +164,18 @@ export default function PrivateOsPanel() {
           <div className="mt-5 rounded-2xl border border-ace-warning/25 bg-ace-surface p-4 text-sm text-ace-text-secondary">
             <div>Private OSデータを読み込めませんでした。認証状態を再確認しています。</div>
             <div className="mt-2 font-mono text-[10px] text-ace-text-muted">{error}</div>
+          </div>
+        ) : null}
+
+        {actionMessage ? (
+          <div className="mt-5 rounded-2xl border border-ace-accent/25 bg-ace-surface px-4 py-3 text-sm font-bold text-ace-accent-soft">
+            {actionMessage}
+          </div>
+        ) : null}
+
+        {actionError ? (
+          <div className="mt-5 rounded-2xl border border-ace-warning/25 bg-ace-surface px-4 py-3 text-sm text-ace-text-secondary">
+            ACTION記録に失敗しました。<span className="ml-2 font-mono text-[10px] text-ace-text-muted">{actionError}</span>
           </div>
         ) : null}
 
@@ -161,6 +216,9 @@ export default function PrivateOsPanel() {
                   </div>
                   <span className="text-[10px] text-ace-text-muted">TASK_BOARD read model</span>
                 </div>
+                <p className="mt-2 text-[10px] leading-5 text-ace-text-muted">
+                  DriveのStatusは変更せず、「実行した事実」だけACEへ記録します。
+                </p>
                 <div className="mt-4 space-y-3">
                   {tasks.map((task) => (
                     <div key={task.taskId ?? `${task.status}-${task.task}`} className="rounded-2xl border border-ace-border bg-ace-deep p-4">
@@ -171,6 +229,22 @@ export default function PrivateOsPanel() {
                       </div>
                       <div className="mt-2 text-sm font-black leading-5">{task.task ?? "Untitled task"}</div>
                       {task.nextAction ? <p className="mt-2 line-clamp-2 text-xs leading-5 text-ace-text-muted">{task.nextAction}</p> : null}
+
+                      {task.actionRecordedAt ? (
+                        <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-ace-accent/20 bg-ace-surface px-3 py-2">
+                          <span className="text-[10px] font-black tracking-[0.12em] text-ace-accent-soft">ACE ACTION RECORDED</span>
+                          <span className="text-[9px] text-ace-text-muted">{formatActionTime(task.actionRecordedAt)}</span>
+                        </div>
+                      ) : task.taskId ? (
+                        <button
+                          type="button"
+                          disabled={Boolean(recordingTaskId)}
+                          onClick={() => void recordAction(task)}
+                          className="mt-3 w-full rounded-xl border border-ace-accent/25 bg-ace-accent/10 px-3 py-2.5 text-xs font-black text-ace-accent-soft transition hover:bg-ace-accent/15 disabled:cursor-wait disabled:opacity-55"
+                        >
+                          {recordingTaskId === task.taskId ? "ACTION記録中…" : "実行を記録 → +10 XP"}
+                        </button>
+                      ) : null}
                     </div>
                   ))}
                 </div>
