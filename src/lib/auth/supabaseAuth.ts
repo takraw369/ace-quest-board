@@ -25,6 +25,41 @@ export type AceIdentity = {
   contactId: string | null;
 };
 
+export type MyAceSnapshot = {
+  serialCode: string | null;
+  progress: {
+    xpTotal: number;
+    growthLevel: number;
+    growthRank: string;
+    streakCurrent: number;
+    actionsCompleted: number;
+    questsCompleted: number;
+    educationCompleted: number;
+  };
+  curriculum: {
+    stage: string | null;
+    branch: string | null;
+    loopPosition: string | null;
+    recommendedNodeId: string | null;
+    reason: string | null;
+    confidence: number | null;
+  } | null;
+  recommendation: {
+    type: string;
+    ref: string | null;
+    destination: string | null;
+    reason: string;
+    status: string;
+    generatedAt: string;
+  } | null;
+  recentEvents: Array<{
+    eventType: string;
+    capturedSignal: string | null;
+    occurredAt: string;
+  }>;
+  learningCounts: Record<string, number>;
+};
+
 function saveSession(session: StoredSession) {
   localStorage.setItem(SESSION_KEY, JSON.stringify(session));
 }
@@ -163,6 +198,112 @@ export async function getCurrentIdentity(): Promise<AceIdentity | null> {
     role: roles[0]?.role ?? "flower",
     displayName: profiles[0]?.display_name ?? null,
     contactId: contacts[0]?.id ?? null,
+  };
+}
+
+export async function getMyAceSnapshot(identity: AceIdentity): Promise<MyAceSnapshot> {
+  const accessToken = await getAccessToken();
+  const contactId = identity.contactId;
+  if (!accessToken || !contactId) {
+    return {
+      serialCode: null,
+      progress: {
+        xpTotal: 0,
+        growthLevel: 1,
+        growthRank: "seed",
+        streakCurrent: 0,
+        actionsCompleted: 0,
+        questsCompleted: 0,
+        educationCompleted: 0,
+      },
+      curriculum: null,
+      recommendation: null,
+      recentEvents: [],
+      learningCounts: {},
+    };
+  }
+
+  const encodedContactId = encodeURIComponent(contactId);
+  const [progressRows, curriculumRows, recommendationRows, eventRows, learningRows, serialRows] = await Promise.all([
+    restSelect<{
+      xp_total: number;
+      growth_level: number;
+      growth_rank: string;
+      streak_current: number;
+      actions_completed: number;
+      quests_completed: number;
+      education_completed: number;
+    }>(`person_progress?select=xp_total,growth_level,growth_rank,streak_current,actions_completed,quests_completed,education_completed&contact_id=eq.${encodedContactId}`, accessToken),
+    restSelect<{
+      current_spine_stage: string | null;
+      active_branch: string | null;
+      learning_loop_position: string | null;
+      recommended_node_id: string | null;
+      reason: string | null;
+      confidence: number | null;
+    }>(`curriculum_states?select=current_spine_stage,active_branch,learning_loop_position,recommended_node_id,reason,confidence&person_id=eq.${encodedContactId}`, accessToken),
+    restSelect<{
+      recommendation_type: string;
+      recommendation_ref: string | null;
+      destination: string | null;
+      reason: string;
+      status: string;
+      generated_at: string;
+    }>(`education_recommendations?select=recommendation_type,recommendation_ref,destination,reason,status,generated_at&person_id=eq.${encodedContactId}&status=in.(proposed,shown,accepted)&order=generated_at.desc&limit=1`, accessToken),
+    restSelect<{
+      event_type: string;
+      captured_signal: string | null;
+      occurred_at: string;
+    }>(`quest_events?select=event_type,captured_signal,occurred_at&person_id=eq.${encodedContactId}&order=occurred_at.desc&limit=3`, accessToken),
+    restSelect<{ learning_status: string }>(`learning_states?select=learning_status&person_id=eq.${encodedContactId}`, accessToken),
+    restSelect<{ serial_code: string | null }>(`person_serials?select=serial_code&person_id=eq.${encodedContactId}`, accessToken),
+  ]);
+
+  const progress = progressRows[0];
+  const curriculum = curriculumRows[0];
+  const recommendation = recommendationRows[0];
+  const learningCounts = learningRows.reduce<Record<string, number>>((acc, row) => {
+    acc[row.learning_status] = (acc[row.learning_status] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  return {
+    serialCode: serialRows[0]?.serial_code ?? null,
+    progress: {
+      xpTotal: progress?.xp_total ?? 0,
+      growthLevel: progress?.growth_level ?? 1,
+      growthRank: progress?.growth_rank ?? "seed",
+      streakCurrent: progress?.streak_current ?? 0,
+      actionsCompleted: progress?.actions_completed ?? 0,
+      questsCompleted: progress?.quests_completed ?? 0,
+      educationCompleted: progress?.education_completed ?? 0,
+    },
+    curriculum: curriculum
+      ? {
+          stage: curriculum.current_spine_stage,
+          branch: curriculum.active_branch,
+          loopPosition: curriculum.learning_loop_position,
+          recommendedNodeId: curriculum.recommended_node_id,
+          reason: curriculum.reason,
+          confidence: curriculum.confidence,
+        }
+      : null,
+    recommendation: recommendation
+      ? {
+          type: recommendation.recommendation_type,
+          ref: recommendation.recommendation_ref,
+          destination: recommendation.destination,
+          reason: recommendation.reason,
+          status: recommendation.status,
+          generatedAt: recommendation.generated_at,
+        }
+      : null,
+    recentEvents: eventRows.map((event) => ({
+      eventType: event.event_type,
+      capturedSignal: event.captured_signal,
+      occurredAt: event.occurred_at,
+    })),
+    learningCounts,
   };
 }
 
