@@ -22,6 +22,9 @@ export type AceIdentity = {
   user: AceUser;
   role: AceRole;
   displayName: string | null;
+  nickname: string | null;
+  teacherDisplayName: string | null;
+  teacherNamePublic: boolean;
   contactId: string | null;
 };
 
@@ -82,15 +85,6 @@ function authHeaders(accessToken?: string) {
     apikey: SUPABASE_PUBLISHABLE_KEY,
     ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
   };
-}
-
-function metadataDisplayName(user: AceUser): string | null {
-  const metadata = user.user_metadata ?? {};
-  const candidates = [metadata.full_name, metadata.name, metadata.user_name, metadata.preferred_username];
-  for (const candidate of candidates) {
-    if (typeof candidate === "string" && candidate.trim()) return candidate.trim();
-  }
-  return null;
 }
 
 export function beginGoogleLogin(returnTo = "/my-ace") {
@@ -198,18 +192,25 @@ export async function getCurrentIdentity(): Promise<AceIdentity | null> {
   const user = (await userResponse.json()) as AceUser;
   const [roles, profiles, contacts] = await Promise.all([
     restSelect<{ role: AceRole }>(`user_roles?select=role&user_id=eq.${encodeURIComponent(user.id)}`, accessToken),
-    restSelect<{ display_name: string | null }>(`profiles?select=display_name&id=eq.${encodeURIComponent(user.id)}`, accessToken),
+    restSelect<{
+      nickname: string | null;
+      professional_name: string | null;
+      teacher_name_public: boolean | null;
+    }>(`profiles?select=nickname,professional_name,teacher_name_public&id=eq.${encodeURIComponent(user.id)}`, accessToken),
     restSelect<{ id: string }>(`contacts?select=id&auth_user_id=eq.${encodeURIComponent(user.id)}`, accessToken),
   ]);
 
-  const profileName = profiles[0]?.display_name?.trim() || null;
-  const googleName = metadataDisplayName(user);
-  const displayName = profileName && !profileName.includes("@") ? profileName : googleName ?? profileName;
+  const nickname = profiles[0]?.nickname?.trim() || null;
+  const professionalName = profiles[0]?.professional_name?.trim() || null;
+  const teacherNamePublic = Boolean(profiles[0]?.teacher_name_public);
 
   return {
     user,
     role: roles[0]?.role ?? "flower",
-    displayName,
+    displayName: nickname,
+    nickname,
+    teacherDisplayName: teacherNamePublic && professionalName ? professionalName : nickname,
+    teacherNamePublic,
     contactId: contacts[0]?.id ?? null,
   };
 }
