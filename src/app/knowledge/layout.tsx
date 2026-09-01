@@ -16,6 +16,9 @@ export default function KnowledgeLayout({ children }: { children: React.ReactNod
           <Link href={APP_ROUTES.knowledgeLibrary} className="rounded-xl px-3 py-2.5 hover:bg-white/[0.05] hover:text-white">
             知 Library
           </Link>
+          <Link href={APP_ROUTES.profile} className="rounded-xl px-3 py-2.5 hover:bg-white/[0.05] hover:text-white">
+            名 Profile
+          </Link>
         </div>
       </nav>
     </>
