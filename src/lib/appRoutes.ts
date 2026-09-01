@@ -3,6 +3,7 @@ export const APP_ROUTES = {
   knowledge: '/knowledge/today',
   knowledgeLibrary: '/knowledge',
   knowledgeAsk: '/knowledge/ask',
+  profile: '/profile',
   wantTo: '/want-to',
   quest: '/',
 } as const;
