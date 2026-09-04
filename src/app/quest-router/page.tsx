@@ -1,10 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import PwaNav from '@/components/navigation/PwaNav';
-import { WANT_TO_SEED } from '@/lib/wantToSeed';
+import { WANT_TO_SEED, type WantToSeed } from '@/lib/wantToSeed';
 import {
   loadBootstrap,
   PwaBootstrap,
@@ -66,9 +65,10 @@ function updateQuestRecommendation(data: PwaBootstrap, recommendation: Recommend
 }
 
 export default function QuestRouterPage() {
-  const searchParams = useSearchParams();
   const [data, setData] = useState<PwaBootstrap | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [source, setSource] = useState('router');
+  const [carriedWant, setCarriedWant] = useState<WantToSeed | null>(null);
   const [wantText, setWantText] = useState('');
   const [ageBand, setAgeBand] = useState('');
   const [timeBudget, setTimeBudget] = useState<number>(10);
@@ -79,18 +79,16 @@ export default function QuestRouterPage() {
   const [selecting, setSelecting] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const wantId = searchParams.get('want');
-  const source = searchParams.get('source') ?? 'router';
-  const carriedWant = useMemo(() => WANT_TO_SEED.find((item) => item.id === wantId) ?? null, [wantId]);
-
   useEffect(() => {
     setData(loadBootstrap());
+    const params = new URLSearchParams(window.location.search);
+    setSource(params.get('source') ?? 'router');
+    const wantId = params.get('want');
+    const found = wantId ? WANT_TO_SEED.find((item) => item.id === wantId) ?? null : null;
+    setCarriedWant(found);
+    if (found) setWantText(found.title);
     setLoaded(true);
   }, []);
-
-  useEffect(() => {
-    if (carriedWant && !wantText) setWantText(carriedWant.title);
-  }, [carriedWant, wantText]);
 
   const wantContext = {
     id: carriedWant?.id ?? null,
