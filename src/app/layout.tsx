@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import LayerSwitcher from "@/components/navigation/LayerSwitcher";
+import FlowLoopGuide from "@/components/navigation/FlowLoopGuide";
 import PwaPushPrompt from "@/components/pwa/PwaPushPrompt";
 import PwaRegister from "@/components/pwa/PwaRegister";
 import "./globals.css";
@@ -52,6 +53,7 @@ export default function RootLayout({
         <PwaRegister />
         <PwaPushPrompt />
         <LayerSwitcher />
+        <FlowLoopGuide />
         {children}
       </body>
     </html>
