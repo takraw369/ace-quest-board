@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { APP_ROUTES, LAYERS } from '@/lib/appRoutes';
 
-const PWA_ROUTES = ['/today', '/learn', '/quest', '/me', '/people', '/connect/line'];
+const PWA_ROUTES = ['/', '/today', '/learn', '/quest', '/me', '/people', '/connect/line'];
 
 function isActive(pathname: string, href: string) {
   if (href === '/') return pathname === '/';
@@ -13,7 +13,7 @@ function isActive(pathname: string, href: string) {
 
 export default function LayerSwitcher() {
   const pathname = usePathname();
-  if (PWA_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`))) return null;
+  if (PWA_ROUTES.some((route) => pathname === route || (route !== '/' && pathname.startsWith(`${route}/`)))) return null;
 
   const dictionaryActive = isActive(pathname, APP_ROUTES.dictionary);
 
