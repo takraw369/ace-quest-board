@@ -1,15 +1,11 @@
-name = "ace-quest-board-dev"
+name = "ace-quest-board"
 compatibility_date = "2026-08-27"
 workers_dev = true
+
+[[routes]]
+pattern = "ace.sunlovesflow.com"
+custom_domain = true
 
 [assets]
 directory = "./out"
 not_found_handling = "single-page-application"
-
-[env.production]
-name = "ace-quest-board"
-workers_dev = true
-
-[[env.production.routes]]
-pattern = "ace.sunlovesflow.com"
-custom_domain = true
