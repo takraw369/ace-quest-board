@@ -5,6 +5,7 @@ export const APP_ROUTES = {
   knowledgeAsk: '/knowledge/ask',
   profile: '/profile',
   wantTo: '/want-to',
+  questRouter: '/quest-router',
   quest: '/',
 } as const;
 
