@@ -6,9 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "deploy:dev": "npm run build && npx wrangler@latest deploy",
-    "deploy:prod": "npm run build && npx wrangler@latest deploy --env production"
+    "lint": "eslint"
   },
   "dependencies": {
     "framer-motion": "^12.38.0",
