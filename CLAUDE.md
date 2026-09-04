@@ -13,10 +13,9 @@ To Do / Want to を入力 → ビジョンへの道筋がゲームボード上�
 
 ## Deployment policy
 - Netlify is retired for this repository. Do not add new Netlify deploys, hooks, plugins, or build settings.
-- `dev` is the development/testing branch and is connected to the development Worker `ace-quest-board-dev`.
-- Development/test URL uses the Worker workers.dev hostname. Do not attach the production custom domain to the development Worker.
-- `main` is the production/release branch.
-- Production deploy uses Wrangler environment `production`, Worker `ace-quest-board`, and custom domain `ace.sunlovesflow.com`.
+- `dev` is connected directly to Cloudflare Workers Builds for automatic production deployment.
+- Current live technical fallback is `https://ace-quest-board.takraw501.workers.dev`.
+- `ace.sunlovesflow.com` is the intended production URL after Cloudflare custom-domain cutover verification. Do not retire the workers.dev fallback until that verification passes.
 - Current static export is deployed as Cloudflare Workers Static Assets from `out/`.
 - If SSR, Server Actions, Route Handlers, or server-side auth become necessary, evaluate Cloudflare's current recommended Next.js path before changing architecture.
 
@@ -42,10 +41,8 @@ Phase 1: MVP（コアループ）
 ## Commands
 - `npm run dev` — 開発サーバー
 - `npm run build` — ビルド（static export → out/）
-- `npm run deploy:dev` — development Worker (`ace-quest-board-dev`) へデプロイ
-- `npm run deploy:prod` — production Worker (`ace-quest-board`) + `ace.sunlovesflow.com` へデプロイ
+- `npx wrangler@latest deploy` — Cloudflareへデプロイ
 
 ## Branch strategy
-- `main` — 本番・リリース
-- `dev` — 開発・実機テスト
-- 通常実装は `dev`。実機確認後に `main` へ昇格する。
+- `main` — Phase 1 MVP完成後にマージ
+- `dev` — 開発ブランチ（通常作業はここ）
