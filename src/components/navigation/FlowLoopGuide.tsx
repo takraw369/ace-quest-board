@@ -23,7 +23,7 @@ export default function FlowLoopGuide() {
   }, [pathname]);
 
   if (pathname === '/quest') {
-    return <Link href="/my-ace" className="fixed bottom-[5.7rem] right-4 z-40 rounded-full border border-[#789581]/30 bg-[#111510]/95 px-4 py-3 text-xs font-bold text-[#b8c9bb] shadow-2xl backdrop-blur md:right-6">体験のEvidenceを見る →</Link>;
+    return <Link href="/my-ace/evidence" className="fixed bottom-[5.7rem] right-4 z-40 rounded-full border border-[#789581]/30 bg-[#111510]/95 px-4 py-3 text-xs font-bold text-[#b8c9bb] shadow-2xl backdrop-blur md:right-6">体験のEvidenceを見る →</Link>;
   }
 
   const entry = ENTRY[pathname];
