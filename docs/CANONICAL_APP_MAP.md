@@ -2,53 +2,69 @@
 
 ## One app, three layers
 
-Production surface: `https://ace-quest-board.netlify.app`
+### Development / test surface
+`https://ace-quest-board-dev.<workers.dev subdomain>`
+
+Use this surface for MASA's real-device testing before release. The exact workers.dev hostname is determined by the Cloudflare account subdomain.
+
+### Production surface
+`https://ace.sunlovesflow.com`
+
+Production is reserved for stable releases promoted from `dev` to `main`.
 
 | Layer | Canonical route | Role |
 | --- | --- | --- |
 | 知 / Knowledge | `/knowledge` | Meaning, concepts, connected knowledge |
-| 望 / Want to | `/want-to` | Direction, desires, priorities |
-| 行 / Quest | `/` | Action, quests, execution |
+| 望 / Want to | `/want-to` | Direction, desires, priorities, achievement logs |
+| 行 / Quest | `/` and `/quest` | Action, quests, execution |
+| Today | `/today` | Personalized daily home, recommendations, growth state, Push onboarding |
+| Learn | `/learn` | Personalized education / deeper content |
+| People | `/people` | Connection recommendations |
+| Calibration | `/calibration` | ACE calibration / current-state check |
+| My ACE | `/my-ace` | Personal ACE view |
+| Profile | `/profile` | Personal profile |
+| LINE Connect | `/connect/line` | Connect LINE identity/session to PWA |
 
-All three layers share one global header and layer switcher. Navigation changes should be made once and reused across the app.
+All user-facing layers belong in this repository unless a separate security boundary, audience, or runtime genuinely requires another app.
 
 ## Source of truth
 
 - Code: `takraw369/ace-quest-board`
-- Knowledge data: Supabase Knowledge Core
-- Want to source: MASA Want to Master / app snapshot (to be unified further without exposing private data)
-- Quest state: Quest Board app state (to be unified further)
-- Hosting: Netlify is delivery only, not the data or code source of truth.
+- Development branch: `dev`
+- Production branch: `main`
+- Knowledge / growth / PWA data: Supabase
+- Want to: current app snapshot + source sheet, to be unified further without exposing private data
+- Deployment: Cloudflare Workers Static Assets
 
-## Branch policy
+## Deployment policy
 
-- `main`: production candidate / stable baseline
-- `dev`: active development
-- feature branches: short-lived experiments and implementation work
+- `dev` -> development Worker `ace-quest-board-dev` -> MASA real-device test
+- approved/stable -> `main`
+- production -> Wrangler `production` environment -> Worker `ace-quest-board` -> `ace.sunlovesflow.com`
 
-Netlify production should ultimately track `main`. Preview deploys are verification surfaces only.
+## Retired / non-canonical surfaces
 
-## Retired surfaces
-
-- The former standalone Knowledge site is legacy/redirect-only.
-- Netlify deploy-preview URLs are preview only and must never be treated as canonical.
+- Netlify production and deploy-preview URLs are retired and must not be treated as canonical.
+- The direct `ace-quest-board...workers.dev` production Worker URL is not the user-facing canonical URL.
+- Former standalone Knowledge surfaces are legacy/redirect-only.
 
 ## Private command center
 
-`masa-os-dashboard.pages.dev` remains separate on Cloudflare Pages. It is the private operator surface and is not part of the public/personal three-layer app.
+`https://masa-os-dashboard.pages.dev` remains separate as the private operator surface for MASA. It is not part of the ACE user-facing app.
 
 Private source data must not be copied into the public repository just to simplify the frontend. Public/personal UI and private operator data are separate security boundaries.
 
 ## Product sequence
 
-1. Consolidate routes and sources of truth.
-2. Use personally and collect friction.
-3. Improve usability from real usage.
-4. Promote stable patterns into ACE-facing experiences.
+1. Build on `dev`.
+2. Test personally on the development Worker / PWA.
+3. Fix friction from real usage.
+4. Promote stable behavior to `main` / production.
+5. Promote proven patterns into ACE-facing experiences.
 
 ## Anti-sprawl rule
 
-Do not create a new standalone app for a feature that belongs to 知・望・行. First decide which layer owns it and add it to this repository and canonical route.
+Do not create a new standalone app for a feature that belongs to 知・望・行・Today or the personal ACE experience. First decide which existing route owns it and add it to this repository.
 
 Create a separate app only when at least one of these is true:
 
