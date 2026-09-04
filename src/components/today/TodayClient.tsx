@@ -57,6 +57,7 @@ export default function TodayClient() {
           <div><p className="text-[9px] font-bold uppercase tracking-[0.22em] text-[#5e665f]">Recommended for you</p><h2 className="mt-1 font-serif text-2xl font-semibold">今、深める3つ。</h2></div>
           <RecommendationCard eyebrow="Education" title={educationTitle} body={education?.reason ?? data.curriculum?.reason ?? '体験と問いから、今の自分に必要な学びを選びます。'} href="/learn" action="体験から学ぶ" />
           <RecommendationCard eyebrow="Quest" title={(questAlt.duration as string | undefined) ?? '今日のQuest'} body={quest?.reason ?? '今の実行履歴に合うサイズで、次の一手を現実にします。'} href="/quest" action="Questをやる" />
+          <div className="-mt-1 flex justify-end px-1"><Link href="/quest-router" className="text-[11px] font-semibold text-[#8fa795] underline decoration-[#789581]/30 underline-offset-4">今の時間・状態からQuestを選び直す →</Link></div>
           <RecommendationCard eyebrow="People / Place" title="反応が増える出逢い" body={connection?.reason ?? '今のテーマに、違う視点や環境を1つ足します。'} href="/people" action="出逢いの方向を見る" />
         </section>
         {data.cached_at && <p className="mt-8 text-center text-[10px] text-[#505650]">最終同期 {new Date(data.cached_at).toLocaleString('ja-JP')}</p>}
