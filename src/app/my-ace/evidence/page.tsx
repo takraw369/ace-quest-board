@@ -39,6 +39,9 @@ export default function MyAceEvidencePage() {
   const [bootstrap, setBootstrap] = useState<PwaBootstrap | null>(null);
   const [payload, setPayload] = useState<EvidencePayload | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const [sessionRejected, setSessionRejected] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     const data = loadBootstrap();
@@ -48,31 +51,71 @@ export default function MyAceEvidencePage() {
       return;
     }
     let cancelled = false;
-    void fetch(`${SUPABASE_URL}/functions/v1/pwa-my-ace-evidence`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ session_token: data.session_token, limit: 30 }),
-    })
-      .then(async (response) => {
-        const result = (await response.json().catch(() => ({}))) as EvidencePayload;
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 15_000);
+    const load = async () => {
+      try {
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/pwa-my-ace-evidence`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ session_token: data.session_token, limit: 30 }),
+          signal: controller.signal,
+        });
+        if (response.status === 401) {
+          if (!cancelled) setSessionRejected(true);
+          return;
+        }
+        if (!response.ok) throw new Error('evidence_request_failed');
+        const result = await response.json() as EvidencePayload;
+        if (result?.ok !== true || !Array.isArray(result.evidence)
+          || !result.evidence.every((item) => item && typeof item.id === 'string')) {
+          throw new Error('invalid_evidence_response');
+        }
         if (!cancelled) setPayload(result);
-      })
-      .finally(() => {
+      } catch {
+        if (!cancelled) setFailed(true);
+      } finally {
+        window.clearTimeout(timeout);
         if (!cancelled) setLoaded(true);
-      });
-    return () => { cancelled = true; };
-  }, []);
+      }
+    };
+    void load();
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [attempt]);
 
   if (!loaded) return <main className="min-h-screen bg-[#090a08] p-6 text-[#e9e1d1]">Evidenceを読み込み中…</main>;
 
-  if (!bootstrap || !sessionIsUsable(bootstrap)) {
+  if (!bootstrap || !sessionIsUsable(bootstrap) || sessionRejected) {
     return (
       <main className="min-h-screen bg-[#090a08] px-5 py-16 text-[#e9e1d1]">
         <section className="mx-auto max-w-md pt-16">
           <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#789581]">MY ACE / EVIDENCE</p>
-          <h1 className="mt-3 font-serif text-3xl font-semibold">まず本人データと接続する。</h1>
+          <h1 className="mt-3 font-serif text-3xl font-semibold">{sessionRejected ? 'もう一度、本人データと接続する。' : 'まず本人データと接続する。'}</h1>
           <p className="mt-5 text-sm leading-7 text-[#939a92]">Questで作ったPrediction・Actual・Reflectionを同じ本人のEvidenceとして読むため、LINEからFLOW OSへ接続してください。</p>
           <Link href="/connect/line" className="mt-7 inline-flex rounded-full bg-[#d9c18d] px-5 py-3 text-sm font-semibold text-[#171813]">LINEと接続する</Link>
+        </section>
+        <PwaNav />
+      </main>
+    );
+  }
+
+  if (failed) {
+    return (
+      <main className="min-h-screen bg-[#090a08] px-5 py-16 text-[#e9e1d1]">
+        <section className="mx-auto max-w-md pt-16">
+          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#789581]">MY ACE / EVIDENCE</p>
+          <h1 className="mt-3 font-serif text-3xl font-semibold">Evidenceを読み込めませんでした。</h1>
+          <p role="alert" className="mt-5 text-sm leading-7 text-[#939a92]">通信状況を確認して、もう一度読み込んでください。保存済みの記録は変更されません。</p>
+          <button type="button" onClick={() => {
+            setLoaded(false);
+            setFailed(false);
+            setAttempt((value) => value + 1);
+          }} className="mt-7 inline-flex rounded-full bg-[#d9c18d] px-5 py-3 text-sm font-semibold text-[#171813]">もう一度読み込む</button>
+          <Link href="/quest" className="mt-5 block text-sm text-[#aeb5ad]">Questへ戻る</Link>
         </section>
         <PwaNav />
       </main>
@@ -98,8 +141,6 @@ export default function MyAceEvidencePage() {
           <Metric label="XP" value={String(progress?.xp_total ?? 0)} />
           <Metric label="STREAK" value={`${progress?.streak_current ?? 0}日`} />
         </section>
-
-        {payload?.ok === false && <div className="mt-5 rounded-2xl border border-red-400/20 bg-red-400/5 p-4 text-sm text-red-200/90">Evidenceを読み込めませんでした。LINEからFLOW OSを開き直してください。</div>}
 
         {items.length === 0 ? (
           <section className="mt-8 rounded-[28px] border border-[#c8ab72]/15 bg-white/[0.03] p-6">
