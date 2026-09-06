@@ -1,5 +1,5 @@
-import MeClient from '@/components/pwa/MeClient';
+import MeHubClient from '@/components/me/MeHubClient';
 
 export default function MePage() {
-  return <MeClient />;
+  return <MeHubClient />;
 }
