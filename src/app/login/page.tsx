@@ -23,7 +23,7 @@ export default function LoginPage() {
 
         const identity = await getCurrentIdentity();
         if (identity) {
-          window.location.replace(identity.role === "admin" ? "/my-ace?mode=admin" : "/my-ace");
+          window.location.replace("/me");
           return;
         }
       } catch (err) {
@@ -43,7 +43,7 @@ export default function LoginPage() {
           <div className="text-xs font-semibold tracking-[0.28em] text-[#ff9a2f]">ACE / FLOW OS</div>
           <h1 className="mt-3 text-3xl font-black tracking-tight">自分のACEに入る</h1>
           <p className="mt-3 text-sm leading-7 text-blue-100/70">
-            Quest、Learn、今日の一歩、成長記録をひとつのアカウントに繋げます。
+            Quest、Learn、今日の一歩、成長記録を /me に繋げます。
           </p>
         </div>
 
@@ -56,7 +56,7 @@ export default function LoginPage() {
         <button
           type="button"
           disabled={checking}
-          onClick={() => beginGoogleLogin("/my-ace")}
+          onClick={() => beginGoogleLogin("/me")}
           className="flex w-full items-center justify-center gap-3 rounded-2xl bg-[#ff8a1f] px-5 py-4 font-bold text-[#07152e] transition hover:bg-[#ffa247] disabled:cursor-wait disabled:opacity-60"
         >
           <span className="grid h-7 w-7 place-items-center rounded-full bg-white text-sm font-black text-[#4285F4]">G</span>
@@ -64,7 +64,7 @@ export default function LoginPage() {
         </button>
 
         <div className="mt-6 rounded-2xl border border-white/10 bg-black/10 p-4 text-xs leading-6 text-blue-100/60">
-          初回ログイン時はFlowerとして登録されます。管理者・Coach権限はACE側で付与します。
+          初回ログイン時はFlowerとして登録されます。管理・戦略の入口はMASA Dashboardとは分離されています。
         </div>
       </section>
     </main>
