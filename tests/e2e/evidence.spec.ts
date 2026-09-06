@@ -44,7 +44,7 @@ test('network failure is recoverable and never looks like empty history', async 
     if (!recovered) return route.abort('failed');
     await route.fulfill({ json: success });
   });
-  await page.goto('/my-ace/evidence');
+  await page.goto('/me/evidence');
   await expect(page.getByRole('button', { name: 'もう一度読み込む' })).toBeVisible();
   await expect(page.getByText('最初のEvidenceを作ろう。')).toHaveCount(0);
   recovered = true;
@@ -62,7 +62,7 @@ for (const response of [
 ]) {
   test(`${response.name} shows an error without fabricated zero metrics`, async ({ page }) => {
     await page.route(endpoint, (route) => route.fulfill({ status: response.status, body: response.body }));
-    await page.goto('/my-ace/evidence');
+    await page.goto('/me/evidence');
     await expect(page.getByRole('main').getByRole('alert')).toBeVisible();
     await expect(page.getByRole('button', { name: 'もう一度読み込む' })).toBeVisible();
     await expect(page.getByText('最初のEvidenceを作ろう。')).toHaveCount(0);
@@ -79,7 +79,7 @@ test('a stalled request times out and can be retried', async ({ page }) => {
     if (recovered) await route.fulfill({ json: success });
     // Leave the initial request pending until the application's timeout aborts it.
   });
-  await page.goto('/my-ace/evidence');
+  await page.goto('/me/evidence');
   await expect.poll(() => requested).toBe(true);
   await page.clock.fastForward(16_000);
   await expect(page.getByRole('button', { name: 'もう一度読み込む' })).toBeVisible();
@@ -91,7 +91,7 @@ test('a stalled request times out and can be retried', async ({ page }) => {
 
 test('server-rejected session offers reconnection and preserves local state', async ({ page }) => {
   await page.route(endpoint, (route) => route.fulfill({ status: 401, json: { ok: false, error: 'invalid_or_expired_session' } }));
-  await page.goto('/my-ace/evidence');
+  await page.goto('/me/evidence');
   await expect(page.getByRole('link', { name: 'LINEと接続する' })).toBeVisible();
   await expect(page.getByText('最初のEvidenceを作ろう。')).toHaveCount(0);
   expect(await page.evaluate((key) => JSON.parse(localStorage.getItem(key)!), storageKey)).toEqual(bootstrap);
@@ -101,14 +101,14 @@ test('expired local session never requests evidence', async ({ page }) => {
   let requests = 0;
   await page.addInitScript((key) => localStorage.setItem(key, JSON.stringify({ ok: true, session_token: 'expired', session_expires_at: '2020-01-01' })), storageKey);
   await page.route(endpoint, (route) => { requests += 1; return route.abort(); });
-  await page.goto('/my-ace/evidence');
+  await page.goto('/me/evidence');
   await expect(page.getByRole('link', { name: 'LINEと接続する' })).toBeVisible();
   expect(requests).toBe(0);
 });
 
 test('verified empty history alone shows the first-Quest invitation', async ({ page }) => {
   await page.route(endpoint, (route) => route.fulfill({ json: { ...success, evidence: [], progress: { quests_completed: 0, xp_total: 0, streak_current: 0 } } }));
-  await page.goto('/my-ace/evidence');
+  await page.goto('/me/evidence');
   await expect(page.getByText('最初のEvidenceを作ろう。')).toBeVisible();
   await expect(page.getByRole('main').getByRole('alert')).toHaveCount(0);
 });
