@@ -87,7 +87,7 @@ function authHeaders(accessToken?: string) {
   };
 }
 
-export function beginGoogleLogin(returnTo = "/my-ace") {
+export function beginGoogleLogin(returnTo = "/me") {
   if (typeof window === "undefined") return;
   sessionStorage.setItem(RETURN_TO_KEY, returnTo);
   const redirectTo = `${window.location.origin}/login`;
@@ -103,7 +103,7 @@ export function hasOAuthCallbackHash() {
 }
 
 export function consumeOAuthCallback(): string {
-  if (typeof window === "undefined") return "/my-ace";
+  if (typeof window === "undefined") return "/me";
 
   const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
   const accessToken = params.get("access_token");
@@ -122,7 +122,7 @@ export function consumeOAuthCallback(): string {
   });
 
   window.history.replaceState({}, "", window.location.pathname);
-  const returnTo = sessionStorage.getItem(RETURN_TO_KEY) || "/my-ace";
+  const returnTo = sessionStorage.getItem(RETURN_TO_KEY) || "/me";
   sessionStorage.removeItem(RETURN_TO_KEY);
   return returnTo;
 }
