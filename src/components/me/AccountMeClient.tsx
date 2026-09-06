@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import Vitality8Panel from "@/components/my-ace/Vitality8Panel";
+import Vitality8Panel from "@/components/me/Vitality8Panel";
 import {
   getCurrentIdentity,
   getMyAceSnapshot,
@@ -32,7 +32,7 @@ function nextHref(snapshot: MyAceSnapshot | null) {
   return destination?.startsWith("/") ? destination : "/today";
 }
 
-export default function MyAcePage() {
+export default function AccountMeClient() {
   const [identity, setIdentity] = useState<AceIdentity | null>(null);
   const [snapshot, setSnapshot] = useState<MyAceSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
@@ -53,7 +53,7 @@ export default function MyAcePage() {
           const next = await getMyAceSnapshot(current);
           if (!cancelled) setSnapshot(next);
         } catch (e) {
-          if (!cancelled) setError(e instanceof Error ? e.message : "my_ace_load_failed");
+          if (!cancelled) setError(e instanceof Error ? e.message : "me_load_failed");
         }
       })
       .finally(() => {
@@ -77,7 +77,7 @@ export default function MyAcePage() {
           setError(null);
         })
         .catch((reason) => {
-          if (!cancelled) setError(reason instanceof Error ? reason.message : "my_ace_refresh_failed");
+          if (!cancelled) setError(reason instanceof Error ? reason.message : "me_refresh_failed");
         });
     };
 
@@ -98,7 +98,7 @@ export default function MyAcePage() {
       <main className="ace-theme-active grid min-h-screen place-items-center bg-ace-bg px-6 text-ace-text">
         <div className="text-center">
           <div className="mx-auto h-10 w-10 animate-pulse rounded-full bg-ace-accent" />
-          <p className="mt-5 text-xs font-bold tracking-[0.2em] text-ace-text-muted">MY ACE LOADING</p>
+          <p className="mt-5 text-xs font-bold tracking-[0.2em] text-ace-text-muted">ME LOADING</p>
         </div>
       </main>
     );
@@ -136,7 +136,7 @@ export default function MyAcePage() {
         <header className="flex items-start justify-between gap-5 px-1 pb-6">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2.5">
-              <span className="text-[10px] font-black tracking-[0.28em] text-ace-accent">MY ACE</span>
+              <span className="text-[10px] font-black tracking-[0.28em] text-ace-accent">ME / MY ACE</span>
               <span className="rounded-full border border-ace-accent/25 bg-ace-accent/8 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.14em] text-ace-accent-soft">
                 {identity.role}
               </span>
@@ -147,7 +147,7 @@ export default function MyAcePage() {
           </div>
 
           <div className="flex shrink-0 gap-2">
-            <Link href="/me" className="rounded-xl border border-ace-border px-3 py-2 text-xs font-semibold text-ace-text-secondary transition hover:bg-ace-raised">
+            <Link href="/profile" className="rounded-xl border border-ace-border px-3 py-2 text-xs font-semibold text-ace-text-secondary transition hover:bg-ace-raised">
               Profile
             </Link>
             <button
@@ -165,7 +165,7 @@ export default function MyAcePage() {
 
         {isAdmin && (
           <a
-            href="https://masahiro-yamada.com/dashboard"
+            href="https://masahiroyamada.com/dashboard"
             className="mb-4 flex items-center justify-between gap-4 rounded-2xl border border-ace-accent/20 bg-ace-deep px-4 py-3 text-sm transition hover:bg-ace-surface"
           >
             <span><strong className="text-ace-accent-soft">ADMIN</strong><span className="ml-2 text-ace-text-muted">運営・戦略は管理Dashboardへ</span></span>
@@ -201,6 +201,9 @@ export default function MyAcePage() {
               <a href="#now" className="inline-flex items-center rounded-2xl border border-ace-border px-5 py-3.5 text-sm font-bold text-ace-text-secondary transition hover:bg-ace-raised">
                 今の自分を見る
               </a>
+              <Link href="/me/evidence" className="inline-flex items-center rounded-2xl border border-ace-border px-5 py-3.5 text-sm font-bold text-ace-text-secondary transition hover:bg-ace-raised">
+                Evidenceを見る
+              </Link>
             </div>
           </div>
         </section>
