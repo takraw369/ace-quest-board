@@ -7,6 +7,8 @@ export const APP_ROUTES = {
   wantTo: '/want-to',
   questRouter: '/quest-router',
   quest: '/',
+  me: '/me',
+  evidence: '/me/evidence',
 } as const;
 
 export const LAYERS = [
