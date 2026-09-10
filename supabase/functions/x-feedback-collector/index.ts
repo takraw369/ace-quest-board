@@ -8,6 +8,11 @@ const WINDOW_TARGET_HOURS: Record<string, number> = {
   "72h": 72,
   "7d": 168,
 };
+const PREVIOUS_WINDOW: Record<string, string> = {
+  "24h": "1h",
+  "72h": "24h",
+  "7d": "72h",
+};
 
 type HarnessAccount = { id?: unknown; isActive?: unknown };
 type MetricRow = {
@@ -16,6 +21,17 @@ type MetricRow = {
   provider: string;
   provider_publish_id: string;
   published_at: string;
+};
+type StoredSnapshot = {
+  publish_queue_id: string | null;
+  captured_at: string;
+  impressions: number | null;
+  views: number | null;
+  likes: number | null;
+  replies: number | null;
+  reposts: number | null;
+  bookmarks: number | null;
+  raw_metrics: Record<string, unknown> | null;
 };
 
 function json(body: unknown, status = 200) {
@@ -46,6 +62,50 @@ function dueWindow(elapsed: number, existing: Set<string>) {
     { label: "7d", start: 168, end: 192 },
   ];
   return windows.find((w) => elapsed >= w.start && elapsed < w.end && !existing.has(w.label))?.label ?? null;
+}
+
+function knownSum(values: Array<number | null>) {
+  const known = values.filter((value): value is number => typeof value === "number");
+  return known.length ? known.reduce((sum, value) => sum + value, 0) : null;
+}
+
+function engagementTotal(snapshot: Pick<StoredSnapshot, "likes" | "replies" | "reposts" | "bookmarks">) {
+  return knownSum([snapshot.likes, snapshot.replies, snapshot.reposts, snapshot.bookmarks]);
+}
+
+function delta(current: number | null, previous: number | null) {
+  return current == null || previous == null ? null : current - previous;
+}
+
+function deriveInsightSummary(
+  windowLabel: string,
+  snapshot: StoredSnapshot,
+  previousLabel: string | null,
+  previous: StoredSnapshot | null,
+) {
+  const engagements = engagementTotal(snapshot);
+  const rate = snapshot.impressions != null && snapshot.impressions > 0 && engagements != null
+    ? (engagements / snapshot.impressions) * 100
+    : null;
+  const impressionDelta = previous ? delta(snapshot.impressions, previous.impressions) : null;
+  const engagementDelta = previous ? delta(engagements, engagementTotal(previous)) : null;
+
+  const parts = [
+    `X ${windowLabel} snapshot`,
+    `impressions=${snapshot.impressions ?? "UNKNOWN"}`,
+    `engagements=${engagements ?? "UNKNOWN"}`,
+    `engagement_rate=${rate == null ? "UNKNOWN" : `${rate.toFixed(3)}%`}`,
+  ];
+  if (previousLabel) {
+    parts.push(`vs_${previousLabel}_impressions_delta=${impressionDelta ?? "UNKNOWN"}`);
+    parts.push(`vs_${previousLabel}_engagements_delta=${engagementDelta ?? "UNKNOWN"}`);
+  }
+
+  return {
+    summary: parts.join(" | "),
+    impactScore: rate == null ? null : Math.round(rate * 1000) / 1000,
+    confidence: snapshot.impressions == null || engagements == null ? 0.9 : 1.0,
+  };
 }
 
 async function resolveHarnessAccount(base: string, key: string) {
@@ -133,9 +193,25 @@ Deno.serve(async (req: Request) => {
   const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if (!supabaseUrl || !serviceRole) return json({ error: "supabase_runtime_config_missing" }, 500);
 
+  const db = createClient(supabaseUrl, serviceRole, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
+  const cronSecret = req.headers.get("x-masa-cron-secret") ?? "";
+  const apiKey = req.headers.get("apikey") ?? "";
+  const authorization = req.headers.get("authorization") ?? "";
+  const serviceAuthorized = apiKey === serviceRole || authorization === `Bearer ${serviceRole}`;
+  if (cronSecret) {
+    const { data: expectedSecret, error: secretError } = await db.rpc("get_masa_daily_cron_secret");
+    if (secretError || !expectedSecret || cronSecret !== expectedSecret) return json({ error: "unauthorized" }, 401);
+  } else if (!serviceAuthorized) {
+    return json({ error: "unauthorized" }, 401);
+  }
+
   const hasHarness = !!Deno.env.get("X_HARNESS_API_URL") && !!Deno.env.get("X_HARNESS_API_KEY");
   const hasDirect = !!Deno.env.get("X_USER_ACCESS_TOKEN");
   if (!hasHarness && !hasDirect) {
+    if (cronSecret) return json({ ok: true, state: "waiting_for_x_credentials" });
     return json({
       ok: false,
       state: "credentials_missing",
@@ -143,9 +219,6 @@ Deno.serve(async (req: Request) => {
     }, 412);
   }
 
-  const db = createClient(supabaseUrl, serviceRole, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
   const body = await req.json().catch(() => ({}));
   const queueId = typeof body?.queue_id === "string" ? body.queue_id : null;
   const requestedWindow = typeof body?.window === "string" ? body.window : null;
@@ -174,20 +247,25 @@ Deno.serve(async (req: Request) => {
   const queueIds = rows.map((row) => row.id);
   const { data: existingData, error: existingError } = await db
     .from("content_metric_snapshots")
-    .select("publish_queue_id,raw_metrics")
+    .select("publish_queue_id,captured_at,impressions,views,likes,replies,reposts,bookmarks,raw_metrics")
     .in("publish_queue_id", queueIds);
   if (existingError) return json({ error: "snapshot_read_failed", detail: existingError.message }, 500);
 
   const existingByQueue = new Map<string, Set<string>>();
-  for (const snapshot of existingData ?? []) {
+  const snapshotsByQueue = new Map<string, StoredSnapshot[]>();
+  for (const snapshot of (existingData ?? []) as StoredSnapshot[]) {
     const qid = typeof snapshot?.publish_queue_id === "string" ? snapshot.publish_queue_id : null;
+    if (!qid) continue;
+    if (!snapshotsByQueue.has(qid)) snapshotsByQueue.set(qid, []);
+    snapshotsByQueue.get(qid)!.push(snapshot);
     const label = typeof snapshot?.raw_metrics?.window === "string" ? snapshot.raw_metrics.window : null;
-    if (!qid || !label) continue;
+    if (!label) continue;
     if (!existingByQueue.has(qid)) existingByQueue.set(qid, new Set());
     existingByQueue.get(qid)!.add(label);
   }
 
   const collected: any[] = [];
+  const insights: any[] = [];
   const skipped: any[] = [];
   const failed: any[] = [];
   const nowMs = Date.now();
@@ -272,6 +350,55 @@ Deno.serve(async (req: Request) => {
 
     existing.add(windowLabel);
     existingByQueue.set(row.id, existing);
+
+    const storedSnapshot: StoredSnapshot = {
+      publish_queue_id: row.id,
+      captured_at: snapshot.captured_at,
+      impressions: snapshot.impressions,
+      views: snapshot.views,
+      likes: snapshot.likes,
+      replies: snapshot.replies,
+      reposts: snapshot.reposts,
+      bookmarks: snapshot.bookmarks,
+      raw_metrics: snapshot.raw_metrics,
+    };
+    const previousLabel = PREVIOUS_WINDOW[windowLabel] ?? null;
+    const previous = previousLabel
+      ? (snapshotsByQueue.get(row.id) ?? []).find((item) => item?.raw_metrics?.window === previousLabel) ?? null
+      : null;
+    const derived = deriveInsightSummary(windowLabel, storedSnapshot, previousLabel, previous);
+    const topic = `x_${windowLabel}`;
+    const { data: priorInsight } = await db
+      .from("feedback_insights")
+      .select("id")
+      .eq("publish_queue_id", row.id)
+      .eq("signal_type", "metric_window")
+      .eq("topic", topic)
+      .limit(1)
+      .maybeSingle();
+
+    if (!priorInsight?.id) {
+      const { error: insightError } = await db.from("feedback_insights").insert({
+        publish_queue_id: row.id,
+        source_ref: row.source_ref,
+        provider: "x",
+        signal_type: "metric_window",
+        topic,
+        summary: derived.summary,
+        confidence: derived.confidence,
+        impact_score: derived.impactScore,
+        recommended_route: row.source_ref ? `CONTENT_OS:${row.source_ref}` : "CONTENT_OS_REVIEW",
+        analysis_model: "deterministic:x-feedback-collector-v3",
+      });
+      if (insightError) {
+        failed.push({ queue_id: row.id, post_id: postId, window: windowLabel, reason: "insight_insert_failed", detail: insightError.message });
+      } else {
+        insights.push({ queue_id: row.id, source_ref: row.source_ref, window: windowLabel, route: row.source_ref ? `CONTENT_OS:${row.source_ref}` : "CONTENT_OS_REVIEW", summary: derived.summary });
+      }
+    }
+
+    if (!snapshotsByQueue.has(row.id)) snapshotsByQueue.set(row.id, []);
+    snapshotsByQueue.get(row.id)!.push(storedSnapshot);
     collected.push({
       queue_id: row.id,
       source_ref: row.source_ref,
@@ -294,9 +421,11 @@ Deno.serve(async (req: Request) => {
     ok: failed.length === 0,
     state: "collected",
     collected_count: collected.length,
+    insight_count: insights.length,
     skipped_count: skipped.length,
     failed_count: failed.length,
     collected,
+    insights,
     skipped,
     failed,
   }, failed.length ? 207 : 200);
