@@ -11,6 +11,7 @@ type QueueRow = {
   payload: Record<string, unknown>;
   provider_publish_id: string | null;
   attempt_count: number;
+  scheduled_for: string | null;
 };
 
 function json(body: unknown, status = 200) {
@@ -34,14 +35,22 @@ Deno.serve(async (req: Request) => {
 
   const body = await req.json().catch(() => ({}));
   const queueId = typeof body?.queue_id === "string" ? body.queue_id : null;
+  const nowIso = new Date().toISOString();
 
   let query = db
     .from("publish_queue")
-    .select("id,idempotency_key,provider,status,payload,provider_publish_id,attempt_count")
+    .select("id,idempotency_key,provider,status,payload,provider_publish_id,attempt_count,scheduled_for")
     .eq("provider", "tiktok");
 
   if (queueId) query = query.eq("id", queueId);
-  else query = query.in("status", ["queued", "publishing"]).order("created_at", { ascending: true }).limit(1);
+  else {
+    query = query
+      .in("status", ["queued", "publishing"])
+      .or(`status.eq.publishing,scheduled_for.is.null,scheduled_for.lte.${nowIso}`)
+      .order("scheduled_for", { ascending: true, nullsFirst: false })
+      .order("created_at", { ascending: true })
+      .limit(1);
+  }
 
   const { data, error: readError } = await query.maybeSingle();
   if (readError) return json({ error: "queue_read_failed", detail: readError.message }, 500);
@@ -88,6 +97,9 @@ Deno.serve(async (req: Request) => {
   }
 
   if (row.status !== "queued") return json({ error: "invalid_queue_state", status: row.status }, 409);
+  if (row.scheduled_for && new Date(row.scheduled_for).getTime() > Date.now()) {
+    return json({ ok: true, state: "scheduled", queue_id: row.id, scheduled_for: row.scheduled_for });
+  }
 
   const payload = row.payload ?? {};
   const videoUrl = typeof payload.video_url === "string" ? payload.video_url : null;
