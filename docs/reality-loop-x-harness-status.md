@@ -31,8 +31,8 @@ Active runtime:
 PR #47 `Reality Loop: Distribution Intelligence + X Harness adapter`:
 - state: OPEN / Draft
 - mergeable: true
-- current head at verification: `e111fc06744d82b717f72b2d0504eeb5166ed364`
-- GitHub Actions Build #217: PASS
+- previous functional head `e111fc06744d82b717f72b2d0504eeb5166ed364`: GitHub Actions Build #217 PASS
+- status-doc head `e32584cf1d69fc433611ffd5d5ef64fce7572a5d`: GitHub Actions Build #218 PASS
 - PR remains Draft until one real C076 E2E completes.
 
 ## C076 runtime receipt
@@ -60,19 +60,32 @@ Observed feedback state:
 Therefore this work has not published under MASA's identity and has not fabricated performance evidence.
 
 ## Current Human Gate
-One-time permitted X adapter connection is still required before the live publish E2E can move.
+The pinned X Harness `create-x-harness@0.3.0` setup is not a simple browser-OAuth-only flow. Before the live publish E2E can move, MASA must complete any missing X Developer and payment/account steps in the intended environment.
 
-Preferred path:
-1. open/deploy the existing X Harness in MASA's intended Cloudflare environment
-2. connect the owned X account through OAuth
-3. configure the X Harness runtime connection for `sunlovesflow-core` without pasting credentials into Chat, Drive, GitHub, or DB payloads
-4. verify the adapter can resolve the owned X account
+Verified setup contract from the pinned CLI:
+1. choose/login to the intended Cloudflare account
+2. confirm/create an X Developer account and App
+3. confirm API credits are available; purchase only if needed (payment is Human Gate)
+4. configure the App permissions needed by the workflow before generating the own-account token
+5. provide the CLI locally with the OAuth 1.0a credentials it requests: API/Consumer Key + Secret and Access Token + Secret, plus owned X user identity
+6. allow the CLI to create/deploy D1, Worker and Admin and register the owned X account
+7. configure the callback/website URLs printed by the CLI
+8. keep generated setup state, API keys, tokens and cookies local/secret; never paste them into Chat, Drive, GitHub, or DB payloads
+9. configure the resulting X Harness Worker URL/API key into the `sunlovesflow-core` runtime secret path, then verify account resolution
+
+Current X documentation (verified 2026-09-11) describes X API access as pay-per-use with prepaid credits, no subscription and no minimum spend. Do not treat the pinned CLI's example suggestion of `$5` as a required fixed amount; the Developer Console/current official pricing is authoritative.
+
+Authoritative MASA Harness setup command is pinned in `takraw369/masa-automation/config/harness-suite.upstreams.json`:
+
+```bash
+npx create-x-harness@0.3.0 --repo-dir .vendor/the-harness/x-harness-oss
+```
 
 Fallback remains the official direct X API runtime path if explicitly chosen.
 
 ## Next E2E
 Target remains existing CONTENT_OS asset `C076` / Task `T0048`:
-1. complete X adapter auth
+1. complete the X Developer / X Harness credential gate above
 2. re-read C076 staging; do not create a duplicate queue row
 3. MASA Human approval
 4. publish through `x-publish-worker` or reconcile an explicitly manual post
