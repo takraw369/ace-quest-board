@@ -12,6 +12,7 @@ type QueueRow = {
   payload: Record<string, unknown>;
   provider_publish_id: string | null;
   attempt_count: number;
+  scheduled_for: string | null;
 };
 
 type HarnessAccount = {
@@ -131,13 +132,21 @@ Deno.serve(async (req: Request) => {
   });
   const body = await req.json().catch(() => ({}));
   const queueId = typeof body?.queue_id === "string" ? body.queue_id : null;
+  const nowIso = new Date().toISOString();
 
   let q = db
     .from("publish_queue")
-    .select("id,idempotency_key,source_ref,provider,status,payload,provider_publish_id,attempt_count")
+    .select("id,idempotency_key,source_ref,provider,status,payload,provider_publish_id,attempt_count,scheduled_for")
     .in("provider", ["x", "twitter"]);
   if (queueId) q = q.eq("id", queueId);
-  else q = q.eq("status", "queued").order("created_at", { ascending: true }).limit(1);
+  else {
+    q = q
+      .eq("status", "queued")
+      .or(`scheduled_for.is.null,scheduled_for.lte.${nowIso}`)
+      .order("scheduled_for", { ascending: true, nullsFirst: false })
+      .order("created_at", { ascending: true })
+      .limit(1);
+  }
 
   const { data, error } = await q.maybeSingle();
   if (error) return json({ error: "queue_read_failed", detail: error.message }, 500);
@@ -148,6 +157,9 @@ Deno.serve(async (req: Request) => {
     return json({ ok: true, state: "already_published", queue_id: row.id, post_id: row.provider_publish_id });
   }
   if (row.status !== "queued") return json({ error: "invalid_queue_state", status: row.status }, 409);
+  if (row.scheduled_for && new Date(row.scheduled_for).getTime() > Date.now()) {
+    return json({ ok: true, state: "scheduled", queue_id: row.id, scheduled_for: row.scheduled_for });
+  }
 
   const payload = row.payload ?? {};
   const text = typeof payload.text === "string" ? payload.text.trim() : "";
