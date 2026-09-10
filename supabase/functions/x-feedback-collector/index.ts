@@ -2,21 +2,13 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const X_API = "https://api.x.com";
-const WINDOW_TARGET_HOURS: Record<string, number> = {
-  "1h": 1,
-  "24h": 24,
-  "72h": 72,
-  "7d": 168,
-};
-const PREVIOUS_WINDOW: Record<string, string> = {
-  "24h": "1h",
-  "72h": "24h",
-  "7d": "72h",
-};
+const WINDOW_TARGET_HOURS: Record<string, number> = { "1h": 1, "24h": 24, "72h": 72, "7d": 168 };
+const PREVIOUS_WINDOW: Record<string, string> = { "24h": "1h", "72h": "24h", "7d": "72h" };
 
 type HarnessAccount = { id?: unknown; isActive?: unknown };
 type MetricRow = {
   id: string;
+  publication_id: string | null;
   source_ref: string | null;
   provider: string;
   provider_publish_id: string;
@@ -35,10 +27,7 @@ type StoredSnapshot = {
 };
 
 function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { "content-type": "application/json; charset=utf-8" },
-  });
+  return new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json; charset=utf-8" } });
 }
 
 function n(v: unknown) {
@@ -55,7 +44,7 @@ function elapsedHours(publishedAt: string, now = Date.now()) {
 }
 
 function dueWindow(elapsed: number, existing: Set<string>) {
-  const windows: Array<{ label: string; start: number; end: number }> = [
+  const windows = [
     { label: "1h", start: 1, end: 6 },
     { label: "24h", start: 24, end: 48 },
     { label: "72h", start: 72, end: 96 },
@@ -77,16 +66,9 @@ function delta(current: number | null, previous: number | null) {
   return current == null || previous == null ? null : current - previous;
 }
 
-function deriveInsightSummary(
-  windowLabel: string,
-  snapshot: StoredSnapshot,
-  previousLabel: string | null,
-  previous: StoredSnapshot | null,
-) {
+function deriveInsightSummary(windowLabel: string, snapshot: StoredSnapshot, previousLabel: string | null, previous: StoredSnapshot | null) {
   const engagements = engagementTotal(snapshot);
-  const rate = snapshot.impressions != null && snapshot.impressions > 0 && engagements != null
-    ? (engagements / snapshot.impressions) * 100
-    : null;
+  const rate = snapshot.impressions != null && snapshot.impressions > 0 && engagements != null ? (engagements / snapshot.impressions) * 100 : null;
   const impressionDelta = previous ? delta(snapshot.impressions, previous.impressions) : null;
   const engagementDelta = previous ? delta(engagements, engagementTotal(previous)) : null;
 
@@ -100,7 +82,6 @@ function deriveInsightSummary(
     parts.push(`vs_${previousLabel}_impressions_delta=${impressionDelta ?? "UNKNOWN"}`);
     parts.push(`vs_${previousLabel}_engagements_delta=${engagementDelta ?? "UNKNOWN"}`);
   }
-
   return {
     summary: parts.join(" | "),
     impactScore: rate == null ? null : Math.round(rate * 1000) / 1000,
@@ -112,9 +93,7 @@ async function resolveHarnessAccount(base: string, key: string) {
   const configured = (Deno.env.get("X_HARNESS_ACCOUNT_ID") ?? "").trim();
   if (configured) return { ok: true, xAccountId: configured };
 
-  const res = await fetch(`${base}/api/x-accounts`, {
-    headers: { Authorization: `Bearer ${key}` },
-  });
+  const res = await fetch(`${base}/api/x-accounts`, { headers: { Authorization: `Bearer ${key}` } });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) return { ok: false, status: res.status, body, error: "x_harness_account_lookup_failed" };
 
@@ -122,9 +101,7 @@ async function resolveHarnessAccount(base: string, key: string) {
   const account = accounts.find((item) => item?.isActive !== false && typeof item?.id === "string")
     ?? accounts.find((item) => typeof item?.id === "string");
   const xAccountId = typeof account?.id === "string" ? account.id : null;
-  if (!xAccountId) {
-    return { ok: false, status: 404, body: { account_count: accounts.length }, error: "x_harness_account_missing" };
-  }
+  if (!xAccountId) return { ok: false, status: 404, body: { account_count: accounts.length }, error: "x_harness_account_missing" };
   return { ok: true, xAccountId };
 }
 
@@ -135,13 +112,7 @@ async function getHarnessMetrics(postId: string) {
 
   const account = await resolveHarnessAccount(base, key);
   if (!account.ok || !account.xAccountId) {
-    return {
-      ok: false,
-      adapter: "x_harness",
-      status: account.status ?? 502,
-      body: account.body ?? { error: account.error },
-      metrics: {},
-    };
+    return { ok: false, adapter: "x_harness", status: account.status ?? 502, body: account.body ?? { error: account.error }, metrics: {} };
   }
 
   const url = new URL(`${base}/api/posts/history`);
@@ -152,22 +123,9 @@ async function getHarnessMetrics(postId: string) {
   const items = Array.isArray(body?.data?.items) ? body.data.items : [];
   const post = items.find((item: any) => String(item?.id ?? "") === postId) ?? null;
   if (!res.ok || !post) {
-    return {
-      ok: false,
-      adapter: "x_harness",
-      status: res.ok ? 404 : res.status,
-      body: res.ok ? { error: "post_not_found_in_history", post_id: postId } : body,
-      metrics: {},
-    };
+    return { ok: false, adapter: "x_harness", status: res.ok ? 404 : res.status, body: res.ok ? { error: "post_not_found_in_history", post_id: postId } : body, metrics: {} };
   }
-
-  return {
-    ok: true,
-    adapter: "x_harness",
-    status: res.status,
-    body: { success: true, data: post },
-    metrics: post?.public_metrics ?? {},
-  };
+  return { ok: true, adapter: "x_harness", status: res.status, body: { success: true, data: post }, metrics: post?.public_metrics ?? {} };
 }
 
 async function getDirectMetrics(postId: string) {
@@ -177,13 +135,7 @@ async function getDirectMetrics(postId: string) {
   url.searchParams.set("tweet.fields", "created_at,public_metrics");
   const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
   const body = await res.json().catch(() => ({}));
-  return {
-    ok: res.ok,
-    adapter: "direct_x_api",
-    status: res.status,
-    body,
-    metrics: body?.data?.public_metrics ?? {},
-  };
+  return { ok: res.ok, adapter: "direct_x_api", status: res.status, body, metrics: body?.data?.public_metrics ?? {} };
 }
 
 Deno.serve(async (req: Request) => {
@@ -192,10 +144,7 @@ Deno.serve(async (req: Request) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if (!supabaseUrl || !serviceRole) return json({ error: "supabase_runtime_config_missing" }, 500);
-
-  const db = createClient(supabaseUrl, serviceRole, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  const db = createClient(supabaseUrl, serviceRole, { auth: { persistSession: false, autoRefreshToken: false } });
 
   const cronSecret = req.headers.get("x-masa-cron-secret") ?? "";
   const apiKey = req.headers.get("apikey") ?? "";
@@ -204,32 +153,24 @@ Deno.serve(async (req: Request) => {
   if (cronSecret) {
     const { data: expectedSecret, error: secretError } = await db.rpc("get_masa_daily_cron_secret");
     if (secretError || !expectedSecret || cronSecret !== expectedSecret) return json({ error: "unauthorized" }, 401);
-  } else if (!serviceAuthorized) {
-    return json({ error: "unauthorized" }, 401);
-  }
+  } else if (!serviceAuthorized) return json({ error: "unauthorized" }, 401);
 
   const hasHarness = !!Deno.env.get("X_HARNESS_API_URL") && !!Deno.env.get("X_HARNESS_API_KEY");
   const hasDirect = !!Deno.env.get("X_USER_ACCESS_TOKEN");
   if (!hasHarness && !hasDirect) {
     if (cronSecret) return json({ ok: true, state: "waiting_for_x_credentials" });
-    return json({
-      ok: false,
-      state: "credentials_missing",
-      accepted_secrets: ["X_HARNESS_API_URL + X_HARNESS_API_KEY", "X_USER_ACCESS_TOKEN"],
-    }, 412);
+    return json({ ok: false, state: "credentials_missing", accepted_secrets: ["X_HARNESS_API_URL + X_HARNESS_API_KEY", "X_USER_ACCESS_TOKEN"] }, 412);
   }
 
   const body = await req.json().catch(() => ({}));
   const queueId = typeof body?.queue_id === "string" ? body.queue_id : null;
   const requestedWindow = typeof body?.window === "string" ? body.window : null;
   const force = body?.force === true;
-  if (requestedWindow && !WINDOW_TARGET_HOURS[requestedWindow] && requestedWindow !== "manual") {
-    return json({ error: "invalid_window", accepted: ["1h", "24h", "72h", "7d", "manual"] }, 422);
-  }
+  if (requestedWindow && !WINDOW_TARGET_HOURS[requestedWindow] && requestedWindow !== "manual") return json({ error: "invalid_window", accepted: ["1h", "24h", "72h", "7d", "manual"] }, 422);
 
   let q = db
     .from("publish_queue")
-    .select("id,source_ref,provider,provider_publish_id,published_at")
+    .select("id,publication_id,source_ref,provider,provider_publish_id,published_at")
     .in("provider", ["x", "twitter"])
     .eq("status", "published")
     .not("provider_publish_id", "is", null)
@@ -240,7 +181,6 @@ Deno.serve(async (req: Request) => {
 
   const { data, error } = await q;
   if (error) return json({ error: "queue_read_failed", detail: error.message }, 500);
-
   const rows = (data ?? []) as MetricRow[];
   if (!rows.length) return json({ ok: true, state: "idle", reason: "no_published_x_rows" });
 
@@ -268,6 +208,7 @@ Deno.serve(async (req: Request) => {
   const insights: any[] = [];
   const skipped: any[] = [];
   const failed: any[] = [];
+  const warnings: any[] = [];
   const nowMs = Date.now();
 
   for (const row of rows) {
@@ -299,14 +240,7 @@ Deno.serve(async (req: Request) => {
     if (result && !result.ok && hasDirect) result = await getDirectMetrics(postId);
     if (!result) result = await getDirectMetrics(postId);
     if (!result || !result.ok) {
-      failed.push({
-        queue_id: row.id,
-        post_id: postId,
-        window: windowLabel,
-        adapter: result?.adapter ?? null,
-        status: result?.status ?? null,
-        reason: result?.body?.error ?? "metrics_fetch_failed",
-      });
+      failed.push({ queue_id: row.id, post_id: postId, window: windowLabel, adapter: result?.adapter ?? null, status: result?.status ?? null, reason: result?.body?.error ?? "metrics_fetch_failed" });
       continue;
     }
 
@@ -338,14 +272,18 @@ Deno.serve(async (req: Request) => {
 
     const { error: insertError } = await db.from("content_metric_snapshots").insert(snapshot);
     if (insertError) {
-      failed.push({
-        queue_id: row.id,
-        post_id: postId,
-        window: windowLabel,
-        reason: "snapshot_insert_failed",
-        detail: insertError.message,
-      });
+      failed.push({ queue_id: row.id, post_id: postId, window: windowLabel, reason: "snapshot_insert_failed", detail: insertError.message });
       continue;
+    }
+
+    if (row.publication_id) {
+      const publicationPatch: Record<string, unknown> = { status: "measured", observed_at: snapshot.captured_at, updated_at: snapshot.captured_at };
+      if (snapshot.impressions !== null) publicationPatch.impressions = snapshot.impressions;
+      const allEngagements = knownSum([snapshot.likes, snapshot.replies, snapshot.comments, snapshot.reposts, snapshot.shares, snapshot.bookmarks, snapshot.saves]);
+      if (allEngagements !== null) publicationPatch.engagements = allEngagements;
+      if (snapshot.clicks !== null) publicationPatch.clicks = snapshot.clicks;
+      const { error: publicationError } = await db.from("content_publications").update(publicationPatch).eq("id", row.publication_id).in("status", ["published", "measured"]);
+      if (publicationError) warnings.push({ queue_id: row.id, publication_id: row.publication_id, reason: "publication_metric_sync_failed", detail: publicationError.message });
     }
 
     existing.add(windowLabel);
@@ -363,19 +301,10 @@ Deno.serve(async (req: Request) => {
       raw_metrics: snapshot.raw_metrics,
     };
     const previousLabel = PREVIOUS_WINDOW[windowLabel] ?? null;
-    const previous = previousLabel
-      ? (snapshotsByQueue.get(row.id) ?? []).find((item) => item?.raw_metrics?.window === previousLabel) ?? null
-      : null;
+    const previous = previousLabel ? (snapshotsByQueue.get(row.id) ?? []).find((item) => item?.raw_metrics?.window === previousLabel) ?? null : null;
     const derived = deriveInsightSummary(windowLabel, storedSnapshot, previousLabel, previous);
     const topic = `x_${windowLabel}`;
-    const { data: priorInsight } = await db
-      .from("feedback_insights")
-      .select("id")
-      .eq("publish_queue_id", row.id)
-      .eq("signal_type", "metric_window")
-      .eq("topic", topic)
-      .limit(1)
-      .maybeSingle();
+    const { data: priorInsight } = await db.from("feedback_insights").select("id").eq("publish_queue_id", row.id).eq("signal_type", "metric_window").eq("topic", topic).limit(1).maybeSingle();
 
     if (!priorInsight?.id) {
       const { error: insightError } = await db.from("feedback_insights").insert({
@@ -388,19 +317,17 @@ Deno.serve(async (req: Request) => {
         confidence: derived.confidence,
         impact_score: derived.impactScore,
         recommended_route: row.source_ref ? `CONTENT_OS:${row.source_ref}` : "CONTENT_OS_REVIEW",
-        analysis_model: "deterministic:x-feedback-collector-v3",
+        analysis_model: "deterministic:x-feedback-collector-v4",
       });
-      if (insightError) {
-        failed.push({ queue_id: row.id, post_id: postId, window: windowLabel, reason: "insight_insert_failed", detail: insightError.message });
-      } else {
-        insights.push({ queue_id: row.id, source_ref: row.source_ref, window: windowLabel, route: row.source_ref ? `CONTENT_OS:${row.source_ref}` : "CONTENT_OS_REVIEW", summary: derived.summary });
-      }
+      if (insightError) failed.push({ queue_id: row.id, post_id: postId, window: windowLabel, reason: "insight_insert_failed", detail: insightError.message });
+      else insights.push({ queue_id: row.id, source_ref: row.source_ref, window: windowLabel, route: row.source_ref ? `CONTENT_OS:${row.source_ref}` : "CONTENT_OS_REVIEW", summary: derived.summary });
     }
 
     if (!snapshotsByQueue.has(row.id)) snapshotsByQueue.set(row.id, []);
     snapshotsByQueue.get(row.id)!.push(storedSnapshot);
     collected.push({
       queue_id: row.id,
+      publication_id: row.publication_id,
       source_ref: row.source_ref,
       post_id: postId,
       window: windowLabel,
@@ -411,8 +338,12 @@ Deno.serve(async (req: Request) => {
         views: snapshot.views,
         likes: snapshot.likes,
         replies: snapshot.replies,
+        comments: snapshot.comments,
         reposts: snapshot.reposts,
+        shares: snapshot.shares,
         bookmarks: snapshot.bookmarks,
+        saves: snapshot.saves,
+        clicks: snapshot.clicks,
       },
     });
   }
@@ -423,10 +354,12 @@ Deno.serve(async (req: Request) => {
     collected_count: collected.length,
     insight_count: insights.length,
     skipped_count: skipped.length,
+    warning_count: warnings.length,
     failed_count: failed.length,
     collected,
     insights,
     skipped,
+    warnings,
     failed,
   }, failed.length ? 207 : 200);
 });
