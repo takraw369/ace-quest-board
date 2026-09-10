@@ -1,11 +1,16 @@
 -- Distribution Intelligence TTP layer
--- Reuses publish_queue + Reality Loop. No parallel content/person source of truth.
+-- Reuses content_publications + publish_queue + Reality Loop.
+-- No parallel content/person source of truth is introduced.
 
 alter table public.publish_queue
+  add column if not exists publication_id uuid references public.content_publications(id) on delete set null,
   add column if not exists scheduled_for timestamptz,
   add column if not exists campaign_ref text,
   add column if not exists variant_ref text,
   add column if not exists cta_ref text;
+
+create index if not exists publish_queue_publication_idx
+  on public.publish_queue (publication_id);
 
 create index if not exists publish_queue_due_schedule_idx
   on public.publish_queue (provider, status, scheduled_for, created_at);
@@ -13,17 +18,20 @@ create index if not exists publish_queue_due_schedule_idx
 create index if not exists publish_queue_campaign_idx
   on public.publish_queue (campaign_ref, provider, published_at desc);
 
+comment on column public.publish_queue.publication_id is
+  'Optional bridge to the existing content_publications distribution read model.';
 comment on column public.publish_queue.scheduled_for is
-  'Provider-neutral intended publish time. Channel workers must not publish before this timestamp.';
+  'Execution snapshot of intended publish time. Normally copied from content_publications.scheduled_at when a publication becomes queued.';
 comment on column public.publish_queue.campaign_ref is
-  'Campaign attribution key. Canonical campaign/content definition remains outside publish_queue.';
+  'Campaign attribution key for one execution instance. Canonical campaign/content definition remains outside publish_queue.';
 comment on column public.publish_queue.variant_ref is
   'Content/copy variant attribution key for learning across posts.';
 comment on column public.publish_queue.cta_ref is
   'CTA / tracked-entry attribution key, e.g. LINE gate or referral route.';
 
 -- Best-time learning from MASA's own observed results, not generic platform folklore.
--- Uses the latest metric snapshot for each published queue item and preserves unknown metrics as null.
+-- It combines Reality Loop snapshots with manually measured content_publications rows,
+-- while avoiding double-counting publications already bridged to a published queue item.
 create or replace function public.get_distribution_best_times_v1(
   p_provider text default null,
   p_account_ref text default null,
@@ -59,13 +67,13 @@ as $$
     from public.content_metric_snapshots cms
     where cms.publish_queue_id is not null
     order by cms.publish_queue_id, cms.captured_at desc
-  ), observed as (
+  ), queue_observed as (
     select
       pq.provider,
       pq.account_ref,
       extract(isodow from (pq.published_at at time zone 'Asia/Tokyo'))::integer as iso_weekday,
       extract(hour from (pq.published_at at time zone 'Asia/Tokyo'))::integer as hour_jst,
-      ls.impressions,
+      ls.impressions::numeric as impressions,
       case
         when ls.likes is null
          and ls.replies is null
@@ -90,6 +98,30 @@ as $$
       and pq.published_at >= now() - make_interval(days => greatest(7, least(coalesce(p_lookback_days, 90), 366)))
       and (p_provider is null or pq.provider = p_provider)
       and (p_account_ref is null or pq.account_ref = p_account_ref)
+  ), publication_observed as (
+    select
+      cp.channel as provider,
+      null::text as account_ref,
+      extract(isodow from (cp.published_at at time zone 'Asia/Tokyo'))::integer as iso_weekday,
+      extract(hour from (cp.published_at at time zone 'Asia/Tokyo'))::integer as hour_jst,
+      cp.impressions::numeric as impressions,
+      cp.engagements::numeric as engagements
+    from public.content_publications cp
+    where cp.published_at is not null
+      and cp.published_at >= now() - make_interval(days => greatest(7, least(coalesce(p_lookback_days, 90), 366)))
+      and (p_provider is null or cp.channel = p_provider)
+      and p_account_ref is null
+      and (cp.impressions is not null or cp.engagements is not null)
+      and not exists (
+        select 1
+        from public.publish_queue pq
+        where pq.publication_id = cp.id
+          and pq.status = 'published'
+      )
+  ), observed as (
+    select * from queue_observed
+    union all
+    select * from publication_observed
   )
   select
     o.provider,
@@ -127,4 +159,4 @@ revoke all on function public.get_distribution_best_times_v1(text, text, integer
 grant execute on function public.get_distribution_best_times_v1(text, text, integer, integer) to service_role;
 
 comment on function public.get_distribution_best_times_v1(text, text, integer, integer) is
-  'Provider-neutral best-time evidence from own published content. Confidence rises with observed sample count; no platform-wide guess is fabricated.';
+  'Provider-neutral best-time evidence from own published content across Reality Loop and existing content_publications. Confidence rises with observed sample count; no platform-wide guess is fabricated.';
