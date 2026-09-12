@@ -26,12 +26,12 @@ test('Character Create saves current chapter and keeps Quest locked before conne
 
   await page.locator('select').first().selectOption('成人期');
   await page.getByPlaceholder('例：心と身体を整えながら、止まっている仕事を少し進めたい').fill('身体を整えながら仕事を一歩進めたい');
-  await page.getByRole('button', { name: '5分' }).click();
+  await page.getByRole('button', { name: '5分', exact: true }).click();
   await page.getByRole('checkbox').check();
-  await page.getByRole('button', { name: 'この現在地から始める' }).click();
+  await page.getByRole('button', { name: 'この現在地から始める', exact: true }).click();
 
   await expect(page.getByRole('status')).toContainText('現在地を保存しました');
-  await expect(page.getByRole('link', { name: 'LINEと接続する' })).toHaveAttribute('href', '/connect/line?next=/onboarding');
+  await expect(page.getByRole('link', { name: 'LINEと接続する', exact: true })).toHaveAttribute('href', '/connect/line?next=/onboarding');
   await expect(page.getByText('「現在地を保存」＋「LINE接続」で解放されます。')).toBeVisible();
 
   const stored = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? '{}'), onboardingKey);
@@ -64,7 +64,7 @@ test('connected and calibrated player carries Character Create into Quest Router
 
   await expect(page.getByText('本人データとつながった')).toBeVisible();
   await expect(page.getByText('今の身体・認知・感情・行動を観察済み')).toBeVisible();
-  const firstQuest = page.getByRole('link', { name: '最初のQuestを選ぶ →' });
+  const firstQuest = page.getByRole('link', { name: '最初のQuestを選ぶ →', exact: true });
   await expect(firstQuest).toBeVisible();
   await expect(firstQuest).toHaveAttribute('href', /\/quest-router\?source=onboarding.*age=/);
 
@@ -73,11 +73,11 @@ test('connected and calibrated player carries Character Create into Quest Router
   await expect(page.getByText('CHARACTER CREATEから引き継ぎ済み')).toBeVisible();
   await expect(page.locator('select').first()).toHaveValue('成人期');
   await expect(page.getByPlaceholder('例：心と身体を整えながら、やるべき一歩を進めたい')).toHaveValue('整えてから挑戦する');
-  await expect(page.getByRole('button', { name: '10分' })).toHaveClass(/bg-\[#d9c18d\]/);
+  await expect(page.getByRole('button', { name: '10分', exact: true })).toHaveClass(/bg-\[#d9c18d\]/);
   await expect(page.getByRole('button', { name: /向き合える/ })).toHaveClass(/bg-\[#789581\]\/10/);
 });
 
 test('Calibration opened from onboarding keeps a visible return path', async ({ page }) => {
   await page.goto('/calibration?next=/onboarding');
-  await expect(page.getByRole('link', { name: '← Character Createへ戻る' })).toHaveAttribute('href', '/onboarding');
+  await expect(page.getByRole('link', { name: '← Character Createへ戻る', exact: true })).toHaveAttribute('href', '/onboarding');
 });
