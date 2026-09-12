@@ -228,8 +228,8 @@ export default function OnboardingClient() {
             done={calibrated}
           >
             {!calibrated && (
-              <Link href={connected ? '/calibration' : '/connect/line?next=/calibration'} className="flex w-full items-center justify-center rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-[#b7bdb6]">
-                Calibrationをする
+              <Link href={connected ? '/calibration?next=/onboarding' : '/connect/line?next=/onboarding'} className="flex w-full items-center justify-center rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-[#b7bdb6]">
+                {connected ? 'Calibrationをする' : 'LINE接続後にCalibrationへ'}
               </Link>
             )}
           </Gate>
