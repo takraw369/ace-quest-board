@@ -41,7 +41,7 @@ test('Character Create saves current chapter and keeps Quest locked before conne
   expect(stored.dataUseAccepted).toBe(true);
 });
 
-test('connected and calibrated player can continue to the routed first Quest', async ({ page }) => {
+test('connected and calibrated player carries Character Create into Quest Router', async ({ page }) => {
   await page.addInitScript(({ bKey, oKey, bootstrap, onboarding }) => {
     localStorage.setItem(bKey, JSON.stringify(bootstrap));
     localStorage.setItem(oKey, JSON.stringify(onboarding));
@@ -67,4 +67,12 @@ test('connected and calibrated player can continue to the routed first Quest', a
   const firstQuest = page.getByRole('link', { name: '最初のQuestを選ぶ →' });
   await expect(firstQuest).toBeVisible();
   await expect(firstQuest).toHaveAttribute('href', /\/quest-router\?source=onboarding.*age=/);
+
+  await firstQuest.click();
+  await expect(page).toHaveURL(/\/quest-router\?source=onboarding/);
+  await expect(page.getByText('CHARACTER CREATEから引き継ぎ済み')).toBeVisible();
+  await expect(page.getByLabel('今の年代・段階')).toHaveValue('成人期');
+  await expect(page.getByPlaceholder('例：心と身体を整えながら、やるべき一歩を進めたい')).toHaveValue('整えてから挑戦する');
+  await expect(page.getByRole('button', { name: '10分' })).toHaveClass(/bg-\[#d9c18d\]/);
+  await expect(page.getByRole('button', { name: /向き合える/ })).toHaveClass(/bg-\[#789581\]\/10/);
 });
