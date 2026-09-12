@@ -24,7 +24,7 @@ test.beforeEach(async ({ context, baseURL }) => {
 test('Character Create saves current chapter and keeps Quest locked before connection', async ({ page }) => {
   await page.goto('/onboarding');
 
-  await page.getByLabel('今の年代・段階').selectOption('成人期');
+  await page.locator('select').first().selectOption('成人期');
   await page.getByPlaceholder('例：心と身体を整えながら、止まっている仕事を少し進めたい').fill('身体を整えながら仕事を一歩進めたい');
   await page.getByRole('button', { name: '5分' }).click();
   await page.getByRole('checkbox').check();
@@ -71,7 +71,7 @@ test('connected and calibrated player carries Character Create into Quest Router
   await firstQuest.click();
   await expect(page).toHaveURL(/\/quest-router\?source=onboarding/);
   await expect(page.getByText('CHARACTER CREATEから引き継ぎ済み')).toBeVisible();
-  await expect(page.getByLabel('今の年代・段階')).toHaveValue('成人期');
+  await expect(page.locator('select').first()).toHaveValue('成人期');
   await expect(page.getByPlaceholder('例：心と身体を整えながら、やるべき一歩を進めたい')).toHaveValue('整えてから挑戦する');
   await expect(page.getByRole('button', { name: '10分' })).toHaveClass(/bg-\[#d9c18d\]/);
   await expect(page.getByRole('button', { name: /向き合える/ })).toHaveClass(/bg-\[#789581\]\/10/);
