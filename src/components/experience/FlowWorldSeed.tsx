@@ -91,7 +91,7 @@ export default function FlowWorldSeed({
               <p className="mt-1 font-serif text-lg text-[#eee8dc]">{xpTotal}</p>
             </div>
             <div className="rounded-2xl border border-white/8 bg-white/[0.025] p-3">
-              <p className="text-[9px] uppercase tracking-[0.18em] text-[#7f867f]">RETURN TRACE</p>
+              <p className="text-[9px] uppercase tracking-[0.18em] text-[#7f867f]">CURRENT STREAK</p>
               <p className="mt-1 font-serif text-lg text-[#eee8dc]">{streak} days</p>
             </div>
           </div>
