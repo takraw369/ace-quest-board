@@ -76,3 +76,8 @@ test('connected and calibrated player carries Character Create into Quest Router
   await expect(page.getByRole('button', { name: '10分' })).toHaveClass(/bg-\[#d9c18d\]/);
   await expect(page.getByRole('button', { name: /向き合える/ })).toHaveClass(/bg-\[#789581\]\/10/);
 });
+
+test('Calibration opened from onboarding keeps a visible return path', async ({ page }) => {
+  await page.goto('/calibration?next=/onboarding');
+  await expect(page.getByRole('link', { name: '← Character Createへ戻る' })).toHaveAttribute('href', '/onboarding');
+});
