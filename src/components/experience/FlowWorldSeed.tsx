@@ -32,12 +32,12 @@ export default function FlowWorldSeed({
         <div>
           <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-[#789581]">{title}</p>
           <h2 className="mt-2 font-serif text-xl font-semibold text-[#eee8dc]">
-            {completed ? '今日の体験が、世界にひとつ刻まれた' : '今日の世界は保存されています'}
+            {completed ? '今日の体験が、世界にひとつ刻まれた' : '今日までの世界が、ここに残っている'}
           </h2>
         </div>
         {xpGain > 0 && (
           <span className="shrink-0 rounded-full border border-[#d9c18d]/20 bg-[#d9c18d]/10 px-3 py-1.5 text-[10px] font-bold text-[#d9c18d]">
-            +{xpGain} XP
+            WORLD +{xpGain} XP
           </span>
         )}
       </div>
@@ -82,8 +82,8 @@ export default function FlowWorldSeed({
 
         <div>
           <p className="text-sm leading-7 text-[#9da29b]">
-            今はまだ“完成したゲーム世界”ではなく、Questの体験が世界へ反映されるための最小単位です。
-            次の段階で、実際のFLOW状態・獲得したLens・Evidenceに応じて地形や光、解放領域へ接続します。
+            Questで得たEvidenceがFLOW COREに残り、次の領域へ続く道を少しずつ照らします。
+            連続記録を守るためではなく、現実で試したこと・戻ってきたこと・気づいたことが世界を育てます。
           </p>
           <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
             <div className="rounded-2xl border border-white/8 bg-white/[0.025] p-3">
@@ -91,7 +91,7 @@ export default function FlowWorldSeed({
               <p className="mt-1 font-serif text-lg text-[#eee8dc]">{xpTotal}</p>
             </div>
             <div className="rounded-2xl border border-white/8 bg-white/[0.025] p-3">
-              <p className="text-[9px] uppercase tracking-[0.18em] text-[#7f867f]">STREAK</p>
+              <p className="text-[9px] uppercase tracking-[0.18em] text-[#7f867f]">RETURN TRACE</p>
               <p className="mt-1 font-serif text-lg text-[#eee8dc]">{streak} days</p>
             </div>
           </div>
