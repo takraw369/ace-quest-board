@@ -146,7 +146,6 @@ function DailyComplete({ data, deepening }: { data: PwaBootstrap; deepening: Dee
           <h1 className="mt-3 font-serif text-3xl font-semibold">今日のQuestは完了</h1>
           <p className="mt-4 text-sm leading-7 text-[#aeb5ad]">今日はここで区切り。実行と振り返りはHuman Graphへ保存されています。</p>
           <div className="mt-6"><WorldAfterQuest data={data} /></div>
-          <Link href="/my-ace/evidence" className="mt-4 flex w-full items-center justify-center rounded-full border border-[#789581]/20 bg-[#789581]/5 px-5 py-3 text-sm font-semibold text-[#a9c0af]">体験のEvidenceを見る →</Link>
           <RelatedLearning data={data} deepening={deepening} surface="quest_daily_complete" />
           <div className="mt-6 rounded-[22px] border border-[#d9c18d]/20 bg-black/15 p-5">
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#d2b97f]">NEXT FLOW DAY</p>
@@ -229,7 +228,6 @@ export default function QuestClient() {
             <p className="mt-3 text-sm leading-7 text-[#929992]">予想・実測・振り返りをEvidenceとして保存。数字より先に、地図に新しい軌跡が増えます。</p>
             <div className="mt-4 flex items-center gap-3 text-xs text-[#aeb5ad]"><span className="rounded-full border border-[#d9c18d]/20 bg-[#d9c18d]/10 px-3 py-1.5 text-[#d9c18d]">+{result.xp ?? 0} XP</span><span>累計 {result.total ?? 0} XP</span><span>🔥 {result.streak ?? 0}日</span></div>
             <div className="mt-6"><WorldAfterQuest data={data} newTrace /></div>
-            <Link href="/my-ace/evidence" className="mt-4 flex w-full items-center justify-center rounded-full border border-[#789581]/20 bg-[#789581]/5 px-5 py-3 text-sm font-semibold text-[#a9c0af]">体験のEvidenceを見る →</Link>
             <RelatedLearning data={data} deepening={deepening} surface="quest_complete" />
             <div className="mt-6 rounded-[22px] border border-[#d9c18d]/20 bg-black/15 p-5">
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#d2b97f]">NEXT FLOW DAY</p>
