@@ -1,3 +1,5 @@
+import { captureConnectedEntranceState, queueEntranceMilestone } from '@/lib/entranceMeasurement';
+
 export const ONBOARDING_STORAGE_KEY = 'flow:ace:onboarding:v1';
 
 export const AGE_BANDS = [
@@ -62,8 +64,22 @@ export function loadOnboardingProfile(): AceOnboardingProfile {
 
 export function saveOnboardingProfile(profile: AceOnboardingProfile) {
   if (typeof window === 'undefined') return;
-  localStorage.setItem(
-    ONBOARDING_STORAGE_KEY,
-    JSON.stringify({ ...profile, version: 1, updatedAt: new Date().toISOString() }),
-  );
+
+  const previous = loadOnboardingProfile();
+  const next: AceOnboardingProfile = {
+    ...profile,
+    version: 1,
+    updatedAt: new Date().toISOString(),
+  };
+  localStorage.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify(next));
+
+  if (next.dataUseAccepted && next.ageBand && !previous.updatedAt) {
+    queueEntranceMilestone('character_saved');
+  }
+
+  if (next.dataUseAccepted && next.completedAt && !previous.completedAt) {
+    queueEntranceMilestone('first_quest_selected');
+  }
+
+  captureConnectedEntranceState(next);
 }
