@@ -1,3 +1,5 @@
+import { queueEntranceMilestone } from '@/lib/entranceMeasurement';
+
 export const ONBOARDING_STORAGE_KEY = 'flow:ace:onboarding:v1';
 
 export const AGE_BANDS = [
@@ -62,8 +64,27 @@ export function loadOnboardingProfile(): AceOnboardingProfile {
 
 export function saveOnboardingProfile(profile: AceOnboardingProfile) {
   if (typeof window === 'undefined') return;
-  localStorage.setItem(
-    ONBOARDING_STORAGE_KEY,
-    JSON.stringify({ ...profile, version: 1, updatedAt: new Date().toISOString() }),
-  );
+
+  const previous = loadOnboardingProfile();
+  const updatedAt = new Date().toISOString();
+  const next = { ...profile, version: 1 as const, updatedAt };
+  localStorage.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify(next));
+
+  if (next.dataUseAccepted && next.ageBand && !previous.updatedAt) {
+    queueEntranceMilestone('character_saved', {
+      age_band: next.ageBand,
+      time_budget_minutes: next.timeBudgetMinutes,
+      attention_level: next.attentionLevel,
+      direction_present: Boolean(next.direction.trim()),
+    });
+  }
+
+  if (next.dataUseAccepted && next.completedAt && !previous.completedAt) {
+    queueEntranceMilestone('first_quest_selected', {
+      age_band: next.ageBand,
+      time_budget_minutes: next.timeBudgetMinutes,
+      attention_level: next.attentionLevel,
+      onboarding_completed_at: next.completedAt,
+    });
+  }
 }
