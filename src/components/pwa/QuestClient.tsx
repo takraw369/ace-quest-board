@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import FlowWorldSeed from '@/components/experience/FlowWorldSeed';
+import FlowWorldMap from '@/components/experience/FlowWorldMap';
 import PwaNav from '@/components/navigation/PwaNav';
 import {
   DailyQuestState,
@@ -113,6 +113,28 @@ function RelatedLearning({
   );
 }
 
+function WorldAfterQuest({ data, newTrace = false }: { data: PwaBootstrap; newTrace?: boolean }) {
+  const education = recommendationOf(data, 'education');
+  const connection = recommendationOf(data, 'connection');
+  const nextHref = education ? '/learn' : connection ? '/people' : '/today';
+  const hasNextRoute = Boolean(education || connection);
+
+  return (
+    <FlowWorldMap
+      actionsCompleted={data.progress?.actions_completed ?? 0}
+      questsCompleted={data.progress?.quests_completed ?? 0}
+      learningCompleted={data.progress?.education_completed ?? 0}
+      hasConnectionRoute={Boolean(connection)}
+      hasNextRoute={hasNextRoute}
+      questCompletedToday
+      rank={String(data.progress?.growth_rank ?? 'seed').toUpperCase()}
+      xpTotal={data.progress?.xp_total ?? 0}
+      nextHref={nextHref}
+      newTrace={newTrace ? 'quest' : undefined}
+    />
+  );
+}
+
 function DailyComplete({ data, deepening }: { data: PwaBootstrap; deepening: DeepeningPayload | null }) {
   const unlock = unlockLabel(data.daily_quest?.next_unlock_at);
   return (
@@ -123,19 +145,15 @@ function DailyComplete({ data, deepening }: { data: PwaBootstrap; deepening: Dee
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#a9c0af]">TODAY COMPLETE</p>
           <h1 className="mt-3 font-serif text-3xl font-semibold">今日のQuestは完了</h1>
           <p className="mt-4 text-sm leading-7 text-[#aeb5ad]">今日はここで区切り。実行と振り返りはHuman Graphへ保存されています。</p>
-          <div className="mt-6">
-            <FlowWorldSeed
-              xpTotal={data.progress?.xp_total ?? 0}
-              streak={data.progress?.streak_current ?? 0}
-            />
-          </div>
+          <div className="mt-6"><WorldAfterQuest data={data} /></div>
+          <Link href="/my-ace/evidence" className="mt-4 flex w-full items-center justify-center rounded-full border border-[#789581]/20 bg-[#789581]/5 px-5 py-3 text-sm font-semibold text-[#a9c0af]">体験のEvidenceを見る →</Link>
           <RelatedLearning data={data} deepening={deepening} surface="quest_daily_complete" />
           <div className="mt-6 rounded-[22px] border border-[#d9c18d]/20 bg-black/15 p-5">
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#d2b97f]">NEXT FLOW DAY</p>
             <p className="mt-2 font-serif text-xl font-semibold">次のQuestは {unlock} に更新</p>
             <p className="mt-2 text-xs leading-6 text-[#8fa795]">FLOW Dayは毎朝5:00に切り替わります。Questを連続消化するより、1日を使って変化を観察します。</p>
           </div>
-          <Link href="/today" className="mt-5 flex w-full items-center justify-center rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-[#aeb5ad]">Todayへ戻る</Link>
+          <Link href="/today" className="mt-5 flex w-full items-center justify-center rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-[#aeb5ad]">FLOW WORLDへ戻る</Link>
         </section>
       </div>
       <PwaNav />
@@ -160,12 +178,8 @@ export default function QuestClient() {
     if (!data || data.daily_quest?.status !== 'completed' || !sessionIsUsable(data)) return;
     let cancelled = false;
     void loadDeepeningContent(data)
-      .then((payload) => {
-        if (!cancelled) setDeepening(payload);
-      })
-      .catch(() => {
-        if (!cancelled) setDeepening({ ok: false, unlocked: true, items: [] });
-      });
+      .then((payload) => { if (!cancelled) setDeepening(payload); })
+      .catch(() => { if (!cancelled) setDeepening({ ok: false, unlocked: true, items: [] }); });
     return () => { cancelled = true; };
   }, [data?.session_token, data?.daily_quest?.status, data?.daily_quest?.completed_recommendation_id]);
 
@@ -210,25 +224,19 @@ export default function QuestClient() {
 
         {result ? (
           <section className="mt-7 rounded-[28px] border border-[#789581]/25 bg-[#789581]/10 p-6">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#a9c0af]">Quest Complete</p>
-            <p className="mt-3 font-serif text-3xl font-semibold">+{result.xp ?? 0} XP</p>
-            <p className="mt-2 text-sm text-[#aeb5ad]">累計 {result.total ?? 0} XP｜🔥 {result.streak ?? 0}日連続</p>
-            <p className="mt-3 text-sm leading-7 text-[#929992]">予想・実測・振り返りをHuman Graphへ記録しました。</p>
-            <div className="mt-6">
-              <FlowWorldSeed
-                completed
-                xpGain={result.xp ?? 0}
-                xpTotal={result.total ?? 0}
-                streak={result.streak ?? 0}
-              />
-            </div>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#a9c0af]">WORLD UPDATED</p>
+            <h2 className="mt-3 font-serif text-3xl font-semibold">Questが、世界に残った。</h2>
+            <p className="mt-3 text-sm leading-7 text-[#929992]">予想・実測・振り返りをEvidenceとして保存。数字より先に、地図に新しい軌跡が増えます。</p>
+            <div className="mt-4 flex items-center gap-3 text-xs text-[#aeb5ad]"><span className="rounded-full border border-[#d9c18d]/20 bg-[#d9c18d]/10 px-3 py-1.5 text-[#d9c18d]">+{result.xp ?? 0} XP</span><span>累計 {result.total ?? 0} XP</span><span>🔥 {result.streak ?? 0}日</span></div>
+            <div className="mt-6"><WorldAfterQuest data={data} newTrace /></div>
+            <Link href="/my-ace/evidence" className="mt-4 flex w-full items-center justify-center rounded-full border border-[#789581]/20 bg-[#789581]/5 px-5 py-3 text-sm font-semibold text-[#a9c0af]">体験のEvidenceを見る →</Link>
             <RelatedLearning data={data} deepening={deepening} surface="quest_complete" />
             <div className="mt-6 rounded-[22px] border border-[#d9c18d]/20 bg-black/15 p-5">
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#d2b97f]">NEXT FLOW DAY</p>
               <p className="mt-2 font-serif text-xl font-semibold">次のQuestは {unlockLabel(result.dailyQuest?.next_unlock_at)} に更新</p>
               <p className="mt-2 text-xs leading-6 text-[#8fa795]">今日はQuestを増やさず、体験→学び→日常観察で1日を閉じます。</p>
             </div>
-            <Link href="/today" className="mt-5 flex w-full items-center justify-center rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-[#aeb5ad]">今日はここまで</Link>
+            <Link href="/today" className="mt-5 flex w-full items-center justify-center rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-[#aeb5ad]">FLOW WORLDへ戻る</Link>
           </section>
         ) : (
           <div className="mt-7 space-y-4">
