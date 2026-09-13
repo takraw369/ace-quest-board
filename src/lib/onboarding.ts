@@ -1,4 +1,4 @@
-import { queueEntranceMilestone } from '@/lib/entranceMeasurement';
+import { captureConnectedEntranceState, queueEntranceMilestone } from '@/lib/entranceMeasurement';
 
 export const ONBOARDING_STORAGE_KEY = 'flow:ace:onboarding:v1';
 
@@ -87,4 +87,6 @@ export function saveOnboardingProfile(profile: AceOnboardingProfile) {
       onboarding_completed_at: next.completedAt,
     });
   }
+
+  captureConnectedEntranceState(next);
 }
