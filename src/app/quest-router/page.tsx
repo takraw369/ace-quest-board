@@ -5,6 +5,12 @@ import { useEffect, useState } from 'react';
 import PwaNav from '@/components/navigation/PwaNav';
 import { WANT_TO_SEED, type WantToSeed } from '@/lib/wantToSeed';
 import {
+  AGE_BANDS,
+  loadOnboardingProfile,
+  saveOnboardingProfile,
+  TIME_OPTIONS,
+} from '@/lib/onboarding';
+import {
   loadBootstrap,
   PwaBootstrap,
   Recommendation,
@@ -50,9 +56,6 @@ type RouterResponse = {
   recommendation?: Recommendation;
 };
 
-const AGE_BANDS = ['0〜18か月','18〜36か月','3〜6歳','6〜9歳','9〜12歳','12〜15歳','15〜18歳','18〜25歳前後','成人期','転換・再起期'] as const;
-const TIME_OPTIONS = [3, 5, 10, 15, 30] as const;
-
 function updateQuestRecommendation(data: PwaBootstrap, recommendation: Recommendation) {
   const current = data.recommendations ?? [];
   const questIndex = current.findIndex((item) => item.recommendation_type === 'quest');
@@ -82,11 +85,35 @@ export default function QuestRouterPage() {
   useEffect(() => {
     setData(loadBootstrap());
     const params = new URLSearchParams(window.location.search);
-    setSource(params.get('source') ?? 'router');
+    const onboarding = loadOnboardingProfile();
+    const nextSource = params.get('source') ?? 'router';
+    setSource(nextSource);
+
     const wantId = params.get('want');
     const found = wantId ? WANT_TO_SEED.find((item) => item.id === wantId) ?? null : null;
     setCarriedWant(found);
+
+    const queryDirection = params.get('direction')?.trim();
     if (found) setWantText(found.title);
+    else if (queryDirection) setWantText(queryDirection);
+    else if (nextSource === 'onboarding' && onboarding.direction) setWantText(onboarding.direction);
+
+    const queryAge = params.get('age');
+    const safeAge = queryAge && AGE_BANDS.includes(queryAge as (typeof AGE_BANDS)[number])
+      ? queryAge
+      : onboarding.ageBand;
+    if (safeAge) setAgeBand(safeAge);
+
+    const queryMinutes = Number(params.get('minutes'));
+    const safeMinutes = TIME_OPTIONS.includes(queryMinutes as (typeof TIME_OPTIONS)[number])
+      ? queryMinutes
+      : onboarding.timeBudgetMinutes;
+    if (safeMinutes) setTimeBudget(safeMinutes);
+
+    const queryAttention = params.get('attention');
+    if (queryAttention === 'focused' || queryAttention === 'light') setAttention(queryAttention);
+    else if (nextSource === 'onboarding') setAttention(onboarding.attentionLevel);
+
     setLoaded(true);
   }, []);
 
@@ -123,6 +150,20 @@ export default function QuestRouterPage() {
       setError('まず、今の年代・段階を選んでください。');
       return;
     }
+
+    if (source === 'onboarding') {
+      const onboarding = loadOnboardingProfile();
+      saveOnboardingProfile({
+        ...onboarding,
+        ageBand,
+        direction: wantText.trim(),
+        timeBudgetMinutes: timeBudget,
+        attentionLevel: attention,
+        completedAt: onboarding.completedAt ?? null,
+        updatedAt: new Date().toISOString(),
+      });
+    }
+
     setBusy(true);
     setError(null);
     try {
@@ -145,6 +186,10 @@ export default function QuestRouterPage() {
       if (!result.recommendation || !data) throw new Error('recommendation_update_failed');
       const next = updateQuestRecommendation(data, result.recommendation);
       setData(next);
+      if (source === 'onboarding') {
+        const onboarding = loadOnboardingProfile();
+        saveOnboardingProfile({ ...onboarding, completedAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+      }
       window.location.href = '/quest';
     } catch (e) {
       const message = e instanceof Error ? e.message : 'quest_select_failed';
@@ -158,7 +203,7 @@ export default function QuestRouterPage() {
 
   if (!loaded) return <main className="min-h-screen bg-[#090a08] p-6 text-[#e9e1d1]">読み込み中…</main>;
   if (!data?.ok || !sessionIsUsable(data)) {
-    return <main className="min-h-screen bg-[#090a08] px-5 py-16 text-[#e9e1d1]"><div className="mx-auto max-w-md pt-12"><p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#789581]">QUEST ROUTER</p><h1 className="mt-3 font-serif text-3xl font-semibold">今の自分と接続してから選ぶ。</h1><p className="mt-5 text-sm leading-7 text-[#9ca097]">Want to・ACE / FLOWの現在地・今日の条件を使うため、まず本人データと接続してください。</p><Link href="/connect/line" className="mt-7 inline-flex rounded-full bg-[#d9c18d] px-5 py-3 text-sm font-semibold text-[#171813]">LINEと接続する</Link></div><PwaNav /></main>;
+    return <main className="min-h-screen bg-[#090a08] px-5 py-16 text-[#e9e1d1]"><div className="mx-auto max-w-md pt-12"><p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#789581]">QUEST ROUTER</p><h1 className="mt-3 font-serif text-3xl font-semibold">今の自分と接続してから選ぶ。</h1><p className="mt-5 text-sm leading-7 text-[#9ca097]">Want to・ACE / FLOWの現在地・今日の条件を使うため、まず本人データと接続してください。</p><Link href={source === 'onboarding' ? '/connect/line?next=/onboarding' : '/connect/line'} className="mt-7 inline-flex rounded-full bg-[#d9c18d] px-5 py-3 text-sm font-semibold text-[#171813]">LINEと接続する</Link></div><PwaNav /></main>;
   }
 
   return (
@@ -169,6 +214,7 @@ export default function QuestRouterPage() {
           <p className="text-[9px] font-bold uppercase tracking-[0.24em] text-[#789581]">WANT TO × CALIBRATION × NOW → QUEST</p>
           <h1 className="mt-2 font-serif text-3xl font-semibold tracking-tight">行きたい方向と、今いる場所を重ねる。</h1>
           <p className="mt-4 text-sm leading-7 text-[#939a92]">Quest Catalogを全部見る必要はありません。望み・現在地・今日使える時間から、今試す価値が高い候補を3つまで絞ります。</p>
+          {source === 'onboarding' && <p className="mt-3 inline-flex rounded-full border border-[#789581]/20 bg-[#789581]/10 px-3 py-1.5 text-[10px] font-bold tracking-[0.12em] text-[#a9c0af]">CHARACTER CREATEから引き継ぎ済み</p>}
         </header>
 
         <section className="mt-7 rounded-[28px] border border-[#c8ab72]/15 bg-white/[0.03] p-5">
