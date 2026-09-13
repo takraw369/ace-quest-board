@@ -63,6 +63,22 @@ test('Character Create does not queue measurement before data-use consent', asyn
   expect(queued).toBeNull();
 });
 
+test('already-connected first save also captures connected and calibrated milestones', async ({ page }) => {
+  await page.addInitScript(({ key, bootstrap }) => {
+    localStorage.setItem(key, JSON.stringify(bootstrap));
+  }, { key: bootstrapKey, bootstrap: connectedBootstrap });
+
+  await page.goto('/onboarding');
+  await page.locator('select').first().selectOption('成人期');
+  await page.getByRole('checkbox').check();
+  await page.getByRole('button', { name: 'この現在地から始める', exact: true }).click();
+
+  await expect.poll(async () => page.evaluate((key) => {
+    const queue = JSON.parse(localStorage.getItem(key) ?? '[]');
+    return queue.map((event: { milestone: string }) => event.milestone).sort();
+  }, entranceQueueKey)).toEqual(['calibrated', 'character_saved', 'connected']);
+});
+
 test('connected and calibrated player carries Character Create into Quest Router and queues milestones', async ({ page }) => {
   await page.addInitScript(({ bKey, oKey, bootstrap, onboarding }) => {
     localStorage.setItem(bKey, JSON.stringify(bootstrap));
