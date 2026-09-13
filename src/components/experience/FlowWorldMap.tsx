@@ -55,7 +55,7 @@ export default function FlowWorldMap({
   const chapter = worldChapter(litCount, totalMovement);
 
   return (
-    <section className="relative overflow-hidden rounded-[30px] border border-[#d9c18d]/20 bg-[#0d100d] p-5 shadow-[0_28px_90px_rgba(0,0,0,0.30)]">
+    <section data-testid="flow-world-map" data-world={chapter.code} className="relative overflow-hidden rounded-[30px] border border-[#d9c18d]/20 bg-[#0d100d] p-5 shadow-[0_28px_90px_rgba(0,0,0,0.30)]">
       <div className="pointer-events-none absolute -right-24 -top-28 h-64 w-64 rounded-full bg-[#d9c18d]/[0.07] blur-[85px]" />
       <div className="pointer-events-none absolute -bottom-28 -left-24 h-64 w-64 rounded-full bg-[#789581]/[0.08] blur-[90px]" />
 
@@ -78,7 +78,7 @@ export default function FlowWorldMap({
           <circle cx="120" cy="108" r="96" fill="none" stroke="rgba(217,193,141,0.08)" strokeDasharray="2 7" />
           <circle cx="120" cy="108" r="68" fill="none" stroke="rgba(120,149,129,0.10)" />
           {nodes.map((node, index) => (
-            <g key={node.key}>
+            <g key={node.key} data-world-node={node.key} data-lit={node.lit ? 'true' : 'false'}>
               <line
                 x1="120"
                 y1="108"
@@ -126,7 +126,7 @@ export default function FlowWorldMap({
       <div className="relative -mt-2 rounded-[22px] border border-white/8 bg-black/15 p-4">
         <p className="text-sm leading-7 text-[#969d96]">{chapter.note}</p>
         <div className="mt-4 flex items-center justify-between gap-3">
-          <p className="text-[10px] font-semibold tracking-[0.08em] text-[#6f776f]">{litCount}/5 PATHS LIT</p>
+          <p data-testid="flow-world-lit-count" className="text-[10px] font-semibold tracking-[0.08em] text-[#6f776f]">{litCount}/5 PATHS LIT</p>
           {hasNextRoute && (
             <Link href={nextHref} className="rounded-full border border-[#d9c18d]/25 bg-[#d9c18d]/10 px-4 py-2 text-[11px] font-bold text-[#dbc58f]">
               次の光へ →
