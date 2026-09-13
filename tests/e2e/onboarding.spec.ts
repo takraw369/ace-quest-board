@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 
 const bootstrapKey = 'flow:pwa:bootstrap:v1';
 const onboardingKey = 'flow:ace:onboarding:v1';
+const entranceQueueKey = 'flow:ace:entrance-events:v1';
 
 const connectedBootstrap = {
   ok: true,
@@ -11,6 +12,7 @@ const connectedBootstrap = {
   ace: {
     scores: { BODY: 2.5, COGNITION: 3, EMOTION: 2, ACTION: 3.5 },
     result_axis: 'EMOTION',
+    assessed_at: '2026-09-12T23:00:00.000Z',
   },
 };
 
@@ -21,7 +23,7 @@ test.beforeEach(async ({ context, baseURL }) => {
     : route.abort());
 });
 
-test('Character Create saves current chapter and keeps Quest locked before connection', async ({ page }) => {
+test('Character Create saves current chapter and queues consented milestone before connection', async ({ page }) => {
   await page.goto('/onboarding');
 
   await page.locator('select').first().selectOption('成人期');
@@ -39,9 +41,29 @@ test('Character Create saves current chapter and keeps Quest locked before conne
   expect(stored.timeBudgetMinutes).toBe(5);
   expect(stored.direction).toContain('仕事を一歩');
   expect(stored.dataUseAccepted).toBe(true);
+
+  const queued = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? '[]'), entranceQueueKey);
+  expect(queued).toHaveLength(1);
+  expect(queued[0].milestone).toBe('character_saved');
+  expect(queued[0].payload).toMatchObject({
+    age_band: '成人期',
+    time_budget_minutes: 5,
+    attention_level: 'light',
+    direction_present: true,
+  });
 });
 
-test('connected and calibrated player carries Character Create into Quest Router', async ({ page }) => {
+test('Character Create does not queue measurement before data-use consent', async ({ page }) => {
+  await page.goto('/onboarding');
+  await page.locator('select').first().selectOption('成人期');
+  await page.getByPlaceholder('例：心と身体を整えながら、止まっている仕事を少し進めたい').fill('まだ同意前');
+
+  await expect(page.getByRole('button', { name: 'この現在地から始める', exact: true })).toBeDisabled();
+  const queued = await page.evaluate((key) => localStorage.getItem(key), entranceQueueKey);
+  expect(queued).toBeNull();
+});
+
+test('connected and calibrated player carries Character Create into Quest Router and queues milestones', async ({ page }) => {
   await page.addInitScript(({ bKey, oKey, bootstrap, onboarding }) => {
     localStorage.setItem(bKey, JSON.stringify(bootstrap));
     localStorage.setItem(oKey, JSON.stringify(onboarding));
@@ -64,6 +86,16 @@ test('connected and calibrated player carries Character Create into Quest Router
 
   await expect(page.getByText('本人データとつながった')).toBeVisible();
   await expect(page.getByText('今の身体・認知・感情・行動を観察済み')).toBeVisible();
+
+  await expect.poll(async () => page.evaluate((key) => {
+    const queue = JSON.parse(localStorage.getItem(key) ?? '[]');
+    return queue.map((event: { milestone: string }) => event.milestone).sort();
+  }, entranceQueueKey)).toEqual(['calibrated', 'connected']);
+
+  const queued = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? '[]'), entranceQueueKey);
+  const calibration = queued.find((event: { milestone: string }) => event.milestone === 'calibrated');
+  expect(calibration.payload).toMatchObject({ calibration_axis: 'EMOTION', preexisting: true });
+
   const firstQuest = page.getByRole('link', { name: '最初のQuestを選ぶ →', exact: true });
   await expect(firstQuest).toBeVisible();
   await expect(firstQuest).toHaveAttribute('href', /\/quest-router\?source=onboarding.*age=/);
