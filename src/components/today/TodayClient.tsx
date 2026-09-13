@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import AceCalibrationSummary from '@/components/calibration/AceCalibrationSummary';
 import FlowWorldMap from '@/components/experience/FlowWorldMap';
+import ReturnPath from '@/components/experience/ReturnPath';
 import PwaNav from '@/components/navigation/PwaNav';
 import { loadBootstrap, PwaBootstrap } from '@/lib/pwa';
 
@@ -73,6 +74,8 @@ export default function TodayClient() {
           xpTotal={progress.xp_total ?? 0}
           nextHref={nextHref}
         />
+
+        <ReturnPath data={data} />
 
         <section className="mt-5 rounded-[24px] border border-white/8 bg-white/[0.02] p-4">
           <div className="flex items-center justify-between gap-4">
