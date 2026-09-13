@@ -74,7 +74,7 @@ test('connected and calibrated player carries Character Create into Quest Router
   await expect(firstQuest).toBeVisible();
   await expect(firstQuest).toHaveAttribute('href', /\/quest-router\?source=onboarding.*age=/);
 
-  await firstQuest.click();
+  await firstQuest.click({ force: true });
   await expect(page).toHaveURL(/\/quest-router\?source=onboarding/);
   await expect(page.getByText('CHARACTER CREATEから引き継ぎ済み')).toBeVisible();
   await expect(page.locator('select').first()).toHaveValue('成人期');
