@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import AceCalibrationSummary from '@/components/calibration/AceCalibrationSummary';
+import FlowWorldMap from '@/components/experience/FlowWorldMap';
 import PwaNav from '@/components/navigation/PwaNav';
 import { loadBootstrap, PwaBootstrap } from '@/lib/pwa';
 
@@ -36,29 +37,67 @@ export default function TodayClient() {
     </main>
   );
 
-  const progress = data.progress ?? {}, flow = data.flow ?? null, rank = String(progress.growth_rank ?? 'seed').toUpperCase(), bottleneck = flow?.bottleneck ? domainLabel[flow.bottleneck] ?? flow.bottleneck : '未判定', name = data.profile?.display_name || 'あなた';
+  const progress = data.progress ?? {};
+  const flow = data.flow ?? null;
+  const rank = String(progress.growth_rank ?? 'seed').toUpperCase();
+  const bottleneck = flow?.bottleneck ? domainLabel[flow.bottleneck] ?? flow.bottleneck : '観察中';
+  const name = data.profile?.display_name || 'あなた';
   const educationTitle = (education?.metadata?.node_title as string | undefined) ?? education?.recommendation_ref ?? '今の自分を知る';
   const questAlt = (quest?.alternative ?? {}) as Record<string, unknown>;
+  const hasNextRoute = Boolean(quest || education || connection);
+  const nextHref = quest ? '/quest' : education ? '/learn' : connection ? '/people' : '/quest-router';
 
   return (
     <main className="min-h-screen bg-[#090a08] px-4 pb-28 pt-7 text-[#e9e1d1] sm:px-6">
       <div className="pointer-events-none fixed inset-0 overflow-hidden"><div className="absolute -left-40 -top-48 h-[460px] w-[460px] rounded-full bg-[#789581]/10 blur-[125px]" /><div className="absolute -right-40 top-64 h-[420px] w-[420px] rounded-full bg-[#c8ab72]/[0.05] blur-[120px]" /></div>
       <div className="relative z-10 mx-auto max-w-xl">
-        <header className="mb-7"><div className="flex items-center justify-between gap-4"><div><p className="text-[9px] font-bold uppercase tracking-[0.24em] text-[#789581]">Today / FLOW OS</p><h1 className="mt-2 font-serif text-3xl font-semibold tracking-tight">{name}の、今日の流れ。</h1></div><div className="rounded-full border border-[#c8ab72]/15 px-3 py-1.5 text-[10px] uppercase tracking-[0.16em] text-[#858c84]">{data.profile?.lifecycle_stage ?? 'registered'}</div></div></header>
+        <header className="mb-7">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-[9px] font-bold uppercase tracking-[0.24em] text-[#789581]">Today / FLOW WORLD</p>
+              <h1 className="mt-2 font-serif text-3xl font-semibold tracking-tight">{name}の、今日の世界。</h1>
+              <p className="mt-2 text-xs leading-6 text-[#717871]">昨日までに動いた場所が、今日の地図になる。</p>
+            </div>
+            <div className="rounded-full border border-[#c8ab72]/15 px-3 py-1.5 text-[10px] uppercase tracking-[0.16em] text-[#858c84]">{data.profile?.lifecycle_stage ?? 'registered'}</div>
+          </div>
+        </header>
 
-        <section className="rounded-[28px] border border-[#c8ab72]/15 bg-white/[0.03] p-5">
-          <div className="flex items-end justify-between gap-4"><div><p className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#6e756e]">Growth</p><p className="mt-1 font-serif text-2xl font-semibold">{rank} Lv.{progress.growth_level ?? 1}</p></div><div className="text-right"><p className="font-serif text-2xl font-semibold text-[#d9c18d]">{progress.xp_total ?? 0} XP</p><p className="mt-1 text-xs text-[#7d847d]">🔥 {progress.streak_current ?? 0}日連続</p></div></div>
-          <div className="mt-5 grid grid-cols-4 gap-2 border-t border-[#c8ab72]/10 pt-4 text-center"><div><p className="text-[9px] text-[#626963]">FLOW</p><p className="mt-1 text-sm font-semibold">{bottleneck}</p></div><div><p className="text-[9px] text-[#626963]">ACTION</p><p className="mt-1 text-sm font-semibold">{progress.actions_completed ?? 0}</p></div><div><p className="text-[9px] text-[#626963]">QUEST</p><p className="mt-1 text-sm font-semibold">{progress.quests_completed ?? 0}</p></div><div><p className="text-[9px] text-[#626963]">LEARN</p><p className="mt-1 text-sm font-semibold">{progress.education_completed ?? 0}</p></div></div>
+        <FlowWorldMap
+          actionsCompleted={progress.actions_completed ?? 0}
+          questsCompleted={progress.quests_completed ?? 0}
+          learningCompleted={progress.education_completed ?? 0}
+          hasConnectionRoute={Boolean(connection)}
+          hasNextRoute={hasNextRoute}
+          questCompletedToday={data.daily_quest?.status === 'completed'}
+          rank={rank}
+          xpTotal={progress.xp_total ?? 0}
+          nextHref={nextHref}
+        />
+
+        <section className="mt-5 rounded-[24px] border border-white/8 bg-white/[0.02] p-4">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[#626963]">WORLD TRACE</p>
+              <p className="mt-1 text-sm font-semibold text-[#b5bbb4]">数字は、世界の主役じゃなく足跡。</p>
+            </div>
+            <p className="text-xs text-[#727972]">FLOW：{bottleneck}</p>
+          </div>
+          <div className="mt-4 grid grid-cols-4 gap-2 border-t border-white/6 pt-4 text-center">
+            <div><p className="text-[9px] text-[#626963]">XP</p><p className="mt-1 text-sm font-semibold text-[#d9c18d]">{progress.xp_total ?? 0}</p></div>
+            <div><p className="text-[9px] text-[#626963]">ACTION</p><p className="mt-1 text-sm font-semibold">{progress.actions_completed ?? 0}</p></div>
+            <div><p className="text-[9px] text-[#626963]">QUEST</p><p className="mt-1 text-sm font-semibold">{progress.quests_completed ?? 0}</p></div>
+            <div><p className="text-[9px] text-[#626963]">LEARN</p><p className="mt-1 text-sm font-semibold">{progress.education_completed ?? 0}</p></div>
+          </div>
         </section>
 
         <AceCalibrationSummary data={data} />
 
         <section className="mt-8 space-y-4">
-          <div><p className="text-[9px] font-bold uppercase tracking-[0.22em] text-[#5e665f]">Recommended for you</p><h2 className="mt-1 font-serif text-2xl font-semibold">今、深める3つ。</h2></div>
-          <RecommendationCard eyebrow="Education" title={educationTitle} body={education?.reason ?? data.curriculum?.reason ?? '体験と問いから、今の自分に必要な学びを選びます。'} href="/learn" action="体験から学ぶ" />
-          <RecommendationCard eyebrow="Quest" title={(questAlt.duration as string | undefined) ?? '今日のQuest'} body={quest?.reason ?? '今の実行履歴に合うサイズで、次の一手を現実にします。'} href="/quest" action="Questをやる" />
-          <div className="-mt-1 flex justify-end px-1"><Link href="/quest-router" className="text-[11px] font-semibold text-[#8fa795] underline decoration-[#789581]/30 underline-offset-4">今の時間・状態からQuestを選び直す →</Link></div>
-          <RecommendationCard eyebrow="People / Place" title="反応が増える出逢い" body={connection?.reason ?? '今のテーマに、違う視点や環境を1つ足します。'} href="/people" action="出逢いの方向を見る" />
+          <div><p className="text-[9px] font-bold uppercase tracking-[0.22em] text-[#5e665f]">PATHS OPEN NOW</p><h2 className="mt-1 font-serif text-2xl font-semibold">今日、どの道へ行く？</h2><p className="mt-2 text-xs leading-6 text-[#717871]">全部やる必要はない。今ちょっと気になる道を1つ。</p></div>
+          <RecommendationCard eyebrow="Knowledge Grove / 学びの森" title={educationTitle} body={education?.reason ?? data.curriculum?.reason ?? '体験と問いから、今の自分に必要な学びを選びます。'} href="/learn" action="森へ入る →" />
+          <RecommendationCard eyebrow="Quest Ridge / 挑戦の丘" title={(questAlt.duration as string | undefined) ?? '今日のQuest'} body={quest?.reason ?? '今の実行履歴に合うサイズで、次の一手を現実にします。'} href="/quest" action="丘へ進む →" />
+          <div className="-mt-1 flex justify-end px-1"><Link href="/quest-router" className="text-[11px] font-semibold text-[#8fa795] underline decoration-[#789581]/30 underline-offset-4">今の時間・状態から別の道を探す →</Link></div>
+          <RecommendationCard eyebrow="Encounter Port / 出逢いの港" title="反応が増える出逢い" body={connection?.reason ?? '今のテーマに、違う視点や環境を1つ足します。'} href="/people" action="港をのぞく →" />
         </section>
         {data.cached_at && <p className="mt-8 text-center text-[10px] text-[#505650]">最終同期 {new Date(data.cached_at).toLocaleString('ja-JP')}</p>}
       </div>
