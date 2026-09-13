@@ -152,6 +152,41 @@ Deno.serve(async (req: Request) => {
       return Response.json({ ok: true, event: action, saved: action === "content_saved", duplicate: false }, { headers: cors });
     }
 
+    if (action === "entrance_event") {
+      const milestones = new Set(["character_saved", "connected", "calibrated", "first_quest_selected"]);
+      const milestone = String(data?.milestone ?? "");
+      if (!milestones.has(milestone)) return Response.json({ ok: false, error: "invalid_entrance_milestone" }, { status: 400, headers: cors });
+
+      const eventType = `ace_entrance_${milestone}`;
+      const { data: existing, error: existingError } = await supabase
+        .from("funnel_events")
+        .select("id")
+        .eq("contact_id", personId)
+        .eq("event_type", eventType)
+        .limit(1)
+        .maybeSingle();
+      if (existingError) throw existingError;
+      if (existing) return Response.json({ ok: true, event: eventType, duplicate: true }, { headers: cors });
+
+      const payload = {
+        milestone,
+        client_event_id: data?.client_event_id ? String(data.client_event_id).slice(0, 100) : null,
+        occurred_at: data?.occurred_at ? String(data.occurred_at).slice(0, 40) : null,
+        age_band: data?.age_band ? String(data.age_band).slice(0, 80) : null,
+        time_budget_minutes: Number.isFinite(Number(data?.time_budget_minutes)) ? Number(data.time_budget_minutes) : null,
+        attention_level: data?.attention_level === "focused" ? "focused" : data?.attention_level === "light" ? "light" : null,
+        direction_present: typeof data?.direction_present === "boolean" ? data.direction_present : null,
+        calibration_axis: data?.calibration_axis ? String(data.calibration_axis).slice(0, 32) : null,
+        calibration_at: data?.calibration_at ? String(data.calibration_at).slice(0, 40) : null,
+        preexisting: typeof data?.preexisting === "boolean" ? data.preexisting : null,
+        onboarding_completed_at: data?.onboarding_completed_at ? String(data.onboarding_completed_at).slice(0, 40) : null,
+        source: "ace_onboarding_v1",
+      };
+      const { error } = await supabase.from("funnel_events").insert({ contact_id: personId, event_type: eventType, channel: "pwa", payload });
+      if (error) throw error;
+      return Response.json({ ok: true, event: eventType, duplicate: false }, { headers: cors });
+    }
+
     let rec: any = null;
     if (recommendationId) {
       const { data: found, error } = await supabase
