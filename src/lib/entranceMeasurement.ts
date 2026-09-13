@@ -10,13 +10,9 @@ type EntranceEvent = {
   id: string;
   milestone: EntranceMilestone;
   occurredAt: string;
-  payload: Record<string, unknown>;
 };
 
 type EntranceProfileContext = {
-  ageBand: string;
-  timeBudgetMinutes: number;
-  attentionLevel: 'light' | 'focused';
   dataUseAccepted: boolean;
   updatedAt: string;
 };
@@ -60,10 +56,7 @@ export function entranceMilestoneSeen(milestone: EntranceMilestone) {
     || queuedEvents().some((event) => event.milestone === milestone);
 }
 
-export function queueEntranceMilestone(
-  milestone: EntranceMilestone,
-  payload: Record<string, unknown> = {},
-) {
+export function queueEntranceMilestone(milestone: EntranceMilestone) {
   if (typeof window === 'undefined' || entranceMilestoneSeen(milestone)) return;
 
   const queue = queuedEvents();
@@ -71,7 +64,6 @@ export function queueEntranceMilestone(
     id: eventId(),
     milestone,
     occurredAt: new Date().toISOString(),
-    payload,
   });
   writeJson(QUEUE_KEY, queue);
 
@@ -83,25 +75,14 @@ export function captureConnectedEntranceState(
   profile: EntranceProfileContext,
   data?: PwaBootstrap | null,
 ) {
-  if (!profile.dataUseAccepted || !profile.ageBand || !profile.updatedAt) return;
+  if (!profile.dataUseAccepted || !profile.updatedAt) return;
 
   const bootstrap = data ?? loadBootstrap();
   if (!sessionIsUsable(bootstrap)) return;
 
-  queueEntranceMilestone('connected', {
-    age_band: profile.ageBand,
-    time_budget_minutes: profile.timeBudgetMinutes,
-    attention_level: profile.attentionLevel,
-  });
-
+  queueEntranceMilestone('connected');
   if (bootstrap?.ace?.scores && bootstrap?.ace?.result_axis) {
-    const calibratedAt = bootstrap.ace.completed_at ?? bootstrap.ace.assessed_at ?? null;
-    queueEntranceMilestone('calibrated', {
-      age_band: profile.ageBand,
-      calibration_axis: bootstrap.ace.result_axis,
-      calibration_at: calibratedAt,
-      preexisting: Boolean(calibratedAt && calibratedAt < profile.updatedAt),
-    });
+    queueEntranceMilestone('calibrated');
   }
 
   void flushEntranceMilestones(bootstrap);
@@ -124,7 +105,6 @@ async function flushEntranceMilestonesInternal(bootstrap: PwaBootstrap) {
           milestone: event.milestone,
           client_event_id: event.id,
           occurred_at: event.occurredAt,
-          ...event.payload,
         }),
         keepalive: true,
       });
