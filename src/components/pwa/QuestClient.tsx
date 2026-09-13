@@ -15,6 +15,7 @@ import {
   sessionIsUsable,
   trackContentAction,
 } from '@/lib/pwa';
+import { completeReturnAfterQuest } from '@/lib/returnTrace';
 
 type Experiment = { intro?: string; prediction?: string; action?: string; actual?: string; reflection?: string };
 type CompletionResult = {
@@ -209,6 +210,7 @@ export default function QuestClient() {
         dailyQuest: out?.daily_quest ?? latest?.daily_quest ?? null,
       });
       const source = latest ?? data;
+      void completeReturnAfterQuest(source).catch(() => undefined);
       void loadDeepeningContent(source).then(setDeepening).catch(() => undefined);
     } catch (e) { setError(e instanceof Error ? e.message : 'complete_failed'); }
     finally { setBusy(false); }
