@@ -21,18 +21,24 @@ test.beforeEach(async ({ context, baseURL }) => {
     : route.abort());
 });
 
-test('Character Create saves current chapter and keeps Quest locked before connection', async ({ page }) => {
+test('Start Gate awakens WORLD SEED and keeps First Quest locked before connection', async ({ page }) => {
   await page.goto('/onboarding');
+
+  await expect(page.getByText('ACE QUEST · START GATE')).toBeVisible();
+  await expect(page.getByText('まだ何も決まっていない。')).toBeVisible();
+  await expect(page.getByText('WORLD 00 · DORMANT')).toBeVisible();
 
   await page.locator('select').first().selectOption('成人期');
   await page.getByPlaceholder('例：心と身体を整えながら、止まっている仕事を少し進めたい').fill('身体を整えながら仕事を一歩進めたい');
   await page.getByRole('button', { name: '5分', exact: true }).click();
   await page.getByRole('checkbox').check();
-  await page.getByRole('button', { name: 'この現在地から始める', exact: true }).click();
+  await page.getByRole('button', { name: '✦ WORLD SEEDを起動する', exact: true }).click();
 
-  await expect(page.getByRole('status')).toContainText('現在地を保存しました');
-  await expect(page.getByRole('link', { name: 'LINEと接続する', exact: true })).toHaveAttribute('href', '/connect/line?next=/onboarding');
-  await expect(page.getByText('「現在地を保存」＋「LINE接続」で解放されます。')).toBeVisible();
+  await expect(page.getByRole('status')).toContainText('最初の道がひとつ、光りました');
+  await expect(page.getByText('WORLD SEED · AWAKENED')).toBeVisible();
+  await expect(page.getByText('WORLD SEED UNLOCKED')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Gate 02を開く · LINE接続 →', exact: true })).toHaveAttribute('href', '/connect/line?next=/onboarding');
+  await expect(page.getByText('WORLD SEED起動＋LINE接続で、このGateが開きます。')).toBeVisible();
 
   const stored = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? '{}'), onboardingKey);
   expect(stored.ageBand).toBe('成人期');
@@ -62,9 +68,9 @@ test('connected and calibrated player carries Character Create into Quest Router
 
   await page.goto('/onboarding');
 
-  await expect(page.getByText('本人データとつながった')).toBeVisible();
-  await expect(page.getByText('今の身体・認知・感情・行動を観察済み')).toBeVisible();
-  const firstQuest = page.getByRole('link', { name: '最初のQuestを選ぶ →', exact: true });
+  await expect(page.getByText('旅の記録が、あなたにつながった')).toBeVisible();
+  await expect(page.getByText('今日の天気が見えた')).toBeVisible();
+  const firstQuest = page.getByRole('link', { name: '最初のQuestへ →', exact: true });
   await expect(firstQuest).toBeVisible();
   await expect(firstQuest).toHaveAttribute('href', /\/quest-router\?source=onboarding.*age=/);
 
