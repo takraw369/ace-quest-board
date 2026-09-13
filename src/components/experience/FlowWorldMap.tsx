@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 
+type WorldNodeKey = 'action' | 'quest' | 'learn' | 'people' | 'next';
+
 type FlowWorldMapProps = {
   actionsCompleted?: number;
   questsCompleted?: number;
@@ -12,16 +14,25 @@ type FlowWorldMapProps = {
   rank?: string;
   xpTotal?: number;
   nextHref?: string;
+  newTrace?: WorldNodeKey;
 };
 
 type WorldNode = {
-  key: string;
+  key: WorldNodeKey;
   label: string;
   sublabel: string;
   x: number;
   y: number;
   lit: boolean;
   value?: string;
+};
+
+const traceCopy: Record<WorldNodeKey, string> = {
+  action: '行動の原に、新しい足跡が残った。',
+  quest: '挑戦の丘に、今日のQuestの軌跡が刻まれた。',
+  learn: '学びの森に、新しい知恵の道が伸びた。',
+  people: '出逢いの港に、新しい接点が生まれた。',
+  next: '次の門につながる道が見えてきた。',
 };
 
 function worldChapter(litCount: number, totalMovement: number) {
@@ -41,6 +52,7 @@ export default function FlowWorldMap({
   rank = 'seed',
   xpTotal = 0,
   nextHref = '/quest',
+  newTrace,
 }: FlowWorldMapProps) {
   const nodes: WorldNode[] = [
     { key: 'action', label: 'ACTION FIELD', sublabel: '行動の原', x: 120, y: 25, lit: actionsCompleted > 0, value: String(actionsCompleted) },
@@ -53,11 +65,19 @@ export default function FlowWorldMap({
   const litCount = nodes.filter((node) => node.lit).length;
   const totalMovement = actionsCompleted + questsCompleted + learningCompleted;
   const chapter = worldChapter(litCount, totalMovement);
+  const tracedNode = newTrace ? nodes.find((node) => node.key === newTrace) : null;
 
   return (
     <section data-testid="flow-world-map" data-world={chapter.code} className="relative overflow-hidden rounded-[30px] border border-[#d9c18d]/20 bg-[#0d100d] p-5 shadow-[0_28px_90px_rgba(0,0,0,0.30)]">
       <div className="pointer-events-none absolute -right-24 -top-28 h-64 w-64 rounded-full bg-[#d9c18d]/[0.07] blur-[85px]" />
       <div className="pointer-events-none absolute -bottom-28 -left-24 h-64 w-64 rounded-full bg-[#789581]/[0.08] blur-[90px]" />
+
+      {tracedNode && (
+        <div data-testid="world-new-trace" className="ace-unlock-rise relative mb-4 rounded-[20px] border border-[#d9c18d]/30 bg-[#d9c18d]/[0.08] px-4 py-3">
+          <p className="text-[9px] font-bold uppercase tracking-[0.20em] text-[#d9c18d]">NEW TRACE · {tracedNode.label}</p>
+          <p className="mt-1.5 text-sm font-semibold leading-6 text-[#eee8dc]">{traceCopy[tracedNode.key]}</p>
+        </div>
+      )}
 
       <div className="relative flex items-start justify-between gap-4">
         <div>
@@ -77,34 +97,18 @@ export default function FlowWorldMap({
           <title>行動・Quest・学び・出逢い・次の道が灯るFLOW WORLD</title>
           <circle cx="120" cy="108" r="96" fill="none" stroke="rgba(217,193,141,0.08)" strokeDasharray="2 7" />
           <circle cx="120" cy="108" r="68" fill="none" stroke="rgba(120,149,129,0.10)" />
-          {nodes.map((node, index) => (
-            <g key={node.key} data-world-node={node.key} data-lit={node.lit ? 'true' : 'false'}>
-              <line
-                x1="120"
-                y1="108"
-                x2={node.x}
-                y2={node.y}
-                stroke={node.lit ? 'rgba(217,193,141,0.32)' : 'rgba(255,255,255,0.055)'}
-                strokeWidth={node.lit ? 1.2 : 0.8}
-              />
-              <circle
-                cx={node.x}
-                cy={node.y}
-                r={node.lit ? 13 : 10}
-                fill={node.lit ? 'rgba(217,193,141,0.16)' : 'rgba(255,255,255,0.025)'}
-                stroke={node.lit ? 'rgba(217,193,141,0.70)' : 'rgba(255,255,255,0.10)'}
-                strokeWidth="1"
-                className={node.lit ? 'ace-world-node' : undefined}
-                style={{ animationDelay: `${index * 140}ms` }}
-              />
-              <circle cx={node.x} cy={node.y} r="3.5" fill={node.lit ? '#d9c18d' : '#515852'} />
-              {node.value && (
-                <text x={node.x} y={node.y + 27} textAnchor="middle" fontSize="7" fill={node.lit ? 'rgba(233,225,209,0.75)' : 'rgba(125,132,125,0.45)'}>
-                  {node.value}
-                </text>
-              )}
-            </g>
-          ))}
+          {nodes.map((node, index) => {
+            const traced = node.key === newTrace;
+            return (
+              <g key={node.key} data-world-node={node.key} data-lit={node.lit ? 'true' : 'false'} data-new-trace={traced ? 'true' : 'false'}>
+                <line x1="120" y1="108" x2={node.x} y2={node.y} stroke={node.lit ? 'rgba(217,193,141,0.32)' : 'rgba(255,255,255,0.055)'} strokeWidth={traced ? 2 : node.lit ? 1.2 : 0.8} />
+                {traced && <circle cx={node.x} cy={node.y} r="20" fill="none" stroke="rgba(217,193,141,0.24)" className="ace-start-halo" />}
+                <circle cx={node.x} cy={node.y} r={traced ? 15 : node.lit ? 13 : 10} fill={node.lit ? 'rgba(217,193,141,0.16)' : 'rgba(255,255,255,0.025)'} stroke={traced ? '#d9c18d' : node.lit ? 'rgba(217,193,141,0.70)' : 'rgba(255,255,255,0.10)'} strokeWidth={traced ? 1.6 : 1} className={node.lit ? 'ace-world-node' : undefined} style={{ animationDelay: `${index * 140}ms` }} />
+                <circle cx={node.x} cy={node.y} r="3.5" fill={node.lit ? '#d9c18d' : '#515852'} />
+                {node.value && <text x={node.x} y={node.y + 27} textAnchor="middle" fontSize="7" fill={node.lit ? 'rgba(233,225,209,0.75)' : 'rgba(125,132,125,0.45)'}>{node.value}</text>}
+              </g>
+            );
+          })}
           <circle cx="120" cy="108" r="35" fill="rgba(120,149,129,0.08)" stroke="rgba(120,149,129,0.28)" />
           <circle cx="120" cy="108" r={litCount > 0 ? 18 : 13} fill={litCount > 0 ? 'rgba(217,193,141,0.15)' : 'rgba(120,149,129,0.12)'} stroke={litCount > 0 ? 'rgba(217,193,141,0.62)' : 'rgba(120,149,129,0.36)'} className={litCount > 0 ? 'ace-world-core' : undefined} />
           <circle cx="120" cy="108" r="5" fill={litCount > 0 ? '#d9c18d' : '#789581'} />
@@ -116,7 +120,7 @@ export default function FlowWorldMap({
           const top = `${(node.y / 215) * 100}%`;
           return (
             <div key={`label-${node.key}`} className="pointer-events-none absolute -translate-x-1/2" style={{ left, top: `calc(${top} + 20px)` }}>
-              <p className={`whitespace-nowrap text-center text-[7px] font-bold tracking-[0.10em] ${node.lit ? 'text-[#b9aa83]' : 'text-[#555c56]'}`}>{node.label}</p>
+              <p className={`whitespace-nowrap text-center text-[7px] font-bold tracking-[0.10em] ${node.key === newTrace ? 'text-[#e2ca94]' : node.lit ? 'text-[#b9aa83]' : 'text-[#555c56]'}`}>{node.label}</p>
               <p className={`mt-0.5 whitespace-nowrap text-center text-[8px] ${node.lit ? 'text-[#858d85]' : 'text-[#484e49]'}`}>{node.sublabel}</p>
             </div>
           );
@@ -127,11 +131,7 @@ export default function FlowWorldMap({
         <p className="text-sm leading-7 text-[#969d96]">{chapter.note}</p>
         <div className="mt-4 flex items-center justify-between gap-3">
           <p data-testid="flow-world-lit-count" className="text-[10px] font-semibold tracking-[0.08em] text-[#6f776f]">{litCount}/5 PATHS LIT</p>
-          {hasNextRoute && (
-            <Link href={nextHref} className="rounded-full border border-[#d9c18d]/25 bg-[#d9c18d]/10 px-4 py-2 text-[11px] font-bold text-[#dbc58f]">
-              次の光へ →
-            </Link>
-          )}
+          {hasNextRoute && <Link href={nextHref} className="rounded-full border border-[#d9c18d]/25 bg-[#d9c18d]/10 px-4 py-2 text-[11px] font-bold text-[#dbc58f]">次の光へ →</Link>}
         </div>
       </div>
     </section>
