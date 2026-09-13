@@ -13,6 +13,14 @@ type EntranceEvent = {
   payload: Record<string, unknown>;
 };
 
+type EntranceProfileContext = {
+  ageBand: string;
+  timeBudgetMinutes: number;
+  attentionLevel: 'light' | 'focused';
+  dataUseAccepted: boolean;
+  updatedAt: string;
+};
+
 const QUEUE_KEY = 'flow:ace:entrance-events:v1';
 const SENT_KEY = 'flow:ace:entrance-sent:v1';
 
@@ -60,6 +68,34 @@ export function queueEntranceMilestone(
 
   const bootstrap = loadBootstrap();
   if (sessionIsUsable(bootstrap)) void flushEntranceMilestones(bootstrap);
+}
+
+export function captureConnectedEntranceState(
+  profile: EntranceProfileContext,
+  data?: PwaBootstrap | null,
+) {
+  if (!profile.dataUseAccepted || !profile.ageBand || !profile.updatedAt) return;
+
+  const bootstrap = data ?? loadBootstrap();
+  if (!sessionIsUsable(bootstrap)) return;
+
+  queueEntranceMilestone('connected', {
+    age_band: profile.ageBand,
+    time_budget_minutes: profile.timeBudgetMinutes,
+    attention_level: profile.attentionLevel,
+  });
+
+  if (bootstrap?.ace?.scores && bootstrap?.ace?.result_axis) {
+    const calibratedAt = bootstrap.ace.completed_at ?? bootstrap.ace.assessed_at ?? null;
+    queueEntranceMilestone('calibrated', {
+      age_band: profile.ageBand,
+      calibration_axis: bootstrap.ace.result_axis,
+      calibration_at: calibratedAt,
+      preexisting: Boolean(calibratedAt && calibratedAt < profile.updatedAt),
+    });
+  }
+
+  void flushEntranceMilestones(bootstrap);
 }
 
 export async function flushEntranceMilestones(data?: PwaBootstrap | null) {
