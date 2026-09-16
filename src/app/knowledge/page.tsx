@@ -21,7 +21,7 @@ const trailheads = [
     name: "MIND",
     oneLine: "思考・感情・注意の使い方を探る。",
     badge: "ACEに含む",
-    href: APP_ROUTES.knowledgeAsk,
+    href: APP_ROUTES.wantTo,
   },
 ];
 
