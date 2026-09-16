@@ -6,7 +6,7 @@ Updated: 2026-09-16
 
 ACE `/knowledge` is not MASA's operator knowledge browser.
 
-MASA's private/operator Knowledge OS belongs on `masahiro-yamada.com/dashboard/knowledge`, where the FLOW MIND / Knowledge Cockpit already exists.
+MASA's private/operator Knowledge OS belongs on `masahiro-yamada.com/mind` (FLOW MIND / Knowledge Cockpit). The dashboard wrapper also exists at `masahiro-yamada.com/dashboard/knowledge`.
 
 ACE `/knowledge` is the user-facing **Base Camp**:
 
@@ -91,7 +91,9 @@ A PowerPoint deck or video created from ACE material should be registered as an 
 
 ### MASA operator knowledge
 
-Owner: `masahiro-yamada.com/dashboard/knowledge`
+Primary owner: `masahiro-yamada.com/mind`
+
+Dashboard wrapper: `masahiro-yamada.com/dashboard/knowledge`
 
 Purpose:
 
