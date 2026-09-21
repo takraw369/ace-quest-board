@@ -3,6 +3,7 @@ export const APP_ROUTES = {
   dictionary: '/dictionary',
   knowledge: '/knowledge',
   knowledgeLibrary: '/knowledge',
+  knowledgeMap: '/knowledge/map',
   knowledgeAsk: '/knowledge/ask',
   profile: '/profile',
   wantTo: '/want-to',
