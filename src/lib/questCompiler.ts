@@ -100,6 +100,7 @@ export function compileToQuestPlan(input: {
   const mainQuest = quest(
     planId,
     'main',
+    'main',
     `「${sourceTitle}」を現実で1つ試す`,
     `読むだけで終わらせず、${theme}から自分の現実で検証できる仮説を1つ選び、7日以内に実践する。`,
     '実践結果を「事実 / 感じたこと / 次に変えること」の3点で記録する。',
@@ -111,6 +112,7 @@ export function compileToQuestPlan(input: {
     quest(
       planId,
       'sub-1',
+      'sub',
       '核を1文に圧縮する',
       `本文の中心仮説を、自分の言葉で1文にする。起点: ${coreSentence}`,
       '「自分は何を試すのか」が1文で言える。',
@@ -120,6 +122,7 @@ export function compileToQuestPlan(input: {
     quest(
       planId,
       'sub-2',
+      'sub',
       '自分の現在地へ接続する',
       '競技・仕事・健康・家族・学習のどこで、この考えが使えるかを1場面選ぶ。',
       '具体的な「いつ / どこで / 何をする」が決まっている。',
@@ -129,6 +132,7 @@ export function compileToQuestPlan(input: {
     quest(
       planId,
       'sub-3',
+      'sub',
       '7日実験に変換する',
       '成功を証明するのではなく、小さく試して観察データを取れる形へ変換する。',
       'Before指標とAfter指標を1つずつ決める。',
