@@ -8,6 +8,7 @@ export const APP_ROUTES = {
   profile: '/profile',
   wantTo: '/want-to',
   questRouter: '/quest-router',
+  compiler: '/compiler',
   quest: '/',
   myAce: '/my-ace',
   today: '/today',
