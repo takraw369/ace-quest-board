@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { APP_ROUTES } from "@/lib/appRoutes";
 
 const items = [
@@ -11,23 +14,28 @@ const items = [
 ];
 
 export default function KnowledgeLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const canvasMode = pathname === APP_ROUTES.knowledgeMap;
+
   return (
     <>
       {children}
-      <nav className="fixed inset-x-3 bottom-3 z-50 mx-auto max-w-xl rounded-2xl border border-white/[0.10] bg-[#0b111d]/92 p-1.5 shadow-2xl shadow-black/40 backdrop-blur-xl">
-        <div className="grid grid-cols-6 gap-1 text-center text-[9px] font-semibold text-[#8d99ac]">
-          {items.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="rounded-xl px-1 py-2 transition hover:bg-white/[0.05] hover:text-white"
-            >
-              <div className="font-serif text-base text-[#dce4ef]">{item.kanji}</div>
-              <div className="mt-0.5">{item.label}</div>
-            </Link>
-          ))}
-        </div>
-      </nav>
+      {!canvasMode && (
+        <nav className="fixed inset-x-3 bottom-3 z-50 mx-auto max-w-xl rounded-2xl border border-white/[0.10] bg-[#0b111d]/92 p-1.5 shadow-2xl shadow-black/40 backdrop-blur-xl">
+          <div className="grid grid-cols-6 gap-1 text-center text-[9px] font-semibold text-[#8d99ac]">
+            {items.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="rounded-xl px-1 py-2 transition hover:bg-white/[0.05] hover:text-white"
+              >
+                <div className="font-serif text-base text-[#dce4ef]">{item.kanji}</div>
+                <div className="mt-0.5">{item.label}</div>
+              </Link>
+            ))}
+          </div>
+        </nav>
+      )}
     </>
   );
 }
