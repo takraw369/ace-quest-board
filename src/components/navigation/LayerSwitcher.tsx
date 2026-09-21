@@ -16,6 +16,7 @@ export default function LayerSwitcher() {
   if (PWA_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`))) return null;
 
   const dictionaryActive = isActive(pathname, APP_ROUTES.dictionary);
+  const compilerActive = isActive(pathname, APP_ROUTES.compiler);
 
   return (
     <header className="sticky top-0 z-[100] border-b border-white/[0.08] bg-[#071426]/94 shadow-[0_10px_40px_rgba(0,0,0,.18)] backdrop-blur-xl">
@@ -32,6 +33,14 @@ export default function LayerSwitcher() {
           >
             <span className="font-serif text-xs">困</span>
             <span className="hidden md:inline">困ったら</span>
+          </Link>
+          <Link
+            href={APP_ROUTES.compiler}
+            aria-current={compilerActive ? 'page' : undefined}
+            className={`flex h-8 items-center gap-1.5 rounded-full border px-2.5 text-[9px] font-semibold tracking-wide transition ${compilerActive ? 'border-[#d7c08d]/45 bg-[#d7c08d]/12 text-[#ead8ad]' : 'border-white/[0.08] bg-white/[0.025] text-[#a89a79] hover:border-[#d7c08d]/30 hover:text-[#ead8ad]'}`}
+          >
+            <span className="font-serif text-xs">変</span>
+            <span className="hidden lg:inline">Quest化</span>
           </Link>
         </div>
         <nav aria-label="知・望・行" className="flex items-center gap-1 rounded-full border border-white/[0.08] bg-white/[0.025] p-1">
