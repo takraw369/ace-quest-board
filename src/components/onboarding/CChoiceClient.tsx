@@ -587,7 +587,7 @@ export default function CChoiceClient() {
 
             {!connected && (
               <Link
-                href="/connect/line?next=/c-choice"
+                href="/connect/line?next=%2Fc-choice%3Fsource%3Dline"
                 className="mt-5 flex min-h-12 w-full items-center justify-center rounded-full border border-[#789581]/40 bg-[#789581]/10 px-5 py-3 text-center text-sm font-semibold text-[#b9cebd]"
               >
                 LINEとつないで、ACEの旅に保存する
