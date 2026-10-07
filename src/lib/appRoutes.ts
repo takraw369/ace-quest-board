@@ -1,5 +1,6 @@
 export const APP_ROUTES = {
   onboarding: '/onboarding',
+  cChoice: '/c-choice',
   dictionary: '/dictionary',
   knowledge: '/knowledge',
   knowledgeLibrary: '/knowledge',
