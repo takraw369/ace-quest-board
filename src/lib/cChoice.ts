@@ -140,9 +140,18 @@ export function saveCChoiceState(state: CChoiceState) {
   }));
 }
 
-function clientEventId(prefix: string) {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return `${prefix}-${crypto.randomUUID()}`;
-  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+function clientEventId(action: CChoiceAction, state: CChoiceState) {
+  if (action === 'choice_started') return 'choice_started:v1';
+  if (action === 'choice_completed') {
+    return ['choice_completed', state.currentC ?? 'none', state.selectedAt ?? state.updatedAt ?? 'pending'].join(':');
+  }
+  if (action === 'first_quest_started') {
+    return ['first_quest_started', state.currentC ?? 'none', state.firstQuestStartedAt ?? 'pending'].join(':');
+  }
+  if (action === 'first_quest_completed') {
+    return ['first_quest_completed', state.currentC ?? 'none', state.firstQuestCompletedAt ?? 'pending'].join(':');
+  }
+  return 'get_state';
 }
 
 export type CChoiceAction =
@@ -171,7 +180,7 @@ export async function sendCChoiceAction(
     body: JSON.stringify({
       session_token: bootstrap.session_token,
       action,
-      client_event_id: action === 'get_state' ? null : clientEventId(action),
+      client_event_id: action === 'get_state' ? null : clientEventId(action, state),
       source: options.source ?? 'ace',
       data: {
         candidates: state.candidates,
