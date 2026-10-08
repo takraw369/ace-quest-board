@@ -82,11 +82,11 @@ export default function HomePage() {
 
         <aside className="mb-8 flex min-w-0 flex-col gap-4 rounded-[24px] border border-[#86c7b7]/20 bg-gradient-to-r from-[#142b2d] to-[#151e25] p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6" aria-label="ACE Athleteを体験する">
           <div className="min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#a0d4c5]">ACE ATHLETE / FIRST QUEST</p>
-            <h2 className="mt-2 font-serif text-xl font-semibold text-[#f1ead7]">知るより先に、身体で試す。</h2>
-            <p className="mt-1 text-xs leading-6 text-[#a5b7b0]">今の状態を2タップ。Questを選んで、練習後にひとつの発見を残す。</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#a0d4c5]">ACE ATHLETE / TRAINING JOURNAL</p>
+            <h2 className="mt-2 font-serif text-xl font-semibold text-[#f1ead7]">練習を、未来の力に変える。</h2>
+            <p className="mt-1 text-xs leading-6 text-[#a5b7b0]">練習前チェック・練習ノート・振り返り・成長の記録をひとつに。</p>
           </div>
-          <a href="/athlete" className="flex min-h-12 shrink-0 items-center justify-center rounded-2xl bg-[#d8e8d7] px-5 text-sm font-bold text-[#17342e] transition-colors hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d8e8d7]">Athleteを体験　↗</a>
+          <a href="/athlete" className="flex min-h-12 shrink-0 items-center justify-center rounded-2xl bg-[#d8e8d7] px-5 text-sm font-bold text-[#17342e] transition-colors hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d8e8d7]">Athleteノートを開く　↗</a>
         </aside>
 
         <section>
