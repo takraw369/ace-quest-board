@@ -266,7 +266,7 @@ export default function AthleteJournalClient() {
             <p className="mt-2 text-[13px] leading-6 text-[#acc9c9]">数字は優劣じゃない。身体と心を観察して、今日の一歩を選ぼう。</p>
           </div>
           <section className={card} aria-label="練習前チェックイン">
-            {metrics.map(metric => <RatingRow key={metric.key} {...metric} value={checkin[metric.key]} onChange={v=>setCheckin(s=>({...s,[metric.key]:v}))}/>)}
+            {metrics.map(({key: metricKey, ...props}) => <RatingRow key={metricKey} {...props} value={checkin[metricKey]} onChange={v=>setCheckin(s=>({...s,[metricKey]:v}))}/>)}
           </section>
           <section className={card}>
             <SectionTitle eyebrow="ACE QUEST" title="今日の小さなQuest" />
