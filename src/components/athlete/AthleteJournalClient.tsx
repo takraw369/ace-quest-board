@@ -214,10 +214,7 @@ export default function AthleteJournalClient() {
     setDraft(d => ({ ...d, drills:[...d.drills, { id:newId(), name:name.slice(0,90), done:false }] }));
     setDraftDrill('');
   };
-  const openTab = (next: AthleteTab) => {
-    if (next === 'note' && !editId) setDraft(emptyDraft());
-    go(next);
-  };
+  const openTab = (next: AthleteTab) => go(next);
   return <main className="relative min-h-[100dvh] min-w-0 overflow-x-hidden bg-[#07121e] pb-[calc(95px+env(safe-area-inset-bottom))] text-[#eaf0ef] selection:bg-[#63cec1]/30">
     <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
       <div className="absolute -left-40 -top-48 h-[460px] w-[460px] rounded-full bg-[#428a98]/[.09] blur-[110px]" />
