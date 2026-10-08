@@ -21,9 +21,9 @@ test('ACE Athlete: 320px phone check-in → quest → reflection → persisted e
   await page.getByRole('button', { name: '体験を記録する　✦' }).click();
 
   await expect(page.getByRole('heading', { name: '今日の成長は、ここに。' })).toBeVisible();
-  await expect(page.getByText('一つの動作に集中できた')).toBeVisible();
+  await expect(page.getByText('一つの動作に集中できた', { exact: true })).toBeVisible();
   await page.reload();
-  await expect(page.getByText('一つの動作に集中できた', { exact: false })).toBeVisible();
+  await expect(page.getByText('発見した · 一つの動作に集中できた', { exact: true })).toBeVisible();
 
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
   expect(overflow).toBe(false);
