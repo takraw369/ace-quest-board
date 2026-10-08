@@ -36,7 +36,6 @@ const primary = 'flex min-h-14 w-full items-center justify-center gap-2 rounded-
 const secondary = 'flex min-h-12 items-center justify-center rounded-xl border border-white/15 px-4 text-[13px] font-semibold text-[#d6e5e4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6bddce]';
 const label = 'mb-2 block text-[12px] font-bold tracking-[.03em] text-[#dce8e5]';
 const newId = () => globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.round(Math.random() * 100000)}`;
-const TODAY = ['日','月','火','水','木','金','土'];
 
 function SectionTitle({ eyebrow, title, right }: { eyebrow: string; title: string; right?: React.ReactNode }) {
   return <div className="flex min-w-0 items-end justify-between gap-3">
@@ -161,7 +160,7 @@ export default function AthleteJournalClient() {
     if (!writeCheckin(result)) { setError('保存できませんでした。ブラウザの保存設定を確認してください。'); return; }
     setPending(result); setEditId(null);
     setDraft({ ...emptyDraft(), focus: result.goal });
-    setToast('チェックインを保存しました。次は練習ノートへ。'); go('note');
+    go('note'); setToast('チェックインを保存しました。次は練習ノートへ。');
   };
   const saveNote = () => {
     if (!ready || !draft.title.trim() || !draft.date || !Number.isFinite(draft.duration)) { setError('日付と練習名を入力してください。'); return; }
@@ -216,7 +215,7 @@ export default function AthleteJournalClient() {
     setDraftDrill('');
   };
   const openTab = (next: AthleteTab) => {
-    if(next === 'note') { if(!editId) { setDraft(emptyDraft()); } }
+    if (next === 'note' && !editId) setDraft(emptyDraft());
     go(next);
   };
   return <main className="relative min-h-[100dvh] min-w-0 overflow-x-hidden bg-[#07121e] pb-[calc(95px+env(safe-area-inset-bottom))] text-[#eaf0ef] selection:bg-[#63cec1]/30">
