@@ -65,7 +65,7 @@ test('ACE Athlete journal: note can be edited and removed with confirmation', as
   await page.getByRole('button', { name: /ノートを編集する/ }).click();
   await page.getByLabel('練習タイトル').fill('自主練・改');
   await page.getByRole('button', { name: /ノートを保存して振り返る/ }).click();
-  await expect(page.getByText('自主練・改')).toBeVisible();
+  await expect(page.getByText('自主練・改', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'この記録を削除' }).click();
   await expect(page.getByRole('button', { name: '削除を確定する' })).toBeVisible();
   await page.getByRole('button', { name: '削除を確定する' }).click();
