@@ -117,8 +117,8 @@
 }
 
 @keyframes ace-start-button {
-  0%, 100% { transform: translateY(0); box-shadow: 0 12px 36px rgba(217, 193, 141, 0.10); }
-  50% { transform: translateY(-1px); box-shadow: 0 16px 42px rgba(217, 193, 141, 0.18); }
+  0%, 100% { box-shadow: 0 12px 36px rgba(217, 193, 141, 0.10); }
+  50% { box-shadow: 0 16px 42px rgba(217, 193, 141, 0.18); }
 }
 
 .ace-start-drift { animation: ace-start-drift 14s ease-in-out infinite; }
