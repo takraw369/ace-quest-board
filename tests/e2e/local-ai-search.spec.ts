@@ -13,7 +13,7 @@ test("ACE local search: keyword search is usable without model download", async 
 
   await page.getByRole("searchbox", { name: "探したいこと" }).fill("身体活動");
   await page.getByRole("button", { name: "検索する" }).click();
-  await expect(page.getByText("検索結果")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "検索結果" })).toBeVisible();
   await expect(page.getByRole("link", { name: /健康づくりのため、運動不足の人が最初に取る行動/ })).toBeVisible();
   expect(modelRequests).toHaveLength(0);
 
