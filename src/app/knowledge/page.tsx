@@ -32,6 +32,7 @@ export default function KnowledgePage() {
                 <Link href={APP_ROUTES.questRouter} className="rounded-2xl bg-[#ff8a1f] px-5 py-3 text-sm font-bold text-[#07152e] transition hover:brightness-110">今日の山を選ぶ</Link>
                 <Link href={APP_ROUTES.dictionary} className="rounded-2xl border border-white/[0.10] bg-white/[0.035] px-5 py-3 text-sm font-semibold text-[#d8e0eb] transition hover:bg-white/[0.07]">困りごとから探す</Link>
                 <Link href={APP_ROUTES.knowledgeLocalSearch} className="rounded-2xl border border-[#ff8a1f]/25 bg-[#ff8a1f]/[0.06] px-5 py-3 text-sm font-semibold text-[#ffb16d] transition hover:bg-[#ff8a1f]/[0.12]">端末内AI検索（実験版）</Link>
+                <Link href={APP_ROUTES.knowledgeGraphSearch} className="rounded-2xl border border-[#68d6a3]/25 bg-[#68d6a3]/[0.06] px-5 py-3 text-sm font-semibold text-[#91e5b9] transition hover:bg-[#68d6a3]/[0.12]">知識のつながりを探す（実験版）</Link>
               </div>
             </div>
             <div className="relative min-h-[270px] overflow-hidden rounded-[28px] border border-white/[0.08] bg-[#0c1421]">
