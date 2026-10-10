@@ -43,6 +43,17 @@ export default function KnowledgePage() {
           </div>
         </section>
 
+        <section className="mt-6 rounded-[24px] border border-[#ffb978]/25 bg-[#ffb978]/[0.055] p-5 md:p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <div className="text-[10px] font-bold tracking-[.16em] text-[#ffb978]">LIFE REMIND · NEW</div>
+              <h2 className="mt-2 font-serif text-xl font-semibold">大切なことを、思い出す。</h2>
+              <p className="mt-2 text-xs leading-6 text-[#aab9c8]">事実・視点・問いを、一枚ずつ。あなたの周期で見返す小さな習慣。</p>
+            </div>
+            <Link href="/knowledge/remember" className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl bg-[#ffb978] px-5 py-3 text-xs font-bold text-[#162133] transition hover:brightness-110">人生のリマインドを開く →</Link>
+          </div>
+        </section>
+
         <BaseCampClient />
 
         <section className="mt-10 rounded-[28px] border border-white/[0.08] bg-white/[0.025] p-5 md:p-7">
