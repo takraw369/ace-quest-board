@@ -101,6 +101,17 @@ const CARDS: LifeCard[] = [
     source: { label: "Cell（2005）", url: "https://pubmed.ncbi.nlm.nih.gov/16009139/" },
   },
   {
+    id: "social-connection-health", kind: "fact", topic: "人間関係",
+    title: "人とのつながりは、健康にも関係する",
+    truth: "148研究・約30万人を統合したメタ分析では、豊かな社会的関係がある人ほど生存の可能性が高いという関連が報告された。",
+    perspective: "人と会うことや、誰かの話を聞くことは、予定の隙間を埋めるだけの活動ではない。",
+    question: "大切な人との時間を、いつも「時間ができたら」にしていない？",
+    action: "一人の顔を思い浮かべて、無理のない形で連絡を取ってみる。",
+    qualification: "観察研究を統合した関連であり、人と会えば必ず長生きするという因果関係や、個人の寿命の予測を示すものではない。",
+    defaultCadence: "monthly",
+    source: { label: "PLOS Medicine メタ分析（2010）", url: "https://pubmed.ncbi.nlm.nih.gov/20668659/" },
+  },
+  {
     id: "finite-time", kind: "perspective", topic: "時間",
     title: "後回しにした一日も、人生の一日",
     truth: "時間には限りがあり、使わなかった時間を後から貯め直すことはできない。",
