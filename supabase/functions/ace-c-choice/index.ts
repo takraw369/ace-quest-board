@@ -128,6 +128,39 @@ function readChoice(metadata: Record<string, unknown> | null | undefined) {
   };
 }
 
+async function advanceStage(
+  supabaseUrl: string,
+  adminKey: string,
+  personId: string,
+  toStage: string,
+  reason: string,
+) {
+  try {
+    const response = await fetch(`${supabaseUrl}/functions/v1/contact-stage-router`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-internal-key": adminKey,
+      },
+      body: JSON.stringify({
+        contact_id: personId,
+        to_stage: toStage,
+        reason,
+        source: "c_choice",
+      }),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result?.ok !== true) {
+      console.error("C-Choice lifecycle routing failed", toStage, response.status, result);
+      return null;
+    }
+    return result;
+  } catch (error) {
+    console.error("C-Choice lifecycle routing error", toStage, error);
+    return null;
+  }
+}
+
 async function insertEvent(
   supabase: ReturnType<typeof createClient>,
   personId: string,
@@ -193,7 +226,7 @@ Deno.serve(async (req: Request) => {
 
     const { data: contact, error: contactError } = await supabase
       .from("contacts")
-      .select("id,metadata")
+      .select("id,metadata,lifecycle_stage")
       .eq("id", personId)
       .single();
     if (contactError || !contact) {
@@ -299,9 +332,14 @@ Deno.serve(async (req: Request) => {
         if (observationError) throw observationError;
       }
 
+      const lifecycle = contact.lifecycle_stage === "registered"
+        ? await advanceStage(supabaseUrl, adminKey, personId, "engaged", "c_choice_completed")
+        : null;
+
       return Response.json({
         ok: true,
         event: "c_choice_completed",
+        lifecycle,
         duplicate: eventResult.duplicate,
         choice: readChoice(metadata),
       }, { headers: cors });
@@ -389,9 +427,18 @@ Deno.serve(async (req: Request) => {
         if (observationError) throw observationError;
       }
 
+      let lifecycle = null;
+      if (contact.lifecycle_stage === "registered") {
+        await advanceStage(supabaseUrl, adminKey, personId, "engaged", "c_choice_completed_before_first_quest");
+        lifecycle = await advanceStage(supabaseUrl, adminKey, personId, "ace_trial", "c_first_quest_completed");
+      } else if (contact.lifecycle_stage === "engaged") {
+        lifecycle = await advanceStage(supabaseUrl, adminKey, personId, "ace_trial", "c_first_quest_completed");
+      }
+
       return Response.json({
         ok: true,
         event: "c_first_quest_completed",
+        lifecycle,
         duplicate: eventResult.duplicate,
         choice: readChoice(metadata),
       }, { headers: cors });
