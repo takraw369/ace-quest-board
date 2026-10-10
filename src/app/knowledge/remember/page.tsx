@@ -206,7 +206,7 @@ export default function LifeRemindPage() {
   const active = CARDS.find((item) => item.id === activeId) ?? CARDS[0];
   const review = reviews[active.id];
   const currentCadence = review?.cadence ?? active.defaultCadence;
-  const reviewedCount = CARDS.filter((item) => Boolean(reviews[item.id])).length;
+  const reviewedCount = CARDS.filter((item) => (reviews[item.id]?.count ?? 0) > 0).length;
   const dueCount = CARDS.filter((item) => !reviews[item.id] || reviews[item.id].nextAt <= now).length;
 
   function selectCard(card: LifeCard) {
