@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import QuestionCoachPanel, { type QuestionCoaching } from "@/components/knowledge/QuestionCoachPanel";
 import { useEffect, useMemo, useState } from "react";
 import {
   beginGoogleLogin,
   getAccessToken,
+  getCurrentIdentity,
   SUPABASE_PUBLISHABLE_KEY,
   SUPABASE_URL,
 } from "@/lib/auth/supabaseAuth";
@@ -35,6 +37,7 @@ type AskResult = {
   mode: "ai" | "retrieval";
   model?: string | null;
   answer: string;
+  question_coach?: QuestionCoaching | null;
   application?: string[];
   project?: Project | null;
   related: RelatedDocument[];
@@ -70,7 +73,7 @@ async function askKnowledge(question: string, projectId: string, accessToken: st
       Authorization: `Bearer ${accessToken}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ question, project_id: projectId || null }),
+    body: JSON.stringify({ question, project_id: projectId || null, question_coach: true }),
   });
 
   const payload = await response.json().catch(() => ({}));
@@ -90,6 +93,8 @@ const quickQuestions = [
 export default function KnowledgeAskPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [question, setQuestion] = useState("");
+  const [submittedQuestion, setSubmittedQuestion] = useState("");
+  const [userId, setUserId] = useState<string | null>(null);
   const [projectId, setProjectId] = useState("");
   const [result, setResult] = useState<AskResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -113,6 +118,9 @@ export default function KnowledgeAskPage() {
         );
         if (!alive) return;
         setProjects(rows || []);
+        void getCurrentIdentity().then((identity) => {
+          if (alive) setUserId(identity?.user.id ?? null);
+        }).catch(() => { /* History stays disabled when identity cannot be verified. */ });
       } catch (err) {
         if (alive) setError(err instanceof Error ? err.message : "Knowledge Askを開けません");
       } finally {
@@ -136,6 +144,7 @@ export default function KnowledgeAskPage() {
     const q = (nextQuestion ?? question).trim();
     if (q.length < 2 || asking) return;
     setQuestion(q);
+    setSubmittedQuestion(q);
     setAsking(true);
     setError("");
     setResult(null);
@@ -278,6 +287,18 @@ export default function KnowledgeAskPage() {
                     </div>
                   )}
                 </section>
+              )}
+
+              {result && (
+                <QuestionCoachPanel
+                  originalQuestion={submittedQuestion}
+                  answer={result.answer}
+                  coaching={result.question_coach}
+                  userId={userId}
+                  mode={result.mode}
+                  busy={asking}
+                  onAskAgain={(nextQuestion) => { void submit(nextQuestion); }}
+                />
               )}
             </section>
 
