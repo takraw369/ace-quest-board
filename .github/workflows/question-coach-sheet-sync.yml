@@ -1,0 +1,46 @@
+name: Question Coach Sheet Sync
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Preview APPROVED rows without writing them'
+        type: boolean
+        default: true
+  schedule:
+    - cron: '17 */3 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: question-coach-sheet-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    # Scheduled runs are disabled until the owner configures GitHub Actions secrets
+    # and explicitly sets repository variable QC_SYNC_ENABLED=true.
+    if: github.event_name == 'workflow_dispatch' || vars.QC_SYNC_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Test review gate
+        run: node --test scripts/question-coach-sheet-sync.test.mjs
+      - name: Sync approved content (no OpenAI API)
+        env:
+          QC_GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.QC_GOOGLE_SERVICE_ACCOUNT_JSON }}
+          QC_SUPABASE_URL: https://qydbtholbwbuwiswmqsr.supabase.co
+          QC_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.QC_SUPABASE_SERVICE_ROLE_KEY }}
+          QC_SYNC_ENABLED: ${{ vars.QC_SYNC_ENABLED }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          if [ "$DRY_RUN" = "true" ]; then
+            node scripts/question-coach-sheet-sync.mjs --dry-run
+          else
+            node scripts/question-coach-sheet-sync.mjs
+          fi
