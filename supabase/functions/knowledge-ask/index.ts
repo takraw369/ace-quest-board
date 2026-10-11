@@ -162,7 +162,7 @@ Deno.serve(async (req: Request) => {
       .limit(250);
     if (curated.error) throw curated.error;
     const compact = (value: string) => normalize(value)
-      .replace(/[\\s、。,.!?！？「」『』（）()\\[\\]{}:/\\\\|・？]/g, "");
+      .replace(/[\s、。,.!?！？「」『』（）()\[\]{}:/\\|・？]/g, "");
     const compactQuestion = compact(question);
     const exactAnswer = (curated.data ?? []).find((entry) =>
       [entry.question_text, ...(Array.isArray(entry.aliases) ? entry.aliases : [])]
