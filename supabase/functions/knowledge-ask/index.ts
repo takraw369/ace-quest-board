@@ -154,6 +154,7 @@ Deno.serve(async (req: Request) => {
     const body = await req.json().catch(() => ({}));
     const question = String(body?.question ?? "").trim();
     const projectId = String(body?.project_id ?? "").trim();
+    const withCoach = body?.question_coach === true;
     if (question.length < 2) {
       return Response.json({ ok: false, error: "question_required" }, { status: 400, headers: cors });
     }
@@ -231,6 +232,13 @@ Deno.serve(async (req: Request) => {
 
     const prompt = `USER QUESTION\n${question}${projectContext}\n\nCANONICAL KNOWLEDGE\n${sourceContext}`;
 
+    const coachingInstructions =
+      "Return strict JSON according to the supplied schema. Answer the original question first, using only canonical knowledge as factual grounding. " +
+      "For simple facts or quick practical questions, set should_show=false and all other coaching fields empty (deepeners=[]). " +
+      "Only when reframing meaningfully improves reasoning, set should_show=true and return one upgraded_question, a short why_better, " +
+      "one lens from DEFINITION, ASSUMPTION, EVIDENCE, COUNTERFACTUAL, EXCEPTION, CAUSALITY, PERSPECTIVE, ABSTRACTION, SYSTEM, TRADEOFF, TRANSFER, PHASE, ACTION, META, " +
+      "and 0-3 useful deepeners. Preserve the user's intent. Do not invent evidence or claim IQ increases.";
+
     const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
@@ -240,10 +248,33 @@ Deno.serve(async (req: Request) => {
       body: JSON.stringify({
         model,
         instructions:
-          "You are the MASA Knowledge OS assistant. Answer in concise Japanese. Use only the supplied canonical knowledge as factual grounding. Clearly separate fact, hypothesis, and interpretation when relevant. Do not invent sources. Mention the most relevant source titles. If a Project is supplied, finish with a concrete 1-3 step application to its current milestone. If the knowledge is insufficient, say what is missing.",
+          "You are the MASA Knowledge OS assistant. Answer in concise Japanese. Use only the supplied canonical knowledge as factual grounding. Clearly separate fact, hypothesis, and interpretation when relevant. Do not invent sources. Mention the most relevant source titles. If a Project is supplied, finish with a concrete 1-3 step application to its current milestone. If the knowledge is insufficient, say what is missing." + (withCoach ? " " + coachingInstructions : ""),
         input: prompt,
         reasoning: { effort: "low" },
-        max_output_tokens: 1400,
+        max_output_tokens: withCoach ? 2100 : 1400,
+        ...(withCoach ? {
+          text: { format: {
+            type: "json_schema", name: "knowledge_with_question_coach", strict: true,
+            schema: {
+              type: "object", additionalProperties: false,
+              required: ["answer", "question_coach"],
+              properties: {
+                answer: { type: "string" },
+                question_coach: {
+                  type: "object", additionalProperties: false,
+                  required: ["should_show", "upgraded_question", "why_better", "lens", "deepeners"],
+                  properties: {
+                    should_show: { type: "boolean" },
+                    upgraded_question: { type: "string" },
+                    why_better: { type: "string" },
+                    lens: { type: "string" },
+                    deepeners: { type: "array", items: { type: "string" } },
+                  },
+                },
+              },
+            },
+          } },
+        } : {}),
       }),
     });
 
@@ -262,13 +293,48 @@ Deno.serve(async (req: Request) => {
     }
 
     const payload = await response.json();
-    const answer = extractResponseText(payload) || fallback.answer;
+    const rawAnswer = extractResponseText(payload) || fallback.answer;
+    let answer = rawAnswer;
+    let questionCoach: {
+      should_show: boolean;
+      upgraded_question: string;
+      why_better: string;
+      lens: string;
+      deepeners: string[];
+    } | null = null;
+
+    if (withCoach) {
+      try {
+        const parsed = JSON.parse(rawAnswer);
+        if (typeof parsed?.answer === "string" && parsed.answer.trim()) {
+          answer = parsed.answer.trim();
+          const coach = parsed.question_coach;
+          if (coach && typeof coach.should_show === "boolean" &&
+              typeof coach.upgraded_question === "string" &&
+              typeof coach.why_better === "string" &&
+              typeof coach.lens === "string" && Array.isArray(coach.deepeners)) {
+            questionCoach = {
+              should_show: coach.should_show && !!coach.upgraded_question.trim() && !!coach.why_better.trim(),
+              upgraded_question: coach.upgraded_question.trim(),
+              why_better: coach.why_better.trim(),
+              lens: coach.lens.trim(),
+              deepeners: coach.deepeners.filter((item: unknown): item is string =>
+                typeof item === "string" && !!item.trim()
+              ).slice(0, 3),
+            };
+          }
+        }
+      } catch {
+        // Preserve a plain-text answer if a model ignores the structured response format.
+      }
+    }
 
     return Response.json({
       ok: true,
       mode: "ai",
       model,
       answer,
+      ...(withCoach ? { question_coach: questionCoach } : {}),
       application: fallback.application,
       project: project || null,
       related,
