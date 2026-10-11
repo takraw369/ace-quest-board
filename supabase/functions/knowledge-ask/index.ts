@@ -101,17 +101,6 @@ function short(value: string | null | undefined, max = 360) {
   return text.length <= max ? text : `${text.slice(0, max).trim()}…`;
 }
 
-function extractResponseText(payload: any) {
-  if (typeof payload?.output_text === "string" && payload.output_text.trim()) return payload.output_text.trim();
-  const parts: string[] = [];
-  for (const item of payload?.output ?? []) {
-    for (const content of item?.content ?? []) {
-      if (content?.type === "output_text" && typeof content?.text === "string") parts.push(content.text);
-    }
-  }
-  return parts.join("\n").trim();
-}
-
 function fallbackAnswer(question: string, related: KnowledgeDocument[], project: Project | null) {
   if (!related.length) {
     return {
@@ -164,6 +153,43 @@ Deno.serve(async (req: Request) => {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
+    // Zero-token first: only return an editorially curated answer for a direct question/alias match.
+    // Unknown queries never invoke a paid LLM provider.
+    const curated = await supabase
+      .from("question_coach_answers")
+      .select("question_text,aliases,answer,upgraded_question,why_better,lens,deepeners,status")
+      .eq("status", "published")
+      .limit(250);
+    if (curated.error) throw curated.error;
+    const compact = (value: string) => normalize(value)
+      .replace(/[\s、。,.!?！？「」『』（）()\[\]{}:/\\|・？]/g, "");
+    const compactQuestion = compact(question);
+    const exactAnswer = (curated.data ?? []).find((entry) =>
+      [entry.question_text, ...(Array.isArray(entry.aliases) ? entry.aliases : [])]
+        .some((candidate: string) => compact(candidate) === compactQuestion)
+    );
+    if (exactAnswer) {
+      const hasCoach = Boolean(
+        withCoach && exactAnswer.upgraded_question?.trim() && exactAnswer.why_better?.trim()
+      );
+      return Response.json({
+        ok: true,
+        mode: "curated",
+        model: null,
+        answer: exactAnswer.answer,
+        question_coach: hasCoach ? {
+          should_show: true,
+          upgraded_question: exactAnswer.upgraded_question,
+          why_better: exactAnswer.why_better,
+          lens: exactAnswer.lens || "META",
+          deepeners: (exactAnswer.deepeners || []).slice(0, 3),
+        } : null,
+        application: [],
+        project: null,
+        related: [],
+      }, { headers: { ...cors, "Content-Type": "application/json" } });
+    }
+
     const docsQuery = supabase
       .from("knowledge_documents")
       .select("id,title,domain,document_type,summary,content,path,source_url,updated_at")
@@ -203,138 +229,15 @@ Deno.serve(async (req: Request) => {
       score: Math.round(score * 10) / 10,
     }));
 
+    // Retrieval-only fallback. Intentionally no OpenAI API key, request, or
+    // automatic AI fallback: the owner has disabled all paid LLM usage.
     const fallback = fallbackAnswer(question, ranked.map((entry) => entry.doc), project as Project | null);
-    const openaiKey = Deno.env.get("OPENAI_API_KEY");
-    const model = Deno.env.get("OPENAI_KNOWLEDGE_MODEL") || "gpt-5.6-luna";
-
-    if (!openaiKey || !ranked.length) {
-      return Response.json({
-        ok: true,
-        mode: "retrieval",
-        model: null,
-        answer: fallback.answer,
-        application: fallback.application,
-        project: project || null,
-        related,
-      }, { headers: { ...cors, "Content-Type": "application/json" } });
-    }
-
-    const sourceContext = ranked
-      .map(({ doc }, index) => {
-        const body = short(doc.content, 2600);
-        return `[SOURCE ${index + 1}]\nTitle: ${doc.title}\nDomain: ${doc.domain || "unknown"}\nType: ${doc.document_type}\nPath: ${doc.path}\nSummary: ${short(doc.summary, 520)}\nContent:\n${body}`;
-      })
-      .join("\n\n---\n\n");
-
-    const projectContext = project
-      ? `\n\nPROJECT\nName: ${project.name}\nStatus: ${project.status}\nPriority: ${project.priority}\nPurpose: ${project.purpose || ""}\nNext milestone: ${project.next_milestone || ""}`
-      : "";
-
-    const prompt = `USER QUESTION\n${question}${projectContext}\n\nCANONICAL KNOWLEDGE\n${sourceContext}`;
-
-    const coachingInstructions =
-      "Return strict JSON according to the supplied schema. Answer the original question first, using only canonical knowledge as factual grounding. " +
-      "For simple facts or quick practical questions, set should_show=false and all other coaching fields empty (deepeners=[]). " +
-      "Only when reframing meaningfully improves reasoning, set should_show=true and return one upgraded_question, a short why_better, " +
-      "one lens from DEFINITION, ASSUMPTION, EVIDENCE, COUNTERFACTUAL, EXCEPTION, CAUSALITY, PERSPECTIVE, ABSTRACTION, SYSTEM, TRADEOFF, TRANSFER, PHASE, ACTION, META, " +
-      "and 0-3 useful deepeners. Preserve the user's intent. Do not invent evidence or claim IQ increases.";
-
-    const response = await fetch("https://api.openai.com/v1/responses", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${openaiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        instructions:
-          "You are the MASA Knowledge OS assistant. Answer in concise Japanese. Use only the supplied canonical knowledge as factual grounding. Clearly separate fact, hypothesis, and interpretation when relevant. Do not invent sources. Mention the most relevant source titles. If a Project is supplied, finish with a concrete 1-3 step application to its current milestone. If the knowledge is insufficient, say what is missing." + (withCoach ? " " + coachingInstructions : ""),
-        input: prompt,
-        reasoning: { effort: "low" },
-        max_output_tokens: withCoach ? 2100 : 1400,
-        ...(withCoach ? {
-          text: { format: {
-            type: "json_schema", name: "knowledge_with_question_coach", strict: true,
-            schema: {
-              type: "object", additionalProperties: false,
-              required: ["answer", "question_coach"],
-              properties: {
-                answer: { type: "string" },
-                question_coach: {
-                  type: "object", additionalProperties: false,
-                  required: ["should_show", "upgraded_question", "why_better", "lens", "deepeners"],
-                  properties: {
-                    should_show: { type: "boolean" },
-                    upgraded_question: { type: "string" },
-                    why_better: { type: "string" },
-                    lens: { type: "string" },
-                    deepeners: { type: "array", items: { type: "string" } },
-                  },
-                },
-              },
-            },
-          } },
-        } : {}),
-      }),
-    });
-
-    if (!response.ok) {
-      const detail = await response.text().catch(() => "");
-      console.error("knowledge-ask OpenAI fallback", response.status, detail.slice(0, 500));
-      return Response.json({
-        ok: true,
-        mode: "retrieval",
-        model: null,
-        answer: fallback.answer,
-        application: fallback.application,
-        project: project || null,
-        related,
-      }, { headers: { ...cors, "Content-Type": "application/json" } });
-    }
-
-    const payload = await response.json();
-    const rawAnswer = extractResponseText(payload) || fallback.answer;
-    let answer = rawAnswer;
-    let questionCoach: {
-      should_show: boolean;
-      upgraded_question: string;
-      why_better: string;
-      lens: string;
-      deepeners: string[];
-    } | null = null;
-
-    if (withCoach) {
-      try {
-        const parsed = JSON.parse(rawAnswer);
-        if (typeof parsed?.answer === "string" && parsed.answer.trim()) {
-          answer = parsed.answer.trim();
-          const coach = parsed.question_coach;
-          if (coach && typeof coach.should_show === "boolean" &&
-              typeof coach.upgraded_question === "string" &&
-              typeof coach.why_better === "string" &&
-              typeof coach.lens === "string" && Array.isArray(coach.deepeners)) {
-            questionCoach = {
-              should_show: coach.should_show && !!coach.upgraded_question.trim() && !!coach.why_better.trim(),
-              upgraded_question: coach.upgraded_question.trim(),
-              why_better: coach.why_better.trim(),
-              lens: coach.lens.trim(),
-              deepeners: coach.deepeners.filter((item: unknown): item is string =>
-                typeof item === "string" && !!item.trim()
-              ).slice(0, 3),
-            };
-          }
-        }
-      } catch {
-        // Preserve a plain-text answer if a model ignores the structured response format.
-      }
-    }
-
     return Response.json({
       ok: true,
-      mode: "ai",
-      model,
-      answer,
-      ...(withCoach ? { question_coach: questionCoach } : {}),
+      mode: "retrieval",
+      model: null,
+      answer: fallback.answer,
+      question_coach: null,
       application: fallback.application,
       project: project || null,
       related,

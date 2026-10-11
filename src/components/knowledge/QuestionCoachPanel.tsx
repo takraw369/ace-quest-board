@@ -26,7 +26,7 @@ type Props = {
   answer: string;
   coaching: QuestionCoaching | null | undefined;
   userId: string | null;
-  mode: "ai" | "retrieval";
+  mode: "ai" | "retrieval" | "curated";
   busy: boolean;
   onAskAgain: (question: string) => void;
 };
@@ -98,7 +98,7 @@ export default function QuestionCoachPanel({
     setNotice("");
   }, [userId]);
 
-  const active = mode === "ai" && !!coaching?.should_show &&
+  const active = (mode === "ai" || mode === "curated") && !!coaching?.should_show &&
     !!coaching.upgraded_question.trim() && !!coaching.why_better.trim();
 
   const alreadySaved = active && history.some(
@@ -167,7 +167,7 @@ export default function QuestionCoachPanel({
           <div className="text-[10px] font-bold uppercase tracking-[.22em] text-[#d3b77e]">QUESTION COACH / THINKING LAB</div>
           <h2 className="mt-2 font-serif text-2xl font-semibold text-[#f4ead7]">答えから、問いを育てる。</h2>
           <p className="mt-2 text-xs leading-6 text-[#9eaab5]">
-            回答が主役。問いを変える価値が高い時だけ、AIが次の視点を提示します。
+            回答が主役。登録済みの模範解答から、必要なときだけ次の視点を提示します。OpenAI APIは使いません。
           </p>
         </div>
         <span className="rounded-full border border-[#d3b77e]/25 px-3 py-1.5 text-[10px] text-[#d3b77e]">BETA</span>
@@ -235,7 +235,7 @@ export default function QuestionCoachPanel({
       ) : (
         <div className="mt-5 rounded-2xl border border-dashed border-white/[.10] p-4 text-xs leading-7 text-[#9ba7b3]">
           {mode === "retrieval"
-            ? "現在は正本検索による回答です。AI生成の改善質問は表示しません。"
+            ? "今回は正本の検索結果です。登録済みの改善質問はまだありません。"
             : "今回は回答を優先。問いを改善する必要が低いと判断した場合、追加の質問は出しません。"}
         </div>
       )}
