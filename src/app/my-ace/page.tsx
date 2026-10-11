@@ -179,6 +179,22 @@ export default function MyAcePage() {
           </div>
         )}
 
+        <section aria-label="Question Coach" className="mb-5 flex flex-col gap-4 rounded-[24px] border border-[#c9a45d]/30 bg-[#171913] p-5 shadow-lg shadow-black/15 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+          <div className="min-w-0">
+            <p className="text-[10px] font-black tracking-[0.22em] text-[#e0c98f]">QUESTION COACH / 思考を育てる</p>
+            <h2 className="mt-2 text-xl font-black text-ace-text">質問から、より良い問いへ。</h2>
+            <p className="mt-2 max-w-xl text-sm leading-6 text-ace-text-secondary">
+              質問に答えて終わりじゃない。AIが必要な時だけ「より秀逸な問い」と思考レンズを提示。気づいた問いを保存しよう。
+            </p>
+          </div>
+          <Link
+            href="/knowledge/ask"
+            className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-2xl bg-[#e0c98f] px-5 py-3 text-sm font-black text-[#151913] transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e0c98f]"
+          >
+            Question Coachを開く →
+          </Link>
+        </section>
+
         <section
           className="overflow-hidden rounded-[30px] border border-ace-accent/20 p-6 shadow-2xl shadow-black/25 sm:p-8"
           style={{ background: "linear-gradient(135deg, var(--ace-raised) 0%, var(--ace-surface) 58%, var(--ace-deep) 100%)" }}
