@@ -204,7 +204,7 @@ Deno.serve(async (req: Request) => {
     }));
 
     const fallback = fallbackAnswer(question, ranked.map((entry) => entry.doc), project as Project | null);
-    const openaiKey = Deno.env.get("OPENAI_API_KEY");
+    // Explicit owner policy: OpenAI API is disabled for everyone until a separately reviewed paid-entitlement gate exists.\n    const openaiKey: string | null = null;
     const model = Deno.env.get("OPENAI_KNOWLEDGE_MODEL") || "gpt-5.6-luna";
 
     if (!openaiKey || !ranked.length) {
