@@ -34,7 +34,7 @@ type RelatedDocument = {
 
 type AskResult = {
   ok: boolean;
-  mode: "ai" | "retrieval";
+  mode: "ai" | "retrieval" | "curated";
   model?: string | null;
   answer: string;
   question_coach?: QuestionCoaching | null;
@@ -218,7 +218,7 @@ export default function KnowledgeAskPage() {
               <div className="rounded-3xl border border-white/[0.08] bg-white/[0.03] p-5 md:p-6">
                 <div className="text-[9px] font-bold tracking-[.2em] text-[#ff9a42]">ASK → RETRIEVE → APPLY</div>
                 <h2 className="mt-2 font-serif text-2xl font-semibold">過去の知識を、今の判断に使う。</h2>
-                <p className="mt-2 text-sm leading-7 text-[#8996aa]">質問すると正本Markdownから関連知識を探し、選んだProjectの現在地まで接続します。</p>
+                <p className="mt-2 text-sm leading-7 text-[#8996aa]">まず登録済みの模範解答を検索。未登録なら正本Knowledgeから関連資料を探します。外部の生成AI APIは使用しません。</p>
 
                 <textarea
                   value={question}
@@ -266,8 +266,8 @@ export default function KnowledgeAskPage() {
                       <h2 className="mt-1 font-serif text-xl font-semibold">Knowledgeからの回答</h2>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className={`rounded-full border px-2.5 py-1 text-[9px] ${result.mode === "ai" ? "border-emerald-300/20 text-emerald-200" : "border-amber-300/20 text-amber-200"}`}>
-                        {result.mode === "ai" ? `AI · ${result.model || "model"}` : "Retrieval"}
+                      <span className={`rounded-full border px-2.5 py-1 text-[9px] ${result.mode === "curated" ? "border-emerald-300/20 text-emerald-200" : result.mode === "ai" ? "border-blue-300/20 text-blue-200" : "border-amber-300/20 text-amber-200"}`}>
+                        {result.mode === "curated" ? "登録済み模範解答 · API 0" : result.mode === "ai" ? `AI · ${result.model || "model"}` : "正本検索 · API 0"}
                       </span>
                       <button type="button" onClick={copyAnswer} className="rounded-lg border border-white/[0.08] px-2.5 py-1 text-[9px] text-[#8996aa]">{copied ? "Copied" : "Copy"}</button>
                     </div>
