@@ -3,6 +3,7 @@ import type {
   CompiledQuestPlan,
   GrowthAxis,
 } from '@/types/questCompiler';
+import { knowledgeActionLineage, knowledgeActionProvenance, type KnowledgeActionDraft } from '@/lib/knowledgeActionImport';
 
 const STOP_WORDS = new Set([
   'こと', 'もの', 'ため', 'これ', 'それ', 'ある', 'いる', 'する', 'なる', 'できる',
@@ -82,6 +83,7 @@ export function compileToQuestPlan(input: {
   title?: string;
   text: string;
   now?: Date;
+  knowledgeAction?: KnowledgeActionDraft;
 }): CompiledQuestPlan {
   const text = cleanText(input.text);
   if (text.length < 20) {
@@ -165,16 +167,22 @@ export function compileToQuestPlan(input: {
     ),
   );
 
+  const sourceLineage = input.knowledgeAction ? knowledgeActionLineage(input.knowledgeAction) : undefined;
+  if (sourceLineage) {
+    for (const item of [mainQuest, subQuests[2], dailyQuests[2]]) item.description = `実践する内容:\n${text}\n\n${item.description}`;
+    for (const item of [mainQuest, ...subQuests, ...dailyQuests]) item.description += `\n\n${knowledgeActionProvenance(sourceLineage)}`;
+  }
   return {
     id: planId,
     sourceTitle,
     sourceExcerpt: truncate(text, 180),
     sourceKeywords: keywords,
+    ...(sourceLineage ? { sourceLineage } : {}),
     createdAt: now.toISOString(),
     mainQuest,
     subQuests,
     dailyQuests,
-    reviewPrompts: [
+    reviewPrompts: input.knowledgeAction ? [...input.knowledgeAction.practice.reflectionQuestions] : [
       '実際に起きた事実は何だった？',
       '自分の予測や解釈と、どこが違った？',
       '次に残す行動・やめる行動・変える条件は何？',
