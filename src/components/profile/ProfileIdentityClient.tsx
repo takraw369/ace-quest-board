@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { parseJevNameHandoff } from '@/lib/profile/jevHandoff.mjs';
 import { useEffect, useState } from 'react';
 import {
   beginGoogleLogin,
@@ -27,6 +28,10 @@ export default function ProfileIdentityClient() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+  const [jevOpen, setJevOpen] = useState(false);
+  const [jevRaw, setJevRaw] = useState('');
+  const [jevPreview, setJevPreview] = useState('');
+  const [jevError, setJevError] = useState('');
 
   useEffect(() => {
     let alive = true;
@@ -148,6 +153,64 @@ export default function ProfileIdentityClient() {
 
         {!loading && !loginRequired && (
           <div className="mt-7 space-y-4">
+            <section className="rounded-3xl border border-white/10 bg-white/[0.025] p-5">
+              <p className="text-[10px] font-bold tracking-[.18em] text-[#ff9a42]">JEV PROFILE PASSPORT</p>
+              <h2 className="mt-2 font-serif text-lg font-semibold">JEVに登録した名前を再利用</h2>
+              <p className="mt-2 text-xs leading-6 text-[#9aa7ba]">
+                <a className="underline" href="https://masahiroyamada.com/dashboard/profile-import" target="_blank" rel="noopener noreferrer">
+                  MASA OSのJEV Profile
+                </a> で「ACE用の氏名をコピー」し、ここに貼り付けてください。別サイトからの自動取得はしません。
+              </p>
+              <button type="button" className="mt-4 min-h-11 rounded-xl border border-white/20 px-4 py-2 text-sm" onClick={() => {
+                setJevOpen((value) => !value);
+                setJevRaw('');
+                setJevPreview('');
+                setJevError('');
+              }}>JEVから入力する</button>
+              {jevOpen && (
+                <div className="mt-4 space-y-3 rounded-xl border border-white/10 p-4">
+                  <label htmlFor="jev-transfer-text" className="block text-sm">JEVでコピーした文字を貼り付ける</label>
+                  <textarea
+                    id="jev-transfer-text"
+                    value={jevRaw}
+                    onChange={(event) => { setJevRaw(event.target.value); setJevPreview(''); setJevError(''); }}
+                    rows={3}
+                    maxLength={512}
+                    autoComplete="off"
+                    spellCheck={false}
+                    className="w-full rounded-lg border border-white/20 bg-[#0d1320] p-3 text-base"
+                  />
+                  <p className="text-xs leading-5 text-[#8895a9]">氏名だけの候補です。本人確認やログイン情報の置き換えには使いません。公開する名前に使う場合はご自身で内容を確認してください。</p>
+                  <button type="button" className="min-h-11 rounded-lg bg-[#ff8a1f] px-4 text-sm font-bold text-[#07152e]" onClick={() => {
+                    const parsed = parseJevNameHandoff(jevRaw);
+                    setJevPreview(parsed || '');
+                    setJevError(parsed ? '' : 'JEVからコピーした形式ではありません。MASA OSで改めてコピーしてください。');
+                  }}>内容を確認</button>
+                  {jevPreview && (
+                    <div className="space-y-3 rounded-lg border border-white/20 p-3">
+                      <p className="text-sm">反映候補：<strong>{jevPreview}</strong></p>
+                      <p className="text-xs leading-5 text-[#9aa7ba]">反映先を1つ選択してください。今ある名前は上書きせず、保存・公開も自動では行いません。</p>
+                      <button type="button" disabled={Boolean(nickname.trim()) || jevPreview.length > 40} className="block min-h-11 w-full rounded-lg border border-white/20 px-3 text-sm disabled:opacity-40" onClick={() => {
+                        if (nickname.trim() || jevPreview.length > 40) return;
+                        setNickname(jevPreview);
+                        setJevRaw('');
+                        setJevPreview('');
+                        setJevOpen(false);
+                      }}>空のニックネーム欄へ反映（通常表示名）</button>
+                      <button type="button" disabled={Boolean(professionalName.trim()) || jevPreview.length > 80} className="block min-h-11 w-full rounded-lg border border-white/20 px-3 text-sm disabled:opacity-40" onClick={() => {
+                        if (professionalName.trim() || jevPreview.length > 80) return;
+                        setProfessionalName(jevPreview);
+                        setJevRaw('');
+                        setJevPreview('');
+                        setJevOpen(false);
+                      }}>空の先生・コーチ名欄へ反映（公開設定は変更しない）</button>
+                    </div>
+                  )}
+                  {jevError && <p className="text-xs text-red-200" role="alert">{jevError}</p>}
+                </div>
+              )}
+            </section>
+
             <section className="rounded-3xl border border-white/10 bg-white/[0.025] p-5">
               <p className="text-[10px] font-bold tracking-[.18em] text-[#ff9a42]">普段の表示名</p>
               <label className="mt-4 block text-sm font-semibold">ニックネーム</label>
