@@ -23,6 +23,6 @@ test('never auto-imports, overwrites identity or auto-saves', () => {
   assert.match(page, /if \(nickname\.trim\(\) \|\| jevPreview\.length > 40\) return/);
   assert.match(page, /if \(professionalName\.trim\(\) \|\| jevPreview\.length > 80\) return/);
   assert.match(page, /保存・公開も自動では行いません/);
-  assert.match(page, /teacherNamePublic: teacherNamePublic/);
+  assert.match(page, /teacher_name_public: teacherNamePublic/);
   assert.doesNotMatch(page, /window\.localStorage\.(?:getItem|setItem)/);
 });
