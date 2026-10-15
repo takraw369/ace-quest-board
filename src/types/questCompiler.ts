@@ -1,3 +1,5 @@
+import type { KnowledgeActionLineage, KnowledgeActionReflection } from '@/lib/knowledgeActionImport';
+
 export type GrowthAxis =
   | 'body'
   | 'focus'
@@ -25,6 +27,7 @@ export interface CompiledQuestPlan {
   sourceTitle: string;
   sourceExcerpt: string;
   sourceKeywords: string[];
+  sourceLineage?: KnowledgeActionLineage;
   createdAt: string;
   mainQuest: CompiledQuest;
   subQuests: CompiledQuest[];
@@ -42,6 +45,8 @@ export interface QuestLog {
   xp: number;
   growthAxes: GrowthAxis[];
   reflection?: string;
+  practiceReflection?: KnowledgeActionReflection;
+  sourceLineage?: KnowledgeActionLineage;
 }
 
 export interface MonthlyGrowthReport {
