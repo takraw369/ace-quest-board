@@ -7,6 +7,7 @@ export const APP_ROUTES = {
   knowledgeMap: '/knowledge/map',
   knowledgeAsk: '/knowledge/ask',
   knowledgeLocalSearch: '/knowledge/local-search',
+  knowledgeGraphSearch: '/knowledge/graph-search',
   profile: '/profile',
   wantTo: '/want-to',
   questRouter: '/quest-router',
