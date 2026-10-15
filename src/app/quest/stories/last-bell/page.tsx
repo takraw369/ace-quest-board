@@ -22,7 +22,7 @@ type StoryComment = {
 const choices = {
   quit: '勝負をあきらめた',
   noticed: '何かに気づいた',
-  unsure: 'まだ分からない',
+  unsure: '今は判断しない',
   race: 'RACE：競走',
   care: 'CARE：気づかい',
   ask: 'ナギに話を聞いた',
@@ -165,11 +165,11 @@ export default function LastBellStoryQuest() {
             <p>そのままレースは終わり、記録帳には「棄権」と記された。</p>
             <p>写真の下に残された一言。「なぜ、走り切らなかった？」</p>
           </div>
-          <p className="mt-6 text-sm font-semibold">あなたは、最初どう感じた？</p>
+          <p className="mt-6 text-sm font-semibold">まずは気になった道へ。今は考えず、続きを読むだけでも大丈夫。</p>
           <div className="mt-3 space-y-2">
             <OptionButton selected={first === 'quit'} onClick={() => { setFirst('quit'); setDrawer(null); setInvestigation(null); }}>勝負をあきらめたのかもしれない</OptionButton>
             <OptionButton selected={first === 'noticed'} onClick={() => { setFirst('noticed'); setDrawer(null); setInvestigation(null); }}>何かがおかしいと気づいたのかもしれない</OptionButton>
-            <OptionButton selected={first === 'unsure'} onClick={() => { setFirst('unsure'); setDrawer(null); setInvestigation(null); }}>今の情報では分からない</OptionButton>
+            <OptionButton selected={first === 'unsure'} onClick={() => { setFirst('unsure'); setDrawer(null); setInvestigation(null); }}>今は考えず、続きを読んでみる</OptionButton>
           </div>
         </section>
 
