@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 async function reachEnding(page: import('@playwright/test').Page, route: 'race' | 'care' = 'race') {
   await page.goto('/quest/stories/last-bell');
-  await page.getByRole('button', { name: '今の情報では分からない' }).click();
+  await page.getByRole('button', { name: '今は考えず、続きを読んでみる' }).click();
   await page.getByRole('button', { name: route === 'race' ? 'RACE — 競走を手がかりに' : 'CARE — 気づかいを手がかりに' }).click();
   await page.getByRole('button', { name: 'ナギ本人に話を聞く' }).click();
   await expect(page.getByRole('heading', { name: 'あなたには、どう見えた？' })).toBeVisible();
@@ -16,7 +16,7 @@ test('自由な解釈を端末に保存・再読取・編集・削除できる',
   await expect(page.getByText('止まった時間にも、別の意味があるかもしれない。')).toBeVisible();
 
   await page.reload();
-  await page.getByRole('button', { name: '今の情報では分からない' }).click();
+  await page.getByRole('button', { name: '今は考えず、続きを読んでみる' }).click();
   await page.getByRole('button', { name: 'RACE — 競走を手がかりに' }).click();
   await page.getByRole('button', { name: 'ナギ本人に話を聞く' }).click();
   await expect(page.getByText('止まった時間にも、別の意味があるかもしれない。')).toBeVisible();
