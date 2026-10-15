@@ -103,6 +103,7 @@ export default function LearnClient() {
   const [likedIds, setLikedIds] = useState<string[]>([]);
   const [savedIds, setSavedIds] = useState<string[]>([]);
   const [sharedId, setSharedId] = useState<string | null>(null);
+  const [showOptionalQuestion, setShowOptionalQuestion] = useState(false);
   const impressionKeyRef = useRef<string | null>(null);
   const readDepthSentRef = useRef<Set<string>>(new Set());
   const openedAtRef = useRef<Record<string, number>>({});
@@ -401,14 +402,32 @@ export default function LearnClient() {
         <p className="mt-4 text-sm leading-7 text-[#9da29b]">{rec.reason}</p>
 
         <section className="mt-7 rounded-[28px] border border-[#c8ab72]/15 bg-white/[0.025] p-6">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#d2b97f]">WHAT TO NOTICE</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#d2b97f]">まずは、気づくだけでOK</p>
           <p className="mt-4 font-serif text-xl leading-9 text-[#eee8dc]">{focus ?? '結果そのものより、予想と実際の差を見る。'}</p>
-          <p className="mt-4 text-sm leading-7 text-[#929992]">ここでは答えを覚えない。次のQuestで、自分の反応を実際に取りにいく。</p>
+          <p className="mt-4 text-sm leading-7 text-[#929992]">今は答えを出さなくても、言葉にできなくても大丈夫。気になったことを一つ見つけるだけでも、次につながります。</p>
         </section>
 
-        {question && <section className="mt-4 rounded-[28px] border border-[#789581]/20 bg-[#789581]/[0.06] p-6"><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#9ab0a0]">QUESTION</p><p className="mt-3 font-serif text-xl leading-9 text-[#e6e2d9]">{question}</p></section>}
+        {question && (
+          <section className="mt-4 rounded-[28px] border border-[#789581]/20 bg-[#789581]/[0.06] p-5 sm:p-6">
+            <button
+              type="button"
+              onClick={() => setShowOptionalQuestion((value) => !value)}
+              aria-expanded={showOptionalQuestion}
+              aria-controls="learn-optional-question"
+              className="flex min-h-12 w-full items-center justify-between gap-3 rounded-xl text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d9c18d]"
+            >
+              <span className="text-sm font-semibold text-[#e6e2d9]">もう少し考えてみる（任意）</span>
+              <span aria-hidden="true" className="shrink-0 text-[#a5bea9]">{showOptionalQuestion ? '閉じる −' : '開く ＋'}</span>
+            </button>
+            <div id="learn-optional-question" hidden={!showOptionalQuestion}>
+              <p className="mt-4 font-serif text-xl leading-9 text-[#e6e2d9]">{question}</p>
+              <p className="mt-3 text-xs leading-6 text-[#9aa99d]">すぐに答えを決めなくても、考えるのをやめても構いません。</p>
+            </div>
+          </section>
+        )}
 
-        <Link href="/quest" className="mt-6 flex w-full items-center justify-center rounded-full bg-[#d9c18d] px-5 py-4 text-sm font-semibold text-[#171813]">Questで確かめる →</Link>
+        <Link href="/quest" className="mt-6 flex min-h-12 w-full items-center justify-center rounded-full bg-[#d9c18d] px-5 py-4 text-sm font-semibold text-[#171813]">小さく試してみる（Quest） →</Link>
+        <Link href="/today" className="mt-3 flex min-h-12 w-full items-center justify-center rounded-full border border-white/15 px-5 py-4 text-sm font-semibold text-[#b2b7b1]">今日は眺めるだけで終える</Link>
       </div>
       <PwaNav />
     </main>
