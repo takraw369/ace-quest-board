@@ -89,6 +89,15 @@ export default function HomePage() {
           <a href="/athlete" className="flex min-h-12 shrink-0 items-center justify-center rounded-2xl bg-[#d8e8d7] px-5 text-sm font-bold text-[#17342e] transition-colors hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d8e8d7]">Athleteノートを開く　↗</a>
         </aside>
 
+        <aside className="mb-8 flex min-w-0 flex-col gap-4 rounded-[24px] border border-[#c8ab72]/20 bg-[#c8ab72]/[0.045] p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6" aria-label="物語Questの試作">
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#d9c18d]">STORY QUEST / PROTOTYPE 001</p>
+            <h2 className="mt-2 font-serif text-xl font-semibold text-[#f1ead7]">鳴らなかった、最後の鈴</h2>
+            <p className="mt-1 text-xs leading-6 text-[#a5b7b0]">分岐を選び、同じ出来事の別の意味に出会う。最後に自分の解釈を端末に残せます。</p>
+          </div>
+          <a href="/quest/stories/last-bell" className="flex min-h-12 shrink-0 items-center justify-center rounded-2xl border border-[#d9c18d]/40 px-5 text-sm font-bold text-[#e7d3a9] transition-colors hover:bg-[#d9c18d]/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d9c18d]">物語Questを体験　↗</a>
+        </aside>
+
         <section>
           <div className="mb-5 flex items-end justify-between gap-4">
             <div>
